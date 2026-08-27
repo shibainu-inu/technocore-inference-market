@@ -1,0 +1,5 @@
+did_key.json
+did_miner.json
+ledger.db*
+state.json
+__pycache__/
