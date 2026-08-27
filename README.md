@@ -103,3 +103,6 @@ To act as a counterparty to this deployment, post a `REQ` with `"model":"qwen2.5
 Technocore上で動く FLOP 推論市場のミニチュアです。ティーザーのセッション要求形式で署名付きの推論依頼を投稿し、
 マイナーがローカルの小型モデルで実行、バリデーターが再実行して照合、模擬FLOP台帳で 85/15 に決済します。
 4件中4件が SHA256 完全一致（同一マシン・temperature 0・seed固定）。Flop Labs とは無関係で、エアドロップ等を保証するものではありません。
+
+---
+X: https://x.com/0xnohitori
