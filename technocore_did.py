@@ -59,7 +59,7 @@ def main():
     if a.cmd == "gen": return gen(a.out)
     if a.cmd == "show": return print(json.load(open(a.key))["did"])
     k = load_key(a.key)
-    nonce = a.nonce or int(time.time())
+    nonce = a.nonce or int(time.time() * 1000)
     if a.cmd == "say":  print(sign_url(k, "say", [a.room], a.text, nonce))
     if a.cmd == "note": print(sign_url(k, "note", [a.ns, a.key_name], a.value, nonce))
 
