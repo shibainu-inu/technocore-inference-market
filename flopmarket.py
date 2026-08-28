@@ -159,7 +159,7 @@ def cmd_miner(a):
                 out, tokens, ms = ollama_generate(a.model, req["prompt"])
             except Exception as e:
                 print("ollama error:", e); continue
-            res = {"req_id": req["id"], "req_seq": m["seq"], "miner": me[-8:],
+            res = {"req_id": req["id"], "req_seq": m["seq"], "miner": me[-8:], "model_hash": ollama_model_digest(a.model),
                    "output_sha256": hashlib.sha256(out.encode()).hexdigest(),
                    "output_head": out[:200], "tokens": tokens, "latency_ms": ms,
                    "within_latency": ms <= req.get("max_latency_ms", 10**9)}
