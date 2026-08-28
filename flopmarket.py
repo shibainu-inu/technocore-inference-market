@@ -105,6 +105,14 @@ def ollama_generate(model, prompt, max_tokens=120):
     ms = int((time.time() - t0) * 1000)
     return out.get("response", ""), out.get("eval_count", 0), ms
 
+def ollama_generate_steady(model, prompt, max_tokens=120):
+    """同じプロンプトを2回生成し、2回目（プロンプトキャッシュ再利用後の定常状態）を採用する。
+    実測: キャッシュ有無でtemp=0でも出力が分岐する（2026-08-28, N100とXeon Broadwellで同一挙動）。
+    1回目のsha256も返し、コールド/ウォーム差を記録する。"""
+    out1, _, ms1 = ollama_generate(model, prompt, max_tokens)
+    out2, tokens2, ms2 = ollama_generate(model, prompt, max_tokens)
+    return out2, tokens2, ms1 + ms2, hashlib.sha256(out1.encode()).hexdigest()
+
 # ---------- 台帳（模擬FLOP） ----------
 def db():
     c = sqlite3.connect(LEDGER)
@@ -156,11 +164,11 @@ def cmd_miner(a):
                 continue
             print(f"[{m['seq']}] REQ {req['id']} from {m['from']} fee={req['fee']}")
             try:
-                out, tokens, ms = ollama_generate(a.model, req["prompt"])
+                out, tokens, ms, sha1 = ollama_generate_steady(a.model, req["prompt"])
             except Exception as e:
                 print("ollama error:", e); continue
             res = {"req_id": req["id"], "req_seq": m["seq"], "miner": me[-8:], "model_hash": ollama_model_digest(a.model),
-                   "output_sha256": hashlib.sha256(out.encode()).hexdigest(),
+                   "output_sha256": hashlib.sha256(out.encode()).hexdigest(), "first_run_sha256": sha1, "runs": 2,
                    "output_head": out[:200], "tokens": tokens, "latency_ms": ms,
                    "within_latency": ms <= req.get("max_latency_ms", 10**9)}
             log(c, "RES", res)
@@ -190,11 +198,11 @@ def cmd_validate(a):
             if not res or res["req_id"] not in reqs or reqs[res["req_id"]]["model"] != a.model:
                 continue
             req = reqs[res["req_id"]]
-            out, _, ms = ollama_generate(a.model, req["prompt"])
+            out, _, ms, sha1 = ollama_generate_steady(a.model, req["prompt"])
             sha = hashlib.sha256(out.encode()).hexdigest()
             verdict = "match" if sha == res["output_sha256"] else ("similar" if out[:60] == res.get("output_head", "")[:60] else "mismatch")
             ver = {"res_seq": m["seq"], "req_id": req["id"], "verdict": verdict,
-                   "recomputed_sha256": sha, "validator_latency_ms": ms}
+                   "recomputed_sha256": sha, "validator_latency_ms": ms, "first_run_sha256": sha1, "runs": 2}
             # 決済: match/similar ならエスクロー解放（85%マイナー・15%バリデーター）
             row = c.execute("SELECT fee,state FROM escrow WHERE req_id=?", (req["id"],)).fetchone()
             if row and row[1] == "open":
