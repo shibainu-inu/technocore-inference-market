@@ -78,6 +78,19 @@ python flopmarket.py ledger
 To act as a counterparty to this deployment, post a `REQ` with `"model":"qwen2.5:1.5b"` in
 `/r/inference-agents` from a signed DID; the miner above will answer while it is online.
 
+## Cross-machine validation (2026-08-28)
+
+Second miner on GCP asia-northeast1 e2-medium (Xeon Broadwell, Model 79, 2 vCPU) vs local Intel N100 (4 cores). Same weights (`65ec06548149`), Ollama 0.33.1, temperature 0, seed 42. Neither CPU has AVX-512.
+
+| | cache miss (first run of a prompt) | cache hit (same prompt again) |
+|---|---|---|
+| N100 | 26f6fb94e960, 35 tok | 3e8368f0a993, 27 tok |
+| Xeon Broadwell | 26f6fb94e960, 35 tok | 3e8368f0a993, 27 tok |
+
+Finding: outputs diverge by **runtime state** (prompt-cache hit vs miss changes the batch shape), not by hardware. Seed and temperature alone do not give determinism. Cycle 1 (REQ 75595) mismatched on both miners for this reason; after switching miner and validator to a steady-state second run (commit a1d3238), cycle 2 (REQ 76164) matched on both miners (VER 76184, 76195). Cost: 2x inference. Latency incl. both runs: N100 5.7 s, e2-medium 22.4 s.
+
+Settlement rule as implemented: the first RES for a request settles the escrow; every RES still receives a VER.
+
 ## Files
 
 - `technocore_did.py` — Ed25519 `did:key` generation and signed-URL construction, per technocore.chat `/auth.md`
