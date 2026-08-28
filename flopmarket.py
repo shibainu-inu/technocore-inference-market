@@ -136,7 +136,11 @@ def cmd_request(a):
     if bal < a.fee:
         sys.exit(f"残高不足: {bal} < {a.fee}")
     req_id = hashlib.sha256(f"{me}{time.time()}{a.prompt}".encode()).hexdigest()[:12]
-    req = {"id": req_id, "model": a.model, "model_hash": ollama_model_digest(a.model),
+    try:
+        mh = ollama_model_digest(a.model)
+    except Exception:
+        mh = "unset"   # 発注側に Ollama は不要（マイナー/バリデーターはモデル名で照合する）
+    req = {"id": req_id, "model": a.model, "model_hash": mh,
            "max_latency_ms": a.max_latency, "flops_est": a.flops, "confidential": False,
            "fee": a.fee, "prompt": a.prompt[:400]}
     c.execute("UPDATE bal SET amt=amt-? WHERE did=?", (a.fee, me))
@@ -144,6 +148,15 @@ def cmd_request(a):
     log(c, "REQ", req)
     st, seq, _ = post_signed(key, "REQ " + json.dumps(req, ensure_ascii=False, separators=(",", ":")))
     print(f"REQ {req_id} posted seq={seq} fee={a.fee} escrowed. balance={bal - a.fee}")
+    print(f"watch RES/VER: {BASE}/r/{ROOM}?since={seq}")
+
+def cmd_join(a):
+    """外部参加者向けの最小導線: DID がなければ生成し、Ollama なしで REQ を1件投稿する。"""
+    if not os.path.exists(a.key):
+        print(f"{a.key} が見つからないため、新しい DID を生成します（パスフレーズを決めてください）")
+        tc.gen(a.key)
+        print("生成した鍵ファイルは共有・コミットしないでください。")
+    cmd_request(a)
 
 def cmd_miner(a):
     key = load_key(a.key); me = did_of(key); c = db(); ensure(c, me)
@@ -329,12 +342,16 @@ def main():
     r.add_argument("--max-latency", type=int, default=60000); r.add_argument("--flops", type=int, default=3_000_000_000_000)
     m = s.add_parser("miner"); m.add_argument("--key", default="did_miner.json"); m.add_argument("--model", default="qwen2.5:1.5b")
     v = s.add_parser("validate"); v.add_argument("--key", default="did_key.json"); v.add_argument("--model", default="qwen2.5:1.5b")
+    j = s.add_parser("join", help="DIDがなければ生成してREQを1件投稿（Ollama不要）")
+    j.add_argument("prompt"); j.add_argument("--key", default="did_key.json")
+    j.add_argument("--model", default="qwen2.5:1.5b"); j.add_argument("--fee", type=float, default=10)
+    j.add_argument("--max-latency", type=int, default=60000); j.add_argument("--flops", type=int, default=3_000_000_000_000)
     s.add_parser("ledger")
     t = s.add_parser("stats"); t.add_argument("--hours", type=int, default=24)
     t.add_argument("--room", action="store_true"); t.add_argument("--x", action="store_true")
     t.add_argument("--own", default="PvqA,88xr,hE3T", help="自分のDID末尾（カンマ区切り、対向数から除外）")
     a = p.parse_args()
-    {"request": cmd_request, "miner": cmd_miner, "validate": cmd_validate, "ledger": cmd_ledger, "stats": cmd_stats}[a.cmd](a)
+    {"request": cmd_request, "miner": cmd_miner, "validate": cmd_validate, "ledger": cmd_ledger, "stats": cmd_stats, "join": cmd_join}[a.cmd](a)
 
 if __name__ == "__main__":
     main()
