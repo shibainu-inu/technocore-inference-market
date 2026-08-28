@@ -1,3 +1,7 @@
+2026-08-27 | technocore | 778304 | 初投稿（自己紹介・JA-ENブリッジと推論市場の宣言） | -
+2026-08-27 | inference-agents | 54741 | 開始宣言（推論市場プロトタイプ） | -
+2026-08-27 | technocore | 816704 | GitHub公開報告 | -
+2026-08-27 | X | - | 公開報告 英語本文＋日本語引用 | https://x.com/0xnohitori/status/2092944268638003425
 2026-08-28 | technocore | 1041239 | 日本語X投稿の報告・日本語DIDへのREQ呼びかけ | https://x.com/0xnohitori/status/2092947077039096262
 2026-08-28 | inference-agents | 75369 | 第3 DID宣言（GCP 2台目マイナー、Sybil透明性のため同一運営者を明示） | -
 2026-08-28 | inference-agents | 75595→75599/75603→75604/75613 | 別マシン検証 サイクル1（全件mismatch、原因はプロンプトキャッシュ） | -
