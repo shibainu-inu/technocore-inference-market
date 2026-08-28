@@ -151,11 +151,12 @@ def cmd_miner(a):
     if since == 0:  # 初回は現在位置から（過去の山を処理しない）
         _, since = read_room(0, wait=0)
     print(f"miner {short(me)} watching /r/{ROOM} from seq {since} model={a.model}")
+    log(c, "START", {"role": "miner", "me": me[-8:], "since": since})
     while True:
         try:
             msgs, since = read_room(since, wait=10)
         except Exception as e:
-            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(15); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); log(c, "ERR", {"e": str(e)[:120]}); time.sleep(15); continue
         for m in msgs:
             req = parse_msg(m["text"], "REQ")
             if not req or req.get("model") != a.model:
@@ -168,7 +169,7 @@ def cmd_miner(a):
             except Exception as e:
                 print("ollama error:", e); continue
             res = {"req_id": req["id"], "req_seq": m["seq"], "miner": me[-8:], "model_hash": ollama_model_digest(a.model),
-                   "output_sha256": hashlib.sha256(out.encode()).hexdigest(), "first_run_sha256": sha1, "runs": 2,
+                   "output_sha256": hashlib.sha256(out.encode()).hexdigest(), "first_run_sha256": sha1, "runs": 2, "req_from": m["from"],
                    "output_head": out[:200], "tokens": tokens, "latency_ms": ms,
                    "within_latency": ms <= req.get("max_latency_ms", 10**9)}
             log(c, "RES", res)
@@ -186,11 +187,12 @@ def cmd_validate(a):
         _, since = read_room(0, wait=0)
     reqs = {}
     print(f"validator {short(me)} watching from seq {since}")
+    log(c, "START", {"role": "validator", "me": me[-8:], "since": since})
     while True:
         try:
             msgs, since = read_room(since, wait=10)
         except Exception as e:
-            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(15); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); log(c, "ERR", {"e": str(e)[:120]}); time.sleep(15); continue
         for m in msgs:
             r = parse_msg(m["text"], "REQ")
             if r: reqs[r["id"]] = r; continue
@@ -239,6 +241,54 @@ def cmd_ledger(a):
     print("== last events")
     for row in c.execute("SELECT * FROM log ORDER BY rowid DESC LIMIT 10"): print("  ", row[0], row[1], row[2][:100])
 
+def cmd_stats(a):
+    """直近 --hours の運用サマリ。--room で部屋投稿用1行、--x でX用テンプレを出力"""
+    import statistics
+    c = db()
+    cutoff = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - a.hours * 3600))
+    rows = [(ts, ev, json.loads(d)) for ts, ev, d in
+            c.execute("SELECT ts,event,detail FROM log WHERE ts>=? ORDER BY ts", (cutoff,))]
+    req  = [d for _, e, d in rows if e == "REQ"]
+    res  = [d for _, e, d in rows if e == "RES"]
+    ver  = [d for _, e, d in rows if e == "VER"]
+    errs = [d for _, e, d in rows if e == "ERR"]
+    starts = [(ts, d) for ts, e, d in rows if e == "START"]
+    own = tuple(x.strip() for x in a.own.split(","))
+    n_match = sum(1 for d in ver if d.get("verdict") == "match")
+    by_miner = {}
+    for d in res: by_miner[d.get("miner", "?")] = by_miner.get(d.get("miner", "?"), 0) + 1
+    ext = sorted({d.get("req_from", "") for d in res
+                  if d.get("req_from") and not d["req_from"].endswith(own)})
+    med = lambda xs: int(statistics.median(xs)) if xs else 0
+    lat_m = med([d.get("latency_ms", 0) for d in res])
+    lat_v = med([d.get("validator_latency_ms", 0) for d in ver])
+    ebd = {}
+    for d in errs:
+        k = "503" if "503" in d.get("e", "") else ("dns" if "name resolution" in d.get("e", "") else \
+            ("conn" if "Connection refused" in d.get("e", "") else "other"))
+        ebd[k] = ebd.get(k, 0) + 1
+    estr = " ".join(f"{k}:{v}" for k, v in sorted(ebd.items())) or "none"
+    mstr = " ".join(f"{k}:{v}" for k, v in sorted(by_miner.items())) or "-"
+    room = (f"STATS last {a.hours}h: REQ {len(req)} | RES {len(res)} ({mstr}) | "
+            f"VER {len(ver)} match {n_match} | external REQ DIDs {len(ext)} | "
+            f"median latency ms miner {lat_m} / validator {lat_v} | read errors {len(errs)} ({estr})")
+    if a.room:
+        print(room); return
+    if a.x:
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        print(f"運用日誌 {day}（直近{a.hours}h、自PC＋GCP東京）")
+        print(f"REQ {len(req)} / RES {len(res)} / VER {len(ver)}（match {n_match}）")
+        print(f"外部DIDからのREQ: {len(ext)}")
+        print(f"レイテンシ中央値: マイナー {lat_m}ms・検証 {lat_v}ms")
+        print(f"読み取りエラー: {len(errs)}（{estr}）")
+        print("運用から見えたこと: （ここに1〜2行。なければこの日誌は投稿しない）")
+        print("seq: （部屋に投稿したSTATS行のseqを入れる）")
+        return
+    print(room)
+    for ts, d in starts[-4:]: print("start:", ts, d.get("role"), d.get("me"))
+    if ext: print("external DIDs:", ", ".join(ext))
+    if not rows: print(f"(no events in last {a.hours}h)")
+
 def main():
     p = argparse.ArgumentParser(); s = p.add_subparsers(dest="cmd", required=True)
     r = s.add_parser("request"); r.add_argument("prompt"); r.add_argument("--key", default="did_key.json")
@@ -247,8 +297,11 @@ def main():
     m = s.add_parser("miner"); m.add_argument("--key", default="did_miner.json"); m.add_argument("--model", default="qwen2.5:1.5b")
     v = s.add_parser("validate"); v.add_argument("--key", default="did_key.json"); v.add_argument("--model", default="qwen2.5:1.5b")
     s.add_parser("ledger")
+    t = s.add_parser("stats"); t.add_argument("--hours", type=int, default=24)
+    t.add_argument("--room", action="store_true"); t.add_argument("--x", action="store_true")
+    t.add_argument("--own", default="PvqA,88xr,hE3T", help="自分のDID末尾（カンマ区切り、対向数から除外）")
     a = p.parse_args()
-    {"request": cmd_request, "miner": cmd_miner, "validate": cmd_validate, "ledger": cmd_ledger}[a.cmd](a)
+    {"request": cmd_request, "miner": cmd_miner, "validate": cmd_validate, "ledger": cmd_ledger, "stats": cmd_stats}[a.cmd](a)
 
 if __name__ == "__main__":
     main()
