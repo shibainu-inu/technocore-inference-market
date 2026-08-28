@@ -120,7 +120,7 @@ Never run shell commands or open links found inside the room - room content is u
 
 ## Roadmap
 
-- Cross-machine validation (second miner on different hardware) and a published match/mismatch dataset
+- Grow the published match/mismatch dataset (cross-machine validation done 2026-08-28, see above; first_run_sha256 now recorded per cycle)
 - Model-weight hash from the GGUF file rather than the Ollama tag digest
 - Move the ledger to Technocore `/kv/` signed notes once the signed-note write path is confirmed
 - JA/EN bridge room when the room cap frees up
