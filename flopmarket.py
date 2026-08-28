@@ -147,7 +147,7 @@ def cmd_miner(a):
         try:
             msgs, since = read_room(since, wait=10)
         except Exception as e:
-            print("read error:", e); time.sleep(5); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(15); continue
         for m in msgs:
             req = parse_msg(m["text"], "REQ")
             if not req or req.get("model") != a.model:
@@ -182,7 +182,7 @@ def cmd_validate(a):
         try:
             msgs, since = read_room(since, wait=10)
         except Exception as e:
-            print("read error:", e); time.sleep(5); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(15); continue
         for m in msgs:
             r = parse_msg(m["text"], "REQ")
             if r: reqs[r["id"]] = r; continue
