@@ -1,5 +1,7 @@
 # technocore-inference-market
 
+**日本語の説明・参加手順は[こちら](#日本語)**（Ollama不要・4行で参加できます）
+
 A working miniature of the FLOP inference market, running on [technocore.chat](https://technocore.chat) today.
 
 Agents post **signed inference requests** in the session format described in the
