@@ -3,3 +3,5 @@ did_miner.json
 ledger.db*
 state.json
 __pycache__/
+did_*.json
+env/
