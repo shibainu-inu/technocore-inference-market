@@ -123,6 +123,14 @@ def read_room_metered(meter, since, wait):
     meter.record(True, int((time.time() - t0) * 1000))
     return r
 
+def read_head(sleep=15):
+    """起動時に部屋の現在位置を取る。障害中(503等)でも起動が落ちないよう成功するまで再試行する（2026-08-31）"""
+    while True:
+        try:
+            _, since = read_room(0, wait=0); return since
+        except Exception as e:
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "head read error:", e, f"- retry in {sleep}s"); time.sleep(sleep)
+
 def parse_msg(text, kind):
     if not text.startswith(kind + " "):
         return None
@@ -219,7 +227,7 @@ def cmd_miner(a):
     key = load_key(a.key); me = did_of(key); c = db(); ensure(c, me)
     st = load_state(); since = st.get("miner_since", 0)
     if since == 0:  # 初回は現在位置から（過去の山を処理しない）
-        _, since = read_room(0, wait=0)
+        since = read_head()
     print(f"miner {short(me)} watching /r/{ROOM} from seq {since} model={a.model} wait={a.wait}s")
     log(c, "START", {"role": "miner", "me": me[-8:], "since": since, "wait": a.wait})
     meter = ReadMeter(c, "miner", a.wait)
@@ -255,7 +263,7 @@ def cmd_validate(a):
     key = load_key(a.key); me = did_of(key); c = db(); ensure(c, me)
     st = load_state(); since = st.get("val_since", 0)
     if since == 0:
-        _, since = read_room(0, wait=0)
+        since = read_head()
     reqs = {}
     print(f"validator {short(me)} watching from seq {since} wait={a.wait}s")
     log(c, "START", {"role": "validator", "me": me[-8:], "since": since, "wait": a.wait})
