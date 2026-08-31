@@ -21,3 +21,4 @@
 2026-08-31 | GitHub flop-labs/technocore-chat | #588 | wait_held の実地確認と long-poll 枠の探針計測(5分毎・held/refused/503)の開始を報告 | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5474890806
 2026-08-31 | flop.finance | - | Validator Interest Form 提出（自前1台・Testnet・プロトタイプと#588の実績を記載） | -
 2026-08-31 | flop.finance | - | KOL Survey 提出（運用者/キット作者として。Taiko/Elixir/Avail/Lumoz 等の経験を記載） | -
+2026-08-31 | inference-agents | 146432 | 日次STATS報告（自動・再試行実装後の初回、1回目で成功） | -
