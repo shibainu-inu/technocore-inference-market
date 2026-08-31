@@ -134,8 +134,12 @@ def parse_msg(text, kind):
 def load_state():
     return json.load(open(STATE)) if os.path.exists(STATE) else {}
 
-def save_state(s):
-    json.dump(s, open(STATE, "w"), indent=1)
+def save_state(key, value):
+    """自分のキーだけ更新して書く。miner と validator は同じ state.json を共有するため、
+    プロセス起動時のスナップショット全体を書き戻すと相手の進捗を古い値で上書きしてしまう（2026-08-31 に発覚:
+    再起動したマイナーが8/28の位置から再読込しかけた）。"""
+    cur = load_state(); cur[key] = value
+    json.dump(cur, open(STATE, "w"), indent=1)
 
 # ---------- Ollama ----------
 def ollama_model_digest(model):
@@ -245,7 +249,7 @@ def cmd_miner(a):
                 print(f"  -> RES posted seq={seq} {ms}ms {tokens}tok sha={res['output_sha256'][:12]}")
             except Exception as e:
                 print("post error:", e)
-        st["miner_since"] = since; save_state(st)
+        save_state("miner_since", since)
 
 def cmd_validate(a):
     key = load_key(a.key); me = did_of(key); c = db(); ensure(c, me)
@@ -299,7 +303,7 @@ def cmd_validate(a):
                 print(f"[{m['seq']}] {verdict} -> VER posted seq={seq}")
             except Exception as e:
                 print("post error:", e)
-        st["val_since"] = since; save_state(st)
+        save_state("val_since", since)
         maybe_daily_report(key, c, st)
 
 def cmd_ledger(a):
