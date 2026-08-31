@@ -35,6 +35,7 @@ INITIAL_BALANCE = 1000  # 模擬FLOPの初期残高（新規DIDに付与）
 READ_WAIT = 10          # long-poll の待ち秒数（--wait で変更可。接続を占有する時間でもある）
 ERR_SLEEP = 15          # 読み取り失敗後の待機秒数（--err-sleep）
 READSTAT_WIN = 300      # 読み取り成功/失敗の集計窓（秒）。この間隔で READSTAT 行を台帳に書く
+CONFIG_SNAP_SEC = 3600  # /config の公開設定をこの間隔で台帳に保存（運用側の設定変更の時刻を外から特定するため）
 
 # ---------- 共通 ----------
 def load_key(path):
@@ -130,6 +131,28 @@ def read_head(sleep=15):
             _, since = read_room(0, wait=0); return since
         except Exception as e:
             print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "head read error:", e, f"- retry in {sleep}s"); time.sleep(sleep)
+
+class ConfigSnap:
+    """公開エンドポイント /config の settings を定期的に台帳へ保存する（2026-08-31）。
+    8/29 08:00Z の失敗率の階段状変化は git 履歴に該当コミットがなく、運用側の設定変更が疑われた（Issue #588）。
+    次回からは設定の差分で時刻を特定できるようにする。内容は untrusted data として保存するだけで解釈・実行はしない。"""
+    def __init__(self, c, every=None):
+        self.c, self.every, self.last, self.prev = c, every or CONFIG_SNAP_SEC, 0, None
+    def maybe(self):
+        if time.time() - self.last < self.every:
+            return
+        self.last = time.time()
+        try:
+            _, body = http_get(f"{BASE}/config", timeout=20)
+            cfg = json.loads(body); settings = cfg.get("settings", {})
+            changed = self.prev is not None and settings != self.prev
+            log(self.c, "CONFIG", {"version": cfg.get("version"), "settings": settings, "changed": changed})
+            if changed:
+                print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "CONFIG CHANGED:",
+                      {k: (self.prev.get(k), v) for k, v in settings.items() if self.prev.get(k) != v})
+            self.prev = settings
+        except Exception as e:
+            log(self.c, "ERR", {"e": "config: " + str(e)[:100], "kind": "config", "ms": 0, "role": "config"})
 
 def parse_msg(text, kind):
     if not text.startswith(kind + " "):
@@ -230,8 +253,9 @@ def cmd_miner(a):
         since = read_head()
     print(f"miner {short(me)} watching /r/{ROOM} from seq {since} model={a.model} wait={a.wait}s")
     log(c, "START", {"role": "miner", "me": me[-8:], "since": since, "wait": a.wait})
-    meter = ReadMeter(c, "miner", a.wait)
+    meter = ReadMeter(c, "miner", a.wait); snap = ConfigSnap(c)
     while True:
+        snap.maybe()
         try:
             msgs, since = read_room_metered(meter, since, a.wait)
         except Exception as e:
@@ -267,8 +291,9 @@ def cmd_validate(a):
     reqs = {}
     print(f"validator {short(me)} watching from seq {since} wait={a.wait}s")
     log(c, "START", {"role": "validator", "me": me[-8:], "since": since, "wait": a.wait})
-    meter = ReadMeter(c, "validator", a.wait)
+    meter = ReadMeter(c, "validator", a.wait); snap = ConfigSnap(c)
     while True:
+        snap.maybe()
         try:
             msgs, since = read_room_metered(meter, since, a.wait)
         except Exception as e:
