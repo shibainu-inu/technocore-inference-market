@@ -16,3 +16,4 @@
 2026-08-28 | inference-agents | 90174 | 日次STATS報告 第1回（自動投稿がDNS障害で失敗→手動リカバリー） | -
 2026-08-28 | X | - | X日誌第1回（日本語・DNS障害と復旧、seq 90174） | https://x.com/0xnohitori/status/2093257873350680735
 ＋観察リプライ
+2026-08-31 | GitHub flop-labs/technocore-chat | #588 | 503障害の実測コメント（2拠点・40h・503/timeout分離・8/29 08:00Z階段状増加） | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5472072506
