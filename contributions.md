@@ -17,3 +17,4 @@
 2026-08-28 | X | - | X日誌第1回（日本語・DNS障害と復旧、seq 90174） | https://x.com/0xnohitori/status/2093257873350680735
 ＋観察リプライ
 2026-08-31 | GitHub flop-labs/technocore-chat | #588 | 503障害の実測コメント（2拠点・40h・503/timeout分離・8/29 08:00Z階段状増加） | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5472072506
+2026-08-31 | GitHub flop-labs/technocore-chat | #588 | /config 公開設定からの補足（max_rooms 81920 が有効・max_waiters_total 64）、/config 定期記録の開始を報告 | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5472296289
