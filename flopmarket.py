@@ -88,8 +88,8 @@ class ReadMeter:
     """読み取りの成功数・失敗数・応答時間を集計し、READSTAT_WIN 秒ごとに台帳へ1行書く。
     成功を1件ずつ記録すると台帳が肥大化するため窓で集計する。失敗は従来どおり ERR 行にも残す（ms付き）。
     2026-08-29〜30 の 503 障害（Issue #588 コメント）で「正確な失敗率」と「503(速い) vs timeout(遅い)」の分離が必要になり追加。"""
-    def __init__(self, c, role, wait, win=None):
-        self.c, self.role, self.wait, self.win = c, role, wait, win or READSTAT_WIN
+    def __init__(self, c, role, wait, win=None, probe=True):
+        self.c, self.role, self.wait, self.win, self.probe = c, role, wait, win or READSTAT_WIN, probe
         self.reset()
     def reset(self):
         self.t0 = time.time(); self.ok = 0; self.err = {}; self.ok_ms = []; self.err_ms = {}
@@ -108,10 +108,12 @@ class ReadMeter:
             self.reset(); return
         med = lambda xs: int(statistics.median(xs)) if xs else None
         p90 = lambda xs: int(sorted(xs)[int(len(xs) * 0.9)]) if xs else None
+        pr, pms = waiter_probe() if self.probe else (None, None)
         log(self.c, "READSTAT", {"role": self.role, "wait": self.wait, "win_s": int(time.time() - self.t0),
                                  "ok": self.ok, "err": self.err,
                                  "ok_ms_med": med(self.ok_ms), "ok_ms_p90": p90(self.ok_ms),
-                                 "err_ms_med": {k: med(v) for k, v in self.err_ms.items()}})
+                                 "err_ms_med": {k: med(v) for k, v in self.err_ms.items()},
+                                 "probe": pr, "probe_ms": pms})
         self.reset()
 
 def read_room_metered(meter, since, wait):
@@ -153,6 +155,19 @@ class ConfigSnap:
             self.prev = settings
         except Exception as e:
             log(self.c, "ERR", {"e": "config: " + str(e)[:100], "kind": "config", "ms": 0, "role": "config"})
+
+def waiter_probe(wait=1):
+    """long-poll 枠の空き具合を探る（2026-08-31, Issue #588）。since を先頭より大きくして必ず「待つ」経路に入れ、
+    JSON の wait_held を見る。held=枠あり / refused=枠満杯(wait_held false) / 503=入口で拒否 / err=その他。
+    枠超過は 503 にならず通常応答で返る（作者がソースから確認）ため、ERR には現れない指標をこれで測る。"""
+    t0 = time.time()
+    try:
+        _, body = http_get(f"{BASE}/r/{ROOM}?since=999999999&wait={wait}&format=json", timeout=wait + 20)
+        j = json.loads(body)
+        r = "held" if j.get("wait_held") is True else ("refused" if j.get("wait_held") is False else "nowait")
+    except Exception as e:
+        r = err_kind(e)
+    return r, int((time.time() - t0) * 1000)
 
 def parse_msg(text, kind):
     if not text.startswith(kind + " "):
