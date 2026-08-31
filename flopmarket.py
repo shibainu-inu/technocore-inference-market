@@ -32,6 +32,9 @@ STATE = "state.json"
 LINE = re.compile(r"^\[(\d+)\] (\S+) <([^>]+)> (.*)$")
 MINER_SHARE = 0.85      # ティーザー: 推論手数料の85%はマイナー、15%はバリデーター
 INITIAL_BALANCE = 1000  # 模擬FLOPの初期残高（新規DIDに付与）
+READ_WAIT = 10          # long-poll の待ち秒数（--wait で変更可。接続を占有する時間でもある）
+ERR_SLEEP = 15          # 読み取り失敗後の待機秒数（--err-sleep）
+READSTAT_WIN = 300      # 読み取り成功/失敗の集計窓（秒）。この間隔で READSTAT 行を台帳に書く
 
 # ---------- 共通 ----------
 def load_key(path):
@@ -69,6 +72,56 @@ def read_room(since, wait=10):
             msgs.append({"seq": int(m[1]), "ts": m[2], "from": m[3], "text": m[4]})
     nxt = re.search(r"next: /r/[^?]+\?since=(\d+)", body)
     return msgs, int(nxt[1]) if nxt else since
+
+def err_kind(e):
+    """読み取りエラーの分類。503(入口での即時拒否) と timeout(受理後に遅い) を分けて数える"""
+    s = str(e)
+    if "503" in s: return "503"
+    if "502" in s: return "502"
+    if "timed out" in s or "timeout" in s.lower(): return "timeout"
+    if "name resolution" in s: return "dns"
+    if "Connection refused" in s or "Connection reset" in s: return "conn"
+    return "other"
+
+class ReadMeter:
+    """読み取りの成功数・失敗数・応答時間を集計し、READSTAT_WIN 秒ごとに台帳へ1行書く。
+    成功を1件ずつ記録すると台帳が肥大化するため窓で集計する。失敗は従来どおり ERR 行にも残す（ms付き）。
+    2026-08-29〜30 の 503 障害（Issue #588 コメント）で「正確な失敗率」と「503(速い) vs timeout(遅い)」の分離が必要になり追加。"""
+    def __init__(self, c, role, wait, win=None):
+        self.c, self.role, self.wait, self.win = c, role, wait, win or READSTAT_WIN
+        self.reset()
+    def reset(self):
+        self.t0 = time.time(); self.ok = 0; self.err = {}; self.ok_ms = []; self.err_ms = {}
+    def record(self, ok, ms, e=None):
+        if ok:
+            self.ok += 1; self.ok_ms.append(ms)
+        else:
+            k = err_kind(e); self.err[k] = self.err.get(k, 0) + 1; self.err_ms.setdefault(k, []).append(ms)
+            log(self.c, "ERR", {"e": str(e)[:120], "kind": k, "ms": ms, "role": self.role})
+        if time.time() - self.t0 >= self.win:
+            self.flush()
+    def flush(self):
+        import statistics
+        n_err = sum(self.err.values())
+        if self.ok + n_err == 0:
+            self.reset(); return
+        med = lambda xs: int(statistics.median(xs)) if xs else None
+        p90 = lambda xs: int(sorted(xs)[int(len(xs) * 0.9)]) if xs else None
+        log(self.c, "READSTAT", {"role": self.role, "wait": self.wait, "win_s": int(time.time() - self.t0),
+                                 "ok": self.ok, "err": self.err,
+                                 "ok_ms_med": med(self.ok_ms), "ok_ms_p90": p90(self.ok_ms),
+                                 "err_ms_med": {k: med(v) for k, v in self.err_ms.items()}})
+        self.reset()
+
+def read_room_metered(meter, since, wait):
+    """read_room に計測を付けたもの。失敗時は ERR 記録の上で例外を投げ直す"""
+    t0 = time.time()
+    try:
+        r = read_room(since, wait=wait)
+    except Exception as e:
+        meter.record(False, int((time.time() - t0) * 1000), e); raise
+    meter.record(True, int((time.time() - t0) * 1000))
+    return r
 
 def parse_msg(text, kind):
     if not text.startswith(kind + " "):
@@ -163,13 +216,14 @@ def cmd_miner(a):
     st = load_state(); since = st.get("miner_since", 0)
     if since == 0:  # 初回は現在位置から（過去の山を処理しない）
         _, since = read_room(0, wait=0)
-    print(f"miner {short(me)} watching /r/{ROOM} from seq {since} model={a.model}")
-    log(c, "START", {"role": "miner", "me": me[-8:], "since": since})
+    print(f"miner {short(me)} watching /r/{ROOM} from seq {since} model={a.model} wait={a.wait}s")
+    log(c, "START", {"role": "miner", "me": me[-8:], "since": since, "wait": a.wait})
+    meter = ReadMeter(c, "miner", a.wait)
     while True:
         try:
-            msgs, since = read_room(since, wait=10)
+            msgs, since = read_room_metered(meter, since, a.wait)
         except Exception as e:
-            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); log(c, "ERR", {"e": str(e)[:120]}); time.sleep(15); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(a.err_sleep); continue
         for m in msgs:
             req = parse_msg(m["text"], "REQ")
             if not req or req.get("model") != a.model:
@@ -199,13 +253,15 @@ def cmd_validate(a):
     if since == 0:
         _, since = read_room(0, wait=0)
     reqs = {}
-    print(f"validator {short(me)} watching from seq {since}")
-    log(c, "START", {"role": "validator", "me": me[-8:], "since": since})
+    print(f"validator {short(me)} watching from seq {since} wait={a.wait}s")
+    log(c, "START", {"role": "validator", "me": me[-8:], "since": since, "wait": a.wait})
+    meter = ReadMeter(c, "validator", a.wait)
     while True:
         try:
-            msgs, since = read_room(since, wait=10)
+            msgs, since = read_room_metered(meter, since, a.wait)
         except Exception as e:
-            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); log(c, "ERR", {"e": str(e)[:120]}); time.sleep(15); continue
+            print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "read error:", e); time.sleep(a.err_sleep)
+            maybe_daily_report(key, c, st); continue
         for m in msgs:
             r = parse_msg(m["text"], "REQ")
             if r: reqs[r["id"]] = r; continue
@@ -256,6 +312,7 @@ def cmd_ledger(a):
     for row in c.execute("SELECT * FROM log ORDER BY rowid DESC LIMIT 10"): print("  ", row[0], row[1], row[2][:100])
 
 REPORT_UTC_HOUR = 8   # 毎日この時刻(UTC)以降の最初のループで日次報告を自動投稿 (08:00 UTC = 17:00 JST)
+REPORT_RETRY_SEC = 600  # 初回投稿が失敗したとき、この秒数後に1回だけ再試行
 
 def compute_stats(c, hours, own_csv="PvqA,88xr,hE3T"):
     import statistics
@@ -278,16 +335,22 @@ def compute_stats(c, hours, own_csv="PvqA,88xr,hE3T"):
     lat_v = med([d.get("validator_latency_ms", 0) for d in ver])
     ebd = {}
     for d in errs:
-        k = "503" if "503" in d.get("e", "") else ("dns" if "name resolution" in d.get("e", "") else \
-            ("conn" if "Connection refused" in d.get("e", "") else "other"))
+        k = d.get("kind") or err_kind(d.get("e", ""))
         ebd[k] = ebd.get(k, 0) + 1
     estr = " ".join(f"{k}:{v}" for k, v in sorted(ebd.items())) or "none"
     mstr = " ".join(f"{k}:{v}" for k, v in sorted(by_miner.items())) or "-"
+    # READSTAT（集計窓）があれば成功数と失敗率を出す。無い期間（旧版）は errors のみ
+    rstat = [d for _, e, d in rows if e == "READSTAT"]
+    read_ok = sum(d.get("ok", 0) for d in rstat)
+    read_err = sum(sum(d.get("err", {}).values()) for d in rstat)
+    fail_pct = round(100 * read_err / (read_ok + read_err), 1) if (read_ok + read_err) else None
+    rstr = f" | reads ok {read_ok} fail {fail_pct}%" if fail_pct is not None else ""
     room = (f"STATS last {hours}h: REQ {len(req)} | RES {len(res)} ({mstr}) | "
             f"VER {len(ver)} match {n_match} | external REQ DIDs {len(ext)} | "
-            f"median latency ms miner {lat_m} / validator {lat_v} | read errors {len(errs)} ({estr})")
+            f"median latency ms miner {lat_m} / validator {lat_v} | read errors {len(errs)} ({estr}){rstr}")
     return {"rows": rows, "req": req, "res": res, "ver": ver, "errs": errs, "starts": starts,
-            "n_match": n_match, "ext": ext, "lat_m": lat_m, "lat_v": lat_v, "estr": estr, "room": room}
+            "n_match": n_match, "ext": ext, "lat_m": lat_m, "lat_v": lat_v, "estr": estr, "room": room,
+            "read_ok": read_ok, "fail_pct": fail_pct}
 
 def maybe_daily_report(key, c, st):
     """バリデーター常駐プロセスから毎日1回、直近24hのSTATSを部屋へ自動投稿する。
@@ -297,20 +360,33 @@ def maybe_daily_report(key, c, st):
     if now.tm_hour < REPORT_UTC_HOUR:
         return
     day = time.strftime("%Y-%m-%d", now)
-    if c.execute("SELECT 1 FROM log WHERE event='REPORT' AND detail LIKE ?",
-                 (f'%\"day\": \"{day}\"%',)).fetchone():
-        return
-    log(c, "REPORT", {"day": day, "seq": None})   # 先に記録: 失敗しても当日は再試行しない（連投防止を優先）
+    like = f'%\"day\": \"{day}\"%'
+    row = c.execute("SELECT ts, detail FROM log WHERE event='REPORT' AND detail LIKE ?", (like,)).fetchone()
+    if row:
+        rep = json.loads(row[1])
+        # 失敗済みなら REPORT_RETRY_SEC 経過後に1回だけ再試行（2026-08-28 DNS障害、8/30 503障害の教訓）
+        if rep.get("seq") is not None or rep.get("tries", 1) >= 2:
+            return
+        import calendar
+        if time.time() - calendar.timegm(time.strptime(row[0], "%Y-%m-%dT%H:%M:%SZ")) < REPORT_RETRY_SEC:
+            return
+        tries = 2
+    else:
+        tries = 1
+        log(c, "REPORT", {"day": day, "seq": None, "tries": 1})   # 先に記録（連投防止を優先）
     d = compute_stats(c, 24)
     if not (d["req"] or d["res"] or d["ver"] or d["errs"]):
         print(f"[daily report {day}] no events in 24h - skipped"); return
     try:
         _, seq, _ = post_signed(key, d["room"])
         c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
-                  (json.dumps({"day": day, "seq": seq}), f'%\"day\": \"{day}\"%')); c.commit()
-        print(f"[daily report {day}] posted seq={seq}")
+                  (json.dumps({"day": day, "seq": seq, "tries": tries}), like)); c.commit()
+        print(f"[daily report {day}] posted seq={seq} (try {tries})")
     except Exception as e:
-        print(f"[daily report {day}] post error:", e)
+        c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
+                  (json.dumps({"day": day, "seq": None, "tries": tries}), like)); c.commit()
+        print(f"[daily report {day}] post error (try {tries}):", e,
+              f"- retry in {REPORT_RETRY_SEC}s" if tries == 1 else "- giving up for today")
 
 def cmd_stats(a):
     """直近 --hours の運用サマリ。--room で部屋投稿用1行、--x でX用テンプレを出力"""
@@ -321,14 +397,21 @@ def cmd_stats(a):
     if a.room:
         print(room); return
     if a.x:
-        day = time.strftime("%Y-%m-%d", time.gmtime())
-        print(f"運用日誌 {day}（直近{a.hours}h、自PC＋GCP東京）")
-        print(f"REQ {len(req)} / RES {len(res)} / VER {len(ver)}（match {n_match}）")
-        print(f"外部DIDからのREQ: {len(ext)}")
-        print(f"レイテンシ中央値: マイナー {lat_m}ms・検証 {lat_v}ms")
-        print(f"読み取りエラー: {len(errs)}（{estr}）")
-        print("運用から見えたこと: （ここに1〜2行。なければこの日誌は投稿しない）")
-        print("seq: （部屋に投稿したSTATS行のseqを入れる）")
+        # X日誌の確定テンプレ（2026-08-28）。日付は JST。「今日の学び」「Todo」は無ければ行ごと削除して投稿
+        day = time.strftime("%Y.%m.%d", time.gmtime(time.time() + 9 * 3600))
+        fail = f"、失敗率 {d['fail_pct']}%" if d.get("fail_pct") is not None else ""
+        print("Technocore💠自作デモ市場（トークンもデモ）")
+        print(f"運用日誌{day}✍")
+        print("・マイナー、バリデーター2台稼働中")
+        print("・サーバー: ローカル＋GCP東京")
+        print(f"・直近{a.hours}hステータス: REQ{len(req)}/RES{len(res)}/VER{len(ver)}（match {n_match}）")
+        print(f"　外部DIDからのREQ: {len(ext)}")
+        print(f"・レイテンシ中央値: マイナー {lat_m}ms、検証 {lat_v}ms")
+        print(f"・読み取りエラー: {len(errs)}（{estr}{fail}）")
+        print("・今日の学び: ")
+        print("・Todo: ")
+        print("・詳細、参加方法は固定スレへ👉")
+        print("　あなたのREQお待ちしております！")
         return
     print(room)
     for ts, d in starts[-4:]: print("start:", ts, d.get("role"), d.get("me"))
@@ -342,6 +425,9 @@ def main():
     r.add_argument("--max-latency", type=int, default=60000); r.add_argument("--flops", type=int, default=3_000_000_000_000)
     m = s.add_parser("miner"); m.add_argument("--key", default="did_miner.json"); m.add_argument("--model", default="qwen2.5:1.5b")
     v = s.add_parser("validate"); v.add_argument("--key", default="did_key.json"); v.add_argument("--model", default="qwen2.5:1.5b")
+    for x in (m, v):
+        x.add_argument("--wait", type=int, default=READ_WAIT, help="long-poll 待ち秒（接続を占有する時間。実験用）")
+        x.add_argument("--err-sleep", type=int, default=ERR_SLEEP, help="読み取り失敗後の待機秒")
     j = s.add_parser("join", help="DIDがなければ生成してREQを1件投稿（Ollama不要）")
     j.add_argument("prompt"); j.add_argument("--key", default="did_key.json")
     j.add_argument("--model", default="qwen2.5:1.5b"); j.add_argument("--fee", type=float, default=10)
