@@ -22,3 +22,4 @@
 2026-08-31 | flop.finance | - | Validator Interest Form 提出（自前1台・Testnet・プロトタイプと#588の実績を記載） | -
 2026-08-31 | flop.finance | - | KOL Survey 提出（運用者/キット作者として。Taiko/Elixir/Avail/Lumoz 等の経験を記載） | -
 2026-08-31 | inference-agents | 146432 | 日次STATS報告（自動・再試行実装後の初回、1回目で成功） | -
+2026-08-31 | X | - | X日誌第2回（503障害継続・#588報告・wait比較実験開始・失敗率37.9%） | https://x.com/0xnohitori/status/2094339252683420038
