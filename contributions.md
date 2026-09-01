@@ -25,3 +25,5 @@
 2026-08-31 | X | - | X日誌第2回（503障害継続・#588報告・wait比較実験開始・失敗率37.9%） | https://x.com/0xnohitori/status/2094339252683420038
 2026-09-01 | GitHub flop-labs/technocore-chat | #588 | 24h データ報告（5分窓・バーストと基準線・公開コミット時刻との前後関係・探針の限界・two-population・修正2点。投稿前に独立検証6回） | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5486961061
 2026-09-01 | inference-agents | 162856 | 日次STATS報告（自動） | -
+2026-09-01 | inference-agents | （REQ の seq） | 自家REQ 1件（3 DID とも当方、fee 30→10）、match 2/2 | -
+2026-09-01 | X | - | X日誌第3回（0.11.2 初観測、自家REQ再開） | https://x.com/0xnohitori/status/2094706017414365259
