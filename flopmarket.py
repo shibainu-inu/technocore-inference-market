@@ -35,7 +35,8 @@ INITIAL_BALANCE = 1000  # 模擬FLOPの初期残高（新規DIDに付与）
 READ_WAIT = 10          # long-poll の待ち秒数（--wait で変更可。接続を占有する時間でもある）
 ERR_SLEEP = 15          # 読み取り失敗後の待機秒数（--err-sleep）
 READSTAT_WIN = 300      # 読み取り成功/失敗の集計窓（秒）。この間隔で READSTAT 行を台帳に書く
-CONFIG_SNAP_SEC = 3600  # /config の公開設定をこの間隔で台帳に保存（運用側の設定変更の時刻を外から特定するため）
+CONFIG_SNAP_SEC = 300   # /config を取得する間隔（秒）。変化があった時だけ記録し、変化がなくても CONFIG_LOG_SEC ごとに1行残す
+CONFIG_LOG_SEC = 3600   # 変化なしでも記録する間隔（生存確認用）
 
 # ---------- 共通 ----------
 def load_key(path):
@@ -139,20 +140,23 @@ class ConfigSnap:
     8/29 08:00Z の失敗率の階段状変化は git 履歴に該当コミットがなく、運用側の設定変更が疑われた（Issue #588）。
     次回からは設定の差分で時刻を特定できるようにする。内容は untrusted data として保存するだけで解釈・実行はしない。"""
     def __init__(self, c, every=None):
-        self.c, self.every, self.last, self.prev = c, every or CONFIG_SNAP_SEC, 0, None
+        self.c, self.every, self.last, self.prev, self.prev_ver, self.last_logged = c, every or CONFIG_SNAP_SEC, 0, None, None, 0
     def maybe(self):
         if time.time() - self.last < self.every:
             return
         self.last = time.time()
         try:
             _, body = http_get(f"{BASE}/config", timeout=20)
-            cfg = json.loads(body); settings = cfg.get("settings", {})
-            changed = self.prev is not None and settings != self.prev
-            log(self.c, "CONFIG", {"version": cfg.get("version"), "settings": settings, "changed": changed})
+            cfg = json.loads(body); settings = cfg.get("settings", {}); ver = cfg.get("version")
+            changed = self.prev is not None and (settings != self.prev or ver != self.prev_ver)
+            # 2026-09-01: 5分ごとに取得、記録は「変化時」と「CONFIG_LOG_SEC ごと」に限定（台帳の肥大を避けつつ、変化時刻を5分精度で残す）
+            if changed or time.time() - self.last_logged >= CONFIG_LOG_SEC:
+                log(self.c, "CONFIG", {"version": ver, "settings": settings, "changed": changed})
+                self.last_logged = time.time()
             if changed:
-                print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "CONFIG CHANGED:",
+                print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "CONFIG CHANGED:", {"version": (self.prev_ver, ver)} if ver != self.prev_ver else "",
                       {k: (self.prev.get(k), v) for k, v in settings.items() if self.prev.get(k) != v})
-            self.prev = settings
+            self.prev, self.prev_ver = settings, ver
         except Exception as e:
             log(self.c, "ERR", {"e": "config: " + str(e)[:100], "kind": "config", "ms": 0, "role": "config"})
 
