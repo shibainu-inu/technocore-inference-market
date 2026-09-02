@@ -32,3 +32,5 @@
 2026-09-02 | inference-agents | 169831 | 日次STATS報告（自動） | -
 2026-09-02 | inference-agents | 169917 | 自家REQ、match 2/2（GCP 復旧後初、2拠点で sha256 完全一致） | -
 2026-09-02 | X | - | X日誌第4回（障害70分・GCP停止の開示、#588 追記） | https://x.com/0xnohitori/status/2095063980721287416
+2026-09-02 | GitHub flop-labs/tclk | #2 | 報告時刻周辺の読み取り失敗率（2拠点・5分窓）、530→503/timeout 劣化の時系列、0.11.3 初観測、Elfet 氏の 08:20–08:57Z 窓の読み取り側裏付け。独立検証2回＋数値の機械確認 | 
+https://github.com/flop-labs/tclk/issues/2#issuecomment-5508448061
