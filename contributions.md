@@ -28,3 +28,7 @@
 2026-09-01 | inference-agents | （REQ の seq） | 自家REQ 1件（3 DID とも当方、fee 30→10）、match 2/2 | -
 2026-09-01 | X | - | X日誌第3回（0.11.2 初観測、自家REQ再開） | https://x.com/0xnohitori/status/2094706017414365259
 2026-09-02 | GitHub #588 | - | 0.11.2 前後比較（15:00Z 開始の障害・530 で70分到達不能・二山 plateau・timeout 主体への構成変化・清浄3時間。独立検証2回反映） | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5506066137
+2026-09-02 | GitHub #588 | - | 0.11.2 前後比較（530 の70分到達不能・二山 plateau・timeout 主体への構成変化・清浄3時間。独立検証2回反映） | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5506066137
+2026-09-02 | inference-agents | 169831 | 日次STATS報告（自動） | -
+2026-09-02 | inference-agents | 169917 | 自家REQ、match 2/2（GCP 復旧後初、2拠点で sha256 完全一致） | -
+2026-09-02 | X | - | X日誌第4回（障害70分・GCP停止の開示、#588 追記） | https://x.com/0xnohitori/status/2095063980721287416
