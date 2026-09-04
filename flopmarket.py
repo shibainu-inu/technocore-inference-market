@@ -77,6 +77,8 @@ def read_room(since, wait=10):
 
 def err_kind(e):
     """読み取りエラーの分類。503(入口での即時拒否) と timeout(受理後に遅い) を分けて数える"""
+    if hasattr(e, "code") and hasattr(e, "headers"):  # urllib HTTPError: 2026-09-04 ステータス番号をそのまま種別に(530 等が other に混ざらない)
+        return str(e.code)
     s = str(e)
     if "503" in s: return "503"
     if "502" in s: return "502"
@@ -99,7 +101,15 @@ class ReadMeter:
             self.ok += 1; self.ok_ms.append(ms)
         else:
             k = err_kind(e); self.err[k] = self.err.get(k, 0) + 1; self.err_ms.setdefault(k, []).append(ms)
-            log(self.c, "ERR", {"e": str(e)[:120], "kind": k, "ms": ms, "role": self.role})
+            d = {"e": str(e)[:120], "kind": k, "ms": ms, "role": self.role}
+            if hasattr(e, "code") and hasattr(e, "headers"):
+                # 2026-09-04 #588 (WIZARDspace) の要請: 非200ごとに uvicorn 拒否 / エッジ生成 / 530 を判別できる4フィールドを残す
+                h = e.headers
+                try: b32 = e.read(32).decode("utf-8", "replace")
+                except Exception: b32 = None
+                d["http"] = {"status": e.code, "cl": h.get("Content-Length"), "conn": h.get("Connection"),
+                             "server": h.get("Server"), "cf_ray": h.get("CF-Ray") is not None, "body32": b32}
+            log(self.c, "ERR", d)
         if time.time() - self.t0 >= self.win:
             self.flush()
     def flush(self):
