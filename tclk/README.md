@@ -51,3 +51,15 @@ Both DIDs belong to the same operator (self-declared on Technocore). AI (Claude)
 design, code and analysis; the report's summary section is qwen2.5:1.5b output kept verbatim
 with auditor's correction notes. Scripts are Apache-2.0-compatible adaptations of
 `flop-labs/tclk/examples/live-deal.mjs`.
+
+## Post-publication check (2026-09-04)
+
+The deliverable counted frames by `tclk1 ` prefix + JSON shape. Re-counting the same
+2026-09-02 snapshot with tclk's `decodeFrame` (per issue #89, the prefix is not a reliable
+filter) gives 701 offers / 199 accepts instead of 727 / 201; the 25 rejected offers carry
+non-spec fields (`contractId`), missing point-lock keys, or bad deadlines. Headline ratios
+move by at most one point: contracts formed 28% (was 27%), FLOP-denominated offers listing
+`flop-htlc` 67% of offers with 3% acceptance (was 68% / 2%), PAPER acceptance 87% (unchanged).
+The 16 accepted FLOP-denominated contracts probed directly are the decoder-valid population.
+The report file is left unmodified so its sha256 still matches the deal-room deliverable line.
+Scripts: `recount.mjs`, `recount2.mjs`.
