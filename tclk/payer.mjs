@@ -34,14 +34,26 @@ function loadSigner(file, pass) {
   if (seed.length !== 32) throw new Error("seed length != 32");
   return signerFromSeed(new Uint8Array(seed));
 }
+const REQ_TIMEOUT_MS = Number(process.env.REQ_TIMEOUT_MS ?? 25_000);
 async function req(url, init, what) {
+  // 再試行の原則: 同一リクエストの再送のみ(署名投稿は nonce で at-most-once)。1試行ごとに時間上限。
   for (let attempt = 0; ; attempt += 1) {
-    const res = await fetch(url, init);
-    if (res.status !== 429) return res;
-    if (attempt >= 5) throw new Error(`${what}: rate limited too long`);
+    let res;
+    try {
+      res = await fetch(url, { ...init, signal: AbortSignal.timeout(REQ_TIMEOUT_MS) });
+    } catch (e) {
+      if (attempt >= 3) throw new Error(`${what}: venue unreachable or silent after ${attempt} retries (${e.name})`);
+      const waitMs = Math.min(2 ** attempt, 10) * 1000;
+      log("", `${what}: ${e.name} — ${waitMs / 1000}s 待機して同一リクエストを再送`);
+      await sleep(waitMs); continue;
+    }
+    if (res.status !== 429 && res.status < 500) { res.attempts = attempt; return res; }
+    if (attempt >= 3) throw new Error(`${what}: gave up after ${attempt} retries (${res.status})`);
     const stated = Number(res.headers.get("retry-after"));
-    const waitMs = (Number.isFinite(stated) && stated > 0 ? stated : 5) * 1000;
-    log("", `429 — ${waitMs / 1000}s 待機`);
+    const waitMs = res.status === 429
+      ? (Number.isFinite(stated) && stated > 0 ? stated : 5) * 1000
+      : Math.min(2 ** attempt, 10) * 1000;
+    log("", `${what}: ${res.status} — ${waitMs / 1000}s 待機`);
     await sleep(waitMs);
   }
 }
@@ -65,7 +77,16 @@ async function post(signer, room, frameOrText) {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ did: signer.did, sig, nonce: String(nonce), text }),
   }, `post to ${room}`);
-  if (!res.ok) throw await refusal(`post to ${room}`, res);
+  if (!res.ok) {
+    const body = await res.text();
+    const first = body.split("\n").filter((l) => l.trim())[0] ?? "";
+    // 再送後の nonce 拒否 / 422 重複拒否は「初回の書き込みが着地していた」印
+    if (res.attempts > 0 && (res.status === 422 || /nonce/i.test(first))) {
+      log("", `再送が拒否 (${res.status}: ${first}) — 初回の書き込みが着地済みとみなす`);
+      return text;
+    }
+    throw new Error(`post to ${room}: ${res.status} ${first}`);
+  }
   return text;
 }
 const notes = {
@@ -83,7 +104,17 @@ const notes = {
       : `?if=${encodeURIComponent(condition.if)}`;
     const res = await req(`${BASE}/kv/${ns}/${key}/set/${encodeURIComponent(value)}${query}`,
       undefined, `kv set ${ns}/${key}`);
-    if (res.status === 409) return false;
+    if (res.status === 409) {
+      // 自分の前回試行が着地していれば「現在値 = 書こうとした値」→ 成功扱い(会場の 409 本文が現在値を運ぶ)
+      const lines = (await res.text()).split("\n");
+      const i = lines.findIndex((l) => l.startsWith("current value follows"));
+      const current = i >= 0 ? (lines[i + 1] ?? "").trimEnd() : null;
+      if (current !== null && current === value) {
+        log("", `kv set ${ns}/${key}: 409 だが現在値が自分の値と一致 — 着地済み`);
+        return true;
+      }
+      return false;
+    }
     if (!res.ok) throw await refusal(`kv set ${ns}/${key}`, res);
     return true;
   },
