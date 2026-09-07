@@ -478,8 +478,12 @@ def maybe_daily_report(key, c, st):
         tries = 1
         log(c, "REPORT", {"day": day, "seq": None, "tries": 1})   # 先に記録（連投防止を優先）
     d = compute_stats(c, 24)
-    if not (d["req"] or d["res"] or d["ver"] or d["errs"]):
-        print(f"[daily report {day}] no events in 24h - skipped"); return
+    # 取引ゼロの日は投稿しない。例外は読み取り失敗率が閾値以上の日だけ（観測対象の異常の記録。2026-09-08、方針B）
+    # 9/1 の 1.65% は投稿、平常時 0.0〜0.2% は投稿しない、の間で 0.5%
+    REPORT_MIN_FAIL_PCT = 0.5
+    fp = d.get("fail_pct")
+    if not (d["req"] or d["res"] or d["ver"]) and not (fp is not None and fp >= REPORT_MIN_FAIL_PCT):
+        print(f"[daily report {day}] no trades, read fail {fp}% < {REPORT_MIN_FAIL_PCT}% - skipped"); return
     try:
         _, seq, _ = post_signed(key, d["room"])
         c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
