@@ -418,6 +418,43 @@ def compute_stats(c, hours, own_csv="PvqA,88xr,hE3T"):
             "n_match": n_match, "ext": ext, "lat_m": lat_m, "lat_v": lat_v, "estr": estr, "room": room,
             "read_ok": read_ok, "fail_pct": fail_pct}
 
+def ia_stats(hours, room="inference-agents"):
+    """/r/<room>/export を1回読み、直近 hours の件数・ユニークDID・上位1DID占有率を返す（読み取り専用・書き込みなし）。
+    export が hours に届かない場合があるので実カバー時間 cover_h を併せて返す。失敗時は None（呼び側は他行を止めない）"""
+    import calendar
+    try:
+        st, body = http_get(f"{BASE}/r/{room}/export", timeout=90)
+        if st != 200:
+            return None
+        cutoff = time.time() - hours * 3600
+        n, dids, t_min = 0, {}, None
+        for line in body.split("\n"):
+            if not line.strip():
+                continue
+            try:
+                o = json.loads(line)
+                t = calendar.timegm(time.strptime(o.get("ts", "")[:19], "%Y-%m-%dT%H:%M:%S"))
+            except Exception:
+                continue
+            if t < cutoff:
+                continue
+            n += 1; dids[o.get("from", "?")] = dids.get(o.get("from", "?"), 0) + 1
+            t_min = t if t_min is None or t < t_min else t_min
+        if n == 0:
+            return {"n": 0, "cover_h": 0, "dids": 0, "top1_pct": 0}
+        return {"n": n, "cover_h": round((time.time() - t_min) / 3600, 1),
+                "dids": len(dids), "top1_pct": round(100 * max(dids.values()) / n, 1)}
+    except Exception:
+        return None
+def tclk_board_stats(hours):
+    """tclk/board24.mjs を呼び、/r/tclk-offers の直近 hours の offer/accept 数（decodeFrame 有効）と実カバー時間を得る。失敗時 None"""
+    import subprocess, os
+    js = os.path.join(os.environ.get("TCIM_DIR", os.path.expanduser("~/technocore-inference-market")), "tclk", "board24.mjs")
+    try:
+        r = subprocess.run(["node", js, str(hours)], capture_output=True, text=True, timeout=150)
+        return json.loads(r.stdout.strip().splitlines()[-1]) if r.returncode == 0 else None
+    except Exception:
+        return None
 def maybe_daily_report(key, c, st):
     """バリデーター常駐プロセスから毎日1回、直近24hのSTATSを部屋へ自動投稿する。
     イベントゼロの日はスキップ（心拍投稿にしない）。鍵は起動時に復号済みのものを使う。
@@ -470,10 +507,20 @@ def cmd_stats(a):
         print(f"運用日誌{day}✍")
         print("・マイナー、バリデーター2台稼働中")
         print("・サーバー: ローカル＋GCP東京")
-        print(f"・直近{a.hours}hステータス: REQ{len(req)}/RES{len(res)}/VER{len(ver)}（match {n_match}）")
-        print(f"　外部DIDからのREQ: {len(ext)}")
-        print(f"・レイテンシ中央値: マイナー {lat_m}ms、検証 {lat_v}ms")
-        print(f"・読み取りエラー: {len(errs)}（{estr}{fail}）")
+        if not (req or res or ver):
+            # 取引ゼロの日は4行を1行に畳む（心拍化の防止。2026-09-07）
+            fp = f"、失敗率 {d['fail_pct']}%" if d.get("fail_pct") is not None else ""
+            print(f"・直近{a.hours}h: 取引なし（読み取り ok {d['read_ok']}{fp}、エラー {len(errs)}件）")
+        else:
+            print(f"・直近{a.hours}hステータス: REQ{len(req)}/RES{len(res)}/VER{len(ver)}（match {n_match}）")
+            print(f"　外部DIDからのREQ: {len(ext)}")
+            print(f"・レイテンシ中央値: マイナー {lat_m}ms、検証 {lat_v}ms")
+            print(f"・読み取りエラー: {len(errs)}（{estr}{fail}）")
+        ia = ia_stats(a.hours); tb = tclk_board_stats(a.hours)
+        print(f"・/r/inference-agents: {ia['n']}件（実カバー {ia['cover_h']}h）/ ユニークDID {ia['dids']} / 上位1DID {ia['top1_pct']}%"
+              if ia else "・/r/inference-agents: 取得失敗")
+        print(f"・tclk/1 掲示板: offer {tb['offer']} / accept {tb['accept']}（実カバー {tb['cover_h']}h、decodeFrame 拒否 {tb['rejected']}）"
+              if tb else "・tclk/1 掲示板: 取得失敗")
         print("・今日の学び: ")
         print("・Todo: ")
         print("・詳細、参加方法は固定スレへ👉")
