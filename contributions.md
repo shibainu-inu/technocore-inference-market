@@ -34,3 +34,4 @@
 2026-09-02 | X | - | X日誌第4回（障害70分・GCP停止の開示、#588 追記） | https://x.com/0xnohitori/status/2095063980721287416
 2026-09-02 | GitHub flop-labs/tclk | #2 | 報告時刻周辺の読み取り失敗率（2拠点・5分窓）、530→503/timeout 劣化の時系列、0.11.3 初観測、Elfet 氏の 08:20–08:57Z 窓の読み取り側裏付け。独立検証2回＋数値の機械確認 | 
 https://github.com/flop-labs/tclk/issues/2#issuecomment-5508448061
+2026-09-07 | GitHub technocore-chat #588 | - | 追記B: 0.12.1 前後の読み取り側失敗率（同一窓で 503 1.65%→0.02%）、HTTP 指紋 319/319 が uvicorn 拒否、エッジ 502 1件、/config 版切替 23 回（9/5）、GCP 観測断の自己申告。独立検証2巡で不一致ゼロ | https://github.com/flop-labs/technocore-chat/issues/588#issuecomment-5563556227
