@@ -192,14 +192,30 @@ def parse_msg(text, kind):
         return None
 
 def load_state():
-    return json.load(open(STATE)) if os.path.exists(STATE) else {}
+    """state.json を読む。空・途中書きで壊れていれば警告して {} を返す（落とさない）。
+    2026-09-08: miner と validator が同じファイルを読み書きして競合し、miner が JSONDecodeError で停止した（9/7 19Z 頃）"""
+    if not os.path.exists(STATE):
+        return {}
+    try:
+        with open(STATE) as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"state.json unreadable ({e}) - treating as empty"); return {}
 
 def save_state(key, value):
     """自分のキーだけ更新して書く。miner と validator は同じ state.json を共有するため、
     プロセス起動時のスナップショット全体を書き戻すと相手の進捗を古い値で上書きしてしまう（2026-08-31 に発覚:
     再起動したマイナーが8/28の位置から再読込しかけた）。"""
-    cur = load_state(); cur[key] = value
-    json.dump(cur, open(STATE, "w"), indent=1)
+    # 2026-09-08: 読み→書きを flock で排他し、一時ファイル→os.replace（原子的差し替え）で書く。
+    # 相手が open(..., "w") で空にした瞬間を読んで落ちる競合と、更新の取りこぼしを構造的に無くす。
+    import fcntl
+    with open(STATE + ".lock", "w") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        cur = load_state(); cur[key] = value
+        tmp = STATE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(cur, f, indent=1); f.flush(); os.fsync(f.fileno())
+        os.replace(tmp, STATE)
 
 # ---------- Ollama ----------
 def ollama_model_digest(model):
