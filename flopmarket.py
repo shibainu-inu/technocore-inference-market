@@ -499,6 +499,9 @@ def maybe_daily_report(key, c, st):
     REPORT_MIN_FAIL_PCT = 0.5
     fp = d.get("fail_pct")
     if not (d["req"] or d["res"] or d["ver"]) and not (fp is not None and fp >= REPORT_MIN_FAIL_PCT):
+        # スキップも「その日の判定済み」として記録し、再試行ループで毎回集計しない（2026-09-08 夕: 10秒ごとに skipped が出続けた）
+        c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
+                  (json.dumps({"day": day, "seq": None, "tries": 2, "skipped": True}), like)); c.commit()
         print(f"[daily report {day}] no trades, read fail {fp}% < {REPORT_MIN_FAIL_PCT}% - skipped"); return
     try:
         _, seq, _ = post_signed(key, d["room"])
