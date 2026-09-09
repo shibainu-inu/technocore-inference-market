@@ -20,7 +20,16 @@ flopmarket.py — Technocore 上の推論市場プロトタイプ（FLOPティ�
 
  パスフレーズは起動時に1回入力（常駐用に環境変数 TC_PASS も可。ただし平文保存は避けること）
 """
-import argparse, getpass, hashlib, json, os, re, sqlite3, sys, time, urllib.parse, urllib.request
+import argparse, getpass, hashlib, json, os, re, socket, sqlite3, sys, time, urllib.parse, urllib.request
+
+# 9/9: 自宅回線は IPv6 で technocore.chat に接続できず約 8 秒でフォールバックするため IPv4 を優先する
+# （curl -6 8.3s / -4 0.55s、urllib は 4〜13s → IPv4 固定で 0.1〜0.25s）。READSTAT の自宅側レイテンシは 9/9 前後で条件が変わる。
+_orig_gai = socket.getaddrinfo
+def _gai_v4_first(*a, **k):
+    r = _orig_gai(*a, **k)
+    v4 = [x for x in r if x[0] == socket.AF_INET]
+    return v4 or r
+socket.getaddrinfo = _gai_v4_first
 from cryptography.hazmat.primitives import serialization
 import technocore_did as tc
 
