@@ -96,6 +96,20 @@ def err_kind(e):
     if "Connection refused" in s or "Connection reset" in s: return "conn"
     return "other"
 
+def log_post_err(c, role, what, e, t0):
+    """署名付き投稿（RES/VER/REPORT）の失敗を台帳に残す。kind=post、status=err_kind。
+    2026-09-09 まで stdout のみで、POST 側の 503 件数が事後に集計できなかった（#588 の POST 側の問いに答えられない）。
+    読み取り側の集計（compute_stats の read errors）には入れない。"""
+    d = {"e": str(e)[:120], "kind": "post", "what": what, "status": err_kind(e),
+         "ms": int((time.time() - t0) * 1000), "role": role}
+    if hasattr(e, "code") and hasattr(e, "headers"):
+        h = e.headers
+        try: b32 = e.read(32).decode("utf-8", "replace")
+        except Exception: b32 = None
+        d["http"] = {"status": e.code, "cl": h.get("Content-Length"), "conn": h.get("Connection"),
+                     "server": h.get("Server"), "cf_ray": h.get("CF-Ray") is not None, "body32": b32}
+    log(c, "ERR", d)
+
 class ReadMeter:
     """読み取りの成功数・失敗数・応答時間を集計し、READSTAT_WIN 秒ごとに台帳へ1行書く。
     成功を1件ずつ記録すると台帳が肥大化するため窓で集計する。失敗は従来どおり ERR 行にも残す（ms付き）。
@@ -330,11 +344,12 @@ def cmd_miner(a):
                    "output_head": out[:200], "tokens": tokens, "latency_ms": ms,
                    "within_latency": ms <= req.get("max_latency_ms", 10**9)}
             log(c, "RES", res)
+            t_post = time.time()
             try:
                 _, seq, _ = post_signed(key, "RES " + json.dumps(res, ensure_ascii=False, separators=(",", ":")))
                 print(f"  -> RES posted seq={seq} {ms}ms {tokens}tok sha={res['output_sha256'][:12]}")
             except Exception as e:
-                print("post error:", e)
+                print("post error:", e); log_post_err(c, "miner", "RES", e, t_post)
         save_state("miner_since", since)
 
 def cmd_validate(a):
@@ -385,11 +400,12 @@ def cmd_validate(a):
                     c.execute("UPDATE escrow SET state='refunded' WHERE req_id=?", (req["id"],))
                     ver["settlement"] = "refund"
             log(c, "VER", ver)
+            t_post = time.time()
             try:
                 _, seq, _ = post_signed(key, "VER " + json.dumps(ver, ensure_ascii=False, separators=(",", ":")))
                 print(f"[{m['seq']}] {verdict} -> VER posted seq={seq}")
             except Exception as e:
-                print("post error:", e)
+                print("post error:", e); log_post_err(c, "validator", "VER", e, t_post)
         save_state("val_since", since)
         maybe_daily_report(key, c, st)
 
@@ -413,7 +429,8 @@ def compute_stats(c, hours, own_csv="PvqA,88xr,hE3T"):
     req  = [d for _, e, d in rows if e == "REQ"]
     res  = [d for _, e, d in rows if e == "RES"]
     ver  = [d for _, e, d in rows if e == "VER"]
-    errs = [d for _, e, d in rows if e == "ERR"]
+    errs = [d for _, e, d in rows if e == "ERR" and d.get("kind") != "post"]   # 読み取り側のみ
+    post_errs = [d for _, e, d in rows if e == "ERR" and d.get("kind") == "post"]  # 2026-09-09: 投稿失敗は別枠
     starts = [(ts, d) for ts, e, d in rows if e == "START"]
     own = tuple(x.strip() for x in own_csv.split(","))
     n_match = sum(1 for d in ver if d.get("verdict") == "match")
@@ -436,10 +453,14 @@ def compute_stats(c, hours, own_csv="PvqA,88xr,hE3T"):
     read_err = sum(sum(d.get("err", {}).values()) for d in rstat)
     fail_pct = round(100 * read_err / (read_ok + read_err), 1) if (read_ok + read_err) else None
     rstr = f" | reads ok {read_ok} fail {fail_pct}%" if fail_pct is not None else ""
+    if post_errs:
+        pbd = {}
+        for d in post_errs: pbd[d.get("status", "?")] = pbd.get(d.get("status", "?"), 0) + 1
+        rstr += " | post errors " + " ".join(f"{k}:{v}" for k, v in sorted(pbd.items()))
     room = (f"STATS last {hours}h: REQ {len(req)} | RES {len(res)} ({mstr}) | "
             f"VER {len(ver)} match {n_match} | external REQ DIDs {len(ext)} | "
             f"median latency ms miner {lat_m} / validator {lat_v} | read errors {len(errs)} ({estr}){rstr}")
-    return {"rows": rows, "req": req, "res": res, "ver": ver, "errs": errs, "starts": starts,
+    return {"rows": rows, "req": req, "res": res, "ver": ver, "errs": errs, "post_errs": post_errs, "starts": starts,
             "n_match": n_match, "ext": ext, "lat_m": lat_m, "lat_v": lat_v, "estr": estr, "room": room,
             "read_ok": read_ok, "fail_pct": fail_pct}
 
@@ -512,12 +533,14 @@ def maybe_daily_report(key, c, st):
         c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
                   (json.dumps({"day": day, "seq": None, "tries": 2, "skipped": True}), like)); c.commit()
         print(f"[daily report {day}] no trades, read fail {fp}% < {REPORT_MIN_FAIL_PCT}% - skipped"); return
+    t_post = time.time()
     try:
         _, seq, _ = post_signed(key, d["room"])
         c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
                   (json.dumps({"day": day, "seq": seq, "tries": tries}), like)); c.commit()
         print(f"[daily report {day}] posted seq={seq} (try {tries})")
     except Exception as e:
+        log_post_err(c, "validator", "REPORT", e, t_post)
         c.execute("UPDATE log SET detail=? WHERE event='REPORT' AND detail LIKE ?",
                   (json.dumps({"day": day, "seq": None, "tries": tries}), like)); c.commit()
         print(f"[daily report {day}] post error (try {tries}):", e,
