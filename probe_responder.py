@@ -11,6 +11,9 @@
   - その他の種別（statement 等）→ 台帳に記録のみ。返信しない（実物を見てから決める）
   - 1 ID につき返信は1回。受信から 120 秒を過ぎた probe には返信しない。1時間あたり MAX_PER_HOUR 件まで
   - 台帳 ledger.db に PROBE 行（probe seq / id / kind / 受信 ts / 返信 seq / 遅延 ms）を残す
+  - PROBE_DID からの tclk1 cancel フレーム（本文が `tclk1 ` で始まる行、または probe 行の payload）は、
+    ref/contract が自分の accept 済み offer と一致したときだけ PROBE_CANCEL 行（offer id / contract / 受信 ts /
+    accept からの経過 ms）を残す。返信・投稿はしない
 """
 import argparse, json, os, queue, re, socket, subprocess, sys, threading, time
 
@@ -30,6 +33,7 @@ import technocore_did as tc
 
 PROBE_DID = "did:key:z6MktJffXSF9X98YQ29Ug36A1dkc26RqULaeRHyZj6rpZQV5"
 PREFIX = "probe v1 |"
+FRAME_PREFIX = "tclk1 "
 STATE_FILE = "probe_state.json"
 STAT_ROOMS = ["technocore", "inference-agents", "tclk-offers", "credence"]
 STATS_TTL = 600            # 実測キャッシュの寿命（秒）
@@ -57,7 +61,7 @@ def load_state():
         with open(STATE_FILE) as f:
             return json.load(f)
     except Exception:
-        return {"since": 0, "answered": {}, "sent": []}
+        return {"since": 0, "answered": {}, "sent": [], "accepted": {}}
 
 def save_state(st):
     tmp = STATE_FILE + ".tmp"
@@ -95,6 +99,16 @@ def parse_probe(text):
     if len(parts) < 4:
         return None
     return parts[1], parts[2].lower(), parts[3]
+
+def parse_frame(text):
+    """`tclk1 {...}` → dict / それ以外は None。検証（validateFrame 相当）はしない: probe の cancel は ref=offer id で note 付き"""
+    if not text.startswith(FRAME_PREFIX):
+        return None
+    try:
+        f = json.loads(text[len(FRAME_PREFIX):])
+    except Exception:
+        return None
+    return f if isinstance(f, dict) else None
 
 # ---------- 実測（ask 用） ----------
 _stats_cache = {"at": 0, "data": None}
@@ -209,7 +223,8 @@ def enqueue(msgs, st, lock, q, seen, src):
     """probe 行だけをキューへ。seen（probe seq）で二重投入を防ぐ"""
     n = 0
     for m in msgs:
-        if m.get("from") != PROBE_DID or not m.get("text", "").startswith(PREFIX):
+        tx = m.get("text", "")
+        if m.get("from") != PROBE_DID or not (tx.startswith(PREFIX) or tx.startswith(FRAME_PREFIX)):
             continue
         seq = int(m.get("seq", 0))
         with lock:
@@ -271,8 +286,32 @@ def sweep_loop(room, every, st, lock, q, seen):
         except Exception as e:
             print(f"{now_s()} sweep: {fm.err_kind(e)}", flush=True)
 
+def note_cancel(m, c, st, lock):
+    """PROBE_DID の cancel フレームが自分の accept 済み offer を指していれば台帳に PROBE_CANCEL 行を残す。投稿はしない"""
+    text = m.get("text", "")
+    p = parse_probe(text)
+    f = parse_frame(p[2] if p else text)
+    if not f or f.get("type") != "cancel":
+        return False
+    ref = f.get("ref"); contract = f.get("contract")
+    with lock:
+        acc = st.get("accepted", {})
+        oid = ref if ref in acc else next((k for k, v in acc.items() if contract and v.get("contract") == contract), None)
+        entry = dict(acc[oid]) if oid else None
+    if not entry:
+        return False
+    t_cancel = parse_ts(m.get("ts", "")) or utc_now()
+    rec = {"cancel_seq": int(m.get("seq", 0)), "probe_id": p[0] if p else None, "offer_id": oid,
+           "contract": entry.get("contract"), "ts": m.get("ts"),
+           "accept_probe_seq": entry.get("probe_seq"),
+           "since_accept_ms": int((t_cancel - entry["at"]) * 1000),
+           "matched_by": "ref" if ref == oid else "contract", "src": m.get("_src", "poll")}
+    fm.log(c, "PROBE_CANCEL", json.dumps(rec)); print(rec, flush=True)
+    return True
+
 def handle(m, a, key, me, c, st, lock):
     seq = int(m.get("seq", 0))
+    note_cancel(m, c, st, lock)                # cancel は記録のみ。probe 行なら以下の通常処理（kind:cancel は無応答）も続ける
     p = parse_probe(m.get("text", ""))
     if not p:
         return
@@ -325,6 +364,9 @@ def handle(m, a, key, me, c, st, lock):
         else:
             res = try_accept(payload, a.room, a.key, m.get("from", ""))
             if res.get("ok"):
+                with lock:   # 後続の cancel と突き合わせるため offer id → contract / accept 時刻を保持
+                    st.setdefault("accepted", {})[pre.get("offer_id")] = {
+                        "contract": res.get("contract"), "at": utc_now(), "probe_seq": seq, "pid": pid}
                 return finish(via=via, accept=True, contract=res.get("contract"),
                               latency_ms=int((utc_now() - t_probe) * 1000))
             via = "offer-decline"
@@ -358,6 +400,7 @@ def main():
     me = fm.did_of(key)
     c = fm.db()
     st = load_state()
+    st.setdefault("accepted", {})   # 旧 probe_state.json との互換
     lock = threading.Lock()
     q = queue.Queue()
     seen = set()
