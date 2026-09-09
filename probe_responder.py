@@ -12,7 +12,7 @@
   - 1 ID につき返信は1回。受信から 120 秒を過ぎた probe には返信しない。1時間あたり MAX_PER_HOUR 件まで
   - 台帳 ledger.db に PROBE 行（probe seq / id / kind / 受信 ts / 返信 seq / 遅延 ms）を残す
 """
-import argparse, json, os, re, subprocess, sys, threading, time
+import argparse, json, os, queue, re, subprocess, sys, threading, time
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -53,11 +53,14 @@ def save_state(st):
         json.dump(st, f)
     os.replace(tmp, STATE_FILE)
 
+READ_LIMIT = 200           # サーバー上限。since は無視され常に末尾が返るので、周期×流量 < 200 件を守る
+
 def read_json(room, since, wait):
-    st, body = fm.http_get(f"{fm.BASE}/r/{room}?since={since}&wait={wait}&format=json", timeout=wait + 20)
+    st, body = fm.http_get(f"{fm.BASE}/r/{room}?since={since}&wait={wait}&limit={READ_LIMIT}&format=json",
+                           timeout=wait + 20)
     view = json.loads(body)
     msgs = view.get("messages") if isinstance(view, dict) else view
-    return msgs or []
+    return msgs or [], (view if isinstance(view, dict) else {})
 
 def post_to(key, room, text):
     """flopmarket.post_signed と同じ手順で、部屋だけ指定可能にしたもの"""
@@ -120,11 +123,11 @@ def refresh_stats():
 
 def stats_loop():
     while True:
+        time.sleep(STATS_TTL)
         try:
             refresh_stats()
         except Exception as e:
             print(f"stats loop: {fm.err_kind(e)}", flush=True)
-        time.sleep(STATS_TTL)
 
 def get_stats():
     """返信経路はキャッシュを読むだけ（更新は stats_loop スレッド）"""
@@ -185,6 +188,93 @@ def try_accept(offer_text, room, key_path):
         return {"ok": False, "error": (r.stdout + r.stderr)[-300:]}
 
 # ---------- 本体 ----------
+def reader_loop(room, wait, st, lock, q):
+    """読み取り専用。投稿を待たずに回し続ける（1周 < 40 秒を守るのが目的）"""
+    while True:
+        try:
+            msgs, view = read_json(room, st["since"], wait)
+        except Exception as e:
+            print(f"read: {fm.err_kind(e)}", flush=True); time.sleep(fm.ERR_SLEEP); continue
+        msgs = sorted(msgs, key=lambda m: int(m.get("seq", 0)))
+        with lock:
+            since = st["since"]
+            first = int(view.get("first_seq") or (msgs[0]["seq"] if msgs else 0) or 0)
+            if since and first > since + 1:
+                print(f"gap: {first - since - 1} msgs unseen between {since} and {first}", flush=True)
+            for m in msgs:
+                seq = int(m.get("seq", 0))
+                if seq <= since:
+                    continue
+                since = seq
+                if m.get("from") == PROBE_DID and m.get("text", "").startswith(PREFIX):
+                    q.put(m)
+            st["since"] = since
+
+def handle(m, a, key, me, c, st, lock):
+    seq = int(m.get("seq", 0))
+    p = parse_probe(m.get("text", ""))
+    if not p:
+        return
+    pid, kind, payload = p
+    t_probe = parse_ts(m.get("ts", "")) or utc_now()
+    age = utc_now() - t_probe
+    rec = {"probe_seq": seq, "id": pid, "kind": kind, "ts": m.get("ts"), "age_s": round(age, 1)}
+
+    def finish(**kw):
+        rec.update(kw)
+        with lock:
+            st["sent"] = [t for t in st["sent"] if utc_now() - t < 3600]
+            if "skipped" not in rec:
+                st["answered"][pid] = seq; st["sent"].append(utc_now())
+            save_state(st)
+        fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True)
+
+    with lock:
+        if pid in st["answered"]:
+            return
+        n_sent = len([t for t in st["sent"] if utc_now() - t < 3600])
+    if age > WINDOW_SEC:
+        return finish(skipped="late")
+    if n_sent >= MAX_PER_HOUR:
+        return finish(skipped="rate")
+
+    reply = None; via = None
+    if kind == "addressed":
+        tgt, _, rest = payload.partition(" ")
+        if tgt != me:
+            return finish(skipped=f"addressed-to:{tgt[-6:]}")
+        kind, payload = "ask", rest
+        rec["addressed_to_me"] = True
+    if kind == "ask":
+        via = "ask-data" if "which room" in payload.lower() else "ask-qwen"
+        reply = compose_room_answer(pid, seq) if via == "ask-data" else compose_generic_answer(pid, seq, payload)
+    elif kind == "offer":
+        via = "offer-accept"
+        if a.dry_run:
+            reply = f"(dry) would run probe_accept.mjs on: {payload[:80]}…"
+        else:
+            res = try_accept(payload, a.room, a.key)
+            if res.get("ok"):
+                return finish(via=via, accept=True, contract=res.get("contract"),
+                              latency_ms=int((utc_now() - t_probe) * 1000))
+            via = "offer-decline"
+            reply = (f"re:{seq} probe v1 {pid} — offer received but my tclk/1 decoder could not accept it "
+                     f"({sanitize(str(res.get('error')), 120)}); nothing paid, so nothing claimed.")[:MAX_TEXT]
+    else:
+        return finish(skipped=f"kind:{kind}")   # null（沈黙の基準線）等は無応答が正解
+
+    if not reply:
+        return finish(skipped="no-reply")
+    rec["via"] = via
+    if a.dry_run:
+        print(f"[dry] {reply}", flush=True)
+        return finish()
+    try:
+        s_, rseq, _ = post_to(key, a.room, reply)
+        finish(reply_seq=rseq, http=s_, latency_ms=int((utc_now() - t_probe) * 1000))
+    except Exception as e:
+        finish(error=fm.err_kind(e))
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--key", required=True)
@@ -197,79 +287,25 @@ def main():
     me = fm.did_of(key)
     c = fm.db()
     st = load_state()
+    lock = threading.Lock()
+    q = queue.Queue()
 
     if not st["since"]:
-        msgs = read_json(a.room, 0, 0)
-        st["since"] = max((m["seq"] for m in msgs), default=0)
+        msgs, _ = read_json(a.room, 0, 0)
+        st["since"] = max((int(m["seq"]) for m in msgs), default=0)
         save_state(st)
     print(f"probe-responder {fm.short(me)} watching /r/{a.room} from seq {st['since']} "
-          f"dry_run={a.dry_run} probe_key={PROBE_DID[-8:]}", flush=True)
+          f"dry_run={a.dry_run} probe_key={PROBE_DID[-8:]} limit={READ_LIMIT}", flush=True)
     refresh_stats()  # 起動時は同期で温め、以後はスレッドで更新
     threading.Thread(target=stats_loop, daemon=True).start()
+    threading.Thread(target=reader_loop, args=(a.room, a.wait, st, lock, q), daemon=True).start()
 
     while True:
+        m = q.get()
         try:
-            msgs = read_json(a.room, st["since"], a.wait)
+            handle(m, a, key, me, c, st, lock)
         except Exception as e:
-            print(f"read: {fm.err_kind(e)}", flush=True); time.sleep(fm.ERR_SLEEP); continue
-        for m in msgs:
-            seq = int(m.get("seq", 0))
-            if seq > st["since"]:
-                st["since"] = seq
-            if m.get("from") != PROBE_DID:
-                continue
-            p = parse_probe(m.get("text", ""))
-            if not p:
-                continue
-            pid, kind, payload = p
-            t_probe = parse_ts(m.get("ts", "")) or utc_now()
-            age = utc_now() - t_probe
-            rec = {"probe_seq": seq, "id": pid, "kind": kind, "ts": m.get("ts"), "age_s": round(age, 1)}
-            if pid in st["answered"]:
-                continue
-            if age > WINDOW_SEC:
-                rec["skipped"] = "late"; fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True); continue
-            st["sent"] = [t for t in st["sent"] if utc_now() - t < 3600]
-            if len(st["sent"]) >= MAX_PER_HOUR:
-                rec["skipped"] = "rate"; fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True); continue
-
-            reply = None; via = None
-            if kind == "ask":
-                via = "ask-data" if "which room" in payload.lower() else "ask-qwen"
-                reply = compose_room_answer(pid, seq) if via == "ask-data" else compose_generic_answer(pid, seq, payload)
-            elif kind == "offer":
-                via = "offer-accept"
-                if a.dry_run:
-                    reply = f"(dry) would run probe_accept.mjs on: {payload[:80]}…"
-                else:
-                    res = try_accept(payload, a.room, a.key)
-                    if res.get("ok"):
-                        rec.update(accept=True, contract=res.get("contract"))
-                        rec["latency_ms"] = int((utc_now() - t_probe) * 1000)
-                        st["answered"][pid] = seq; st["sent"].append(utc_now()); save_state(st)
-                        fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True)
-                        continue
-                    via = "offer-decline"
-                    reply = (f"re:{seq} probe v1 {pid} — offer received but my tclk/1 decoder could not accept it "
-                             f"({sanitize(str(res.get('error')), 120)}); nothing paid, so nothing claimed.")[:MAX_TEXT]
-            else:
-                rec["skipped"] = f"kind:{kind}"; fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True); continue
-
-            if not reply:
-                rec["skipped"] = "no-reply"; fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True); continue
-
-            rec["via"] = via
-            if a.dry_run:
-                print(f"[dry] {reply}", flush=True)
-            else:
-                try:
-                    s, rseq, _ = post_to(key, a.room, reply)
-                    rec.update(reply_seq=rseq, http=s, latency_ms=int((utc_now() - t_probe) * 1000))
-                except Exception as e:
-                    rec["error"] = fm.err_kind(e)
-            st["answered"][pid] = seq; st["sent"].append(utc_now())
-            fm.log(c, "PROBE", json.dumps(rec)); print(rec, flush=True)
-        save_state(st)
+            print(f"handle {m.get('seq')}: {fm.err_kind(e)}", flush=True)
 
 if __name__ == "__main__":
     main()
