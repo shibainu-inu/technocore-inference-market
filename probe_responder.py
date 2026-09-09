@@ -184,12 +184,14 @@ def compose_generic_answer(pid, seq, question):
     return f"re:{seq} probe v1 {pid} — {ans}"[:MAX_TEXT]
 
 # ---------- offer ----------
-def try_accept(offer_text, room, key_path):
+def try_accept(offer_text, room, key_path, signer_did, probe_only=False):
+    """probe_only=True なら投稿せず、補完が必要な項目だけを返す（平文の予告を先に出すため）"""
     if not os.path.exists(NODE_ACCEPT):
         return {"ok": False, "error": f"missing {NODE_ACCEPT}"}
     env = dict(os.environ, KEY_PATH=key_path)
+    payload = {"text": offer_text, "room": room, "signer_did": signer_did, "probe_only": probe_only}
     try:
-        r = subprocess.run(["node", NODE_ACCEPT], input=json.dumps({"text": offer_text, "room": room}),
+        r = subprocess.run(["node", NODE_ACCEPT], input=json.dumps(payload),
                            capture_output=True, text=True, timeout=60, env=env)
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": "node timeout"}
@@ -309,17 +311,42 @@ def handle(m, a, key, me, c, st, lock):
         via = "ask-data" if "which room" in payload.lower() else "ask-qwen"
         reply = compose_room_answer(pid, seq) if via == "ask-data" else compose_generic_answer(pid, seq, payload)
     elif kind == "offer":
-        via = "offer-accept"
-        if a.dry_run:
-            reply = f"(dry) would run probe_accept.mjs on: {payload[:80]}…"
+        # 1) 何を補完しないと accept できないかを先に確かめる（投稿しない）
+        pre = try_accept(payload, a.room, a.key, m.get("from", ""), probe_only=True)
+        if not pre.get("ok"):
+            via = "offer-decline"
+            reply = (f"re:{seq} probe v1 {pid} — cannot accept: {sanitize(str(pre.get('error')), 160)}. "
+                     f"Nothing is paid, so nothing is claimed.")[:MAX_TEXT]
         else:
-            res = try_accept(payload, a.room, a.key)
+            fab = pre.get("fabricated_fields") or []
+            via = "offer-accept"
+            if fab:
+                # 2) 創作した項目を平文で明示してから accept を投稿する（順序は指摘が先）
+                notice = (f"re:{seq} probe v1 {pid} — this is not a valid tclk/1 offer: it is missing the required "
+                          f"fields {', '.join(fab)}. As written no counterparty can accept it. To answer anyway I "
+                          f"fabricated them (role=payer, from=your signing DID, lock=my own hashlock, "
+                          f"claim/refund/expiry=+10/+20/+30min, random nonce), so the contract id in my next line "
+                          f"comes from my invention, not from yours. Nothing is paid, so nothing is claimed.")[:MAX_TEXT]
+                if a.dry_run:
+                    print(f"[dry] {notice}", flush=True)
+                else:
+                    try:
+                        _, nseq, _ = post_to(key, a.room, notice)
+                        rec["notice_seq"] = nseq
+                    except Exception as e:
+                        rec["notice_error"] = fm.err_kind(e)
+            if a.dry_run:
+                print(f"[dry] would post accept frame (fabricated: {fab})", flush=True)
+                return finish(via=via, dry=True, fabricated_fields=fab)
+            res = try_accept(payload, a.room, a.key, m.get("from", ""))
             if res.get("ok"):
                 return finish(via=via, accept=True, contract=res.get("contract"),
+                              fabricated_fields=res.get("fabricated_fields"),
+                              ignored_fields=res.get("ignored_fields"),
                               latency_ms=int((utc_now() - t_probe) * 1000))
             via = "offer-decline"
-            reply = (f"re:{seq} probe v1 {pid} — offer received but my tclk/1 decoder could not accept it "
-                     f"({sanitize(str(res.get('error')), 120)}); nothing paid, so nothing claimed.")[:MAX_TEXT]
+            reply = (f"re:{seq} probe v1 {pid} — accept failed: {sanitize(str(res.get('error')), 160)}. "
+                     f"Nothing is paid, so nothing is claimed.")[:MAX_TEXT]
     else:
         return finish(skipped=f"kind:{kind}")   # null（沈黙の基準線）等は無応答が正解
 

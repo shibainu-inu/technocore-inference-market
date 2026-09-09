@@ -30,13 +30,40 @@ try {
   const input = JSON.parse(readFileSync(0, "utf8"));
   const room = input.room ?? "technocore";
 
-  // decode（tryDecodeFrame の戻り形は {frame}/{ok,frame}/frame のいずれかを許容）
-  let offer;
-  try { offer = core.decodeFrame(input.text); } catch (e) { out({ ok: false, error: `decodeFrame rejected: ${e.message}` }); }
-  if (!offer || offer.type !== "offer") out({ ok: false, error: "decodeFrame rejected: not an offer" });
+  // 公式デコーダを優先。未知フィールド／必須欠落で拒否された場合のみ、JSON を直接読んで補完する。
+  // tclk/1 の offer 必須項目は 12（frame-fields.generated）。probe の offer は 5 項目しかないため、
+  // 応答するには残りを創作するほかない。何を創作したかは fabricated として呼び出し元に返し、
+  // 呼び出し元が平文で先に明示してから accept を投稿する。値の書き換えはしない。
+  const OFFER_ALLOWED = ["type", "from", "role", "amount", "asset", "lock", "rails",
+    "claimByMs", "refundAfterMs", "expiresMs", "paymentKey", "job", "nonce", "id"];
+  let offer = null, ignored = [], fabricated = [];
+  const hl = generateHashLock();   // statement 用。offer に lock が無い場合はその lock にも使う
+  try {
+    offer = core.decodeFrame(input.text);
+  } catch (e) {
+    const raw = JSON.parse(input.text.replace(/^\s*tclk1\s+/, ""));
+    if (raw.type !== "offer") out({ ok: false, error: `not an offer: ${e.message}` });
+    ignored = Object.keys(raw).filter((k) => !OFFER_ALLOWED.includes(k));
+    offer = {};
+    for (const k of OFFER_ALLOWED) if (k in raw) offer[k] = raw[k];
+    const now = Date.now();
+    const fill = {
+      from: input.signer_did,                       // 署名から自明（創作ではないが欠落なので補う）
+      role: "payer",                                // offer を出す側。列挙は payer|payee の2値
+      lock: hl.hash,                                // 本来は offer 側が提示するもの
+      claimByMs: now + 10 * 60_000,
+      refundAfterMs: now + 20 * 60_000,
+      expiresMs: now + 30 * 60_000,
+      nonce: Math.floor(Math.random() * 2 ** 48).toString(16),
+    };
+    for (const [k, v] of Object.entries(fill)) {
+      if (offer[k] === undefined) { offer[k] = v; fabricated.push(k); }
+    }
+  }
+  if (!offer || offer.type !== "offer") out({ ok: false, error: "not an offer" });
+  if (input.probe_only) out({ ok: true, probe_only: true, ignored_fields: ignored, fabricated_fields: fabricated });
 
   // accept を組む（statement はハッシュロック。支払いゼロだが形式上必要なので鋳造し、0600 で保存）
-  const hl = generateHashLock();
   const dir = path.join(homedir(), "tclk-ours");
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, `probe_secret_${hl.hash.slice(2, 18)}.json`),
@@ -56,7 +83,7 @@ try {
     const body = (await res.text()).split("\n").filter((l) => l.trim())[0] ?? "";
     out({ ok: false, error: `post ${res.status} ${body}` });
   }
-  out({ ok: true, contract: accept.contract, room, text });
+  out({ ok: true, contract: accept.contract, room, text, ignored_fields: ignored, fabricated_fields: fabricated });
 } catch (e) {
   out({ ok: false, error: `${e.name}: ${e.message}` });
 }
