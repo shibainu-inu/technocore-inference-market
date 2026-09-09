@@ -34,6 +34,9 @@ QWEN = "qwen2.5:1.5b"
 def utc_now():
     return time.time()
 
+def now_s():
+    return datetime.now(timezone.utc).strftime("%H:%M:%SZ")
+
 def parse_ts(ts):
     try:
         return datetime.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
@@ -188,27 +191,71 @@ def try_accept(offer_text, room, key_path):
         return {"ok": False, "error": (r.stdout + r.stderr)[-300:]}
 
 # ---------- 本体 ----------
-def reader_loop(room, wait, st, lock, q):
+READ_ERR_SLEEP = 3
+
+def enqueue(msgs, st, lock, q, seen, src):
+    """probe 行だけをキューへ。seen（probe seq）で二重投入を防ぐ"""
+    n = 0
+    for m in msgs:
+        if m.get("from") != PROBE_DID or not m.get("text", "").startswith(PREFIX):
+            continue
+        seq = int(m.get("seq", 0))
+        with lock:
+            if seq in seen:
+                continue
+            seen.add(seq)
+        m["_src"] = src
+        q.put(m); n += 1
+    return n
+
+def reader_loop(room, wait, st, lock, q, seen):
     """読み取り専用。投稿を待たずに回し続ける（1周 < 40 秒を守るのが目的）"""
+    n_reads = 0; worst = 0.0; t_report = utc_now()
     while True:
+        t0 = utc_now()
         try:
             msgs, view = read_json(room, st["since"], wait)
         except Exception as e:
-            print(f"read: {fm.err_kind(e)}", flush=True); time.sleep(fm.ERR_SLEEP); continue
+            print(f"{now_s()} read: {fm.err_kind(e)}", flush=True); time.sleep(READ_ERR_SLEEP); continue
         msgs = sorted(msgs, key=lambda m: int(m.get("seq", 0)))
         with lock:
             since = st["since"]
             first = int(view.get("first_seq") or (msgs[0]["seq"] if msgs else 0) or 0)
             if since and first > since + 1:
-                print(f"gap: {first - since - 1} msgs unseen between {since} and {first}", flush=True)
-            for m in msgs:
-                seq = int(m.get("seq", 0))
-                if seq <= since:
+                print(f"{now_s()} gap: {first - since - 1} msgs unseen between {since} and {first} "
+                      f"(loop {utc_now() - t0:.1f}s, count {view.get('count')})", flush=True)
+            new = [m for m in msgs if int(m.get("seq", 0)) > since]
+            if new:
+                st["since"] = int(new[-1]["seq"])
+        enqueue(new, st, lock, q, seen, "poll")
+        n_reads += 1; worst = max(worst, utc_now() - t0)
+        if utc_now() - t_report >= 60:
+            print(f"{now_s()} reader: {n_reads} reads/60s, worst loop {worst:.1f}s, since {st['since']}", flush=True)
+            n_reads = 0; worst = 0.0; t_report = utc_now()
+
+def sweep_loop(room, every, st, lock, q, seen):
+    """保険: /export を定期スキャンし、取り落とした直近の probe を拾う（every=0 で無効）"""
+    while True:
+        time.sleep(every)
+        try:
+            _, body = fm.http_get(f"{fm.BASE}/r/{room}/export", timeout=60)
+            cut = utc_now() - WINDOW_SEC
+            cand = []
+            for ln in body.splitlines():
+                if PROBE_DID not in ln or "probe v1" not in ln:
                     continue
-                since = seq
-                if m.get("from") == PROBE_DID and m.get("text", "").startswith(PREFIX):
-                    q.put(m)
-            st["since"] = since
+                try:
+                    m = json.loads(ln)
+                except Exception:
+                    continue
+                t = parse_ts(m.get("ts", ""))
+                if t and t >= cut:
+                    cand.append(m)
+            n = enqueue(cand, st, lock, q, seen, "sweep")
+            if n:
+                print(f"{now_s()} sweep: picked up {n} probe(s) missed by poll", flush=True)
+        except Exception as e:
+            print(f"{now_s()} sweep: {fm.err_kind(e)}", flush=True)
 
 def handle(m, a, key, me, c, st, lock):
     seq = int(m.get("seq", 0))
@@ -218,7 +265,8 @@ def handle(m, a, key, me, c, st, lock):
     pid, kind, payload = p
     t_probe = parse_ts(m.get("ts", "")) or utc_now()
     age = utc_now() - t_probe
-    rec = {"probe_seq": seq, "id": pid, "kind": kind, "ts": m.get("ts"), "age_s": round(age, 1)}
+    rec = {"probe_seq": seq, "id": pid, "kind": kind, "ts": m.get("ts"), "age_s": round(age, 1),
+           "src": m.get("_src", "poll")}
 
     def finish(**kw):
         rec.update(kw)
@@ -281,6 +329,7 @@ def main():
     ap.add_argument("--room", default="technocore")
     ap.add_argument("--wait", type=int, default=10)
     ap.add_argument("--dry-run", action="store_true", help="投稿せず内容を表示")
+    ap.add_argument("--sweep", type=int, default=60, help="/export の保険スキャン間隔（秒）。0 で無効")
     a = ap.parse_args()
 
     key = fm.load_key(a.key)
@@ -289,16 +338,19 @@ def main():
     st = load_state()
     lock = threading.Lock()
     q = queue.Queue()
+    seen = set()
 
     if not st["since"]:
         msgs, _ = read_json(a.room, 0, 0)
         st["since"] = max((int(m["seq"]) for m in msgs), default=0)
         save_state(st)
     print(f"probe-responder {fm.short(me)} watching /r/{a.room} from seq {st['since']} "
-          f"dry_run={a.dry_run} probe_key={PROBE_DID[-8:]} limit={READ_LIMIT}", flush=True)
+          f"dry_run={a.dry_run} probe_key={PROBE_DID[-8:]} limit={READ_LIMIT} sweep={a.sweep}s", flush=True)
     refresh_stats()  # 起動時は同期で温め、以後はスレッドで更新
     threading.Thread(target=stats_loop, daemon=True).start()
-    threading.Thread(target=reader_loop, args=(a.room, a.wait, st, lock, q), daemon=True).start()
+    threading.Thread(target=reader_loop, args=(a.room, a.wait, st, lock, q, seen), daemon=True).start()
+    if a.sweep > 0:
+        threading.Thread(target=sweep_loop, args=(a.room, a.sweep, st, lock, q, seen), daemon=True).start()
 
     while True:
         m = q.get()
