@@ -12,7 +12,16 @@
   - 1 ID につき返信は1回。受信から 120 秒を過ぎた probe には返信しない。1時間あたり MAX_PER_HOUR 件まで
   - 台帳 ledger.db に PROBE 行（probe seq / id / kind / 受信 ts / 返信 seq / 遅延 ms）を残す
 """
-import argparse, json, os, queue, re, subprocess, sys, threading, time
+import argparse, json, os, queue, re, socket, subprocess, sys, threading, time
+
+# 自宅回線は IPv6 が接続不能で約 8 秒のフォールバックが入る（9/9 実測: curl -6 8.3s / -4 0.55s）。
+# IPv4 を優先し、IPv4 が引けない場合だけ元の結果に戻す。
+_orig_gai = socket.getaddrinfo
+def _gai_v4_first(*a, **k):
+    r = _orig_gai(*a, **k)
+    v4 = [x for x in r if x[0] == socket.AF_INET]
+    return v4 or r
+socket.getaddrinfo = _gai_v4_first
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -192,6 +201,7 @@ def try_accept(offer_text, room, key_path):
 
 # ---------- 本体 ----------
 READ_ERR_SLEEP = 3
+POLL_SLEEP = 2             # wait=0（即時読み取り）のときの間隔（秒）
 
 def enqueue(msgs, st, lock, q, seen, src):
     """probe 行だけをキューへ。seen（probe seq）で二重投入を防ぐ"""
@@ -229,6 +239,8 @@ def reader_loop(room, wait, st, lock, q, seen):
                 st["since"] = int(new[-1]["seq"])
         enqueue(new, st, lock, q, seen, "poll")
         n_reads += 1; worst = max(worst, utc_now() - t0)
+        if wait == 0:
+            time.sleep(POLL_SLEEP)
         if utc_now() - t_report >= 60:
             print(f"{now_s()} reader: {n_reads} reads/60s, worst loop {worst:.1f}s, since {st['since']}", flush=True)
             n_reads = 0; worst = 0.0; t_report = utc_now()
@@ -327,7 +339,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--key", required=True)
     ap.add_argument("--room", default="technocore")
-    ap.add_argument("--wait", type=int, default=10)
+    ap.add_argument("--wait", type=int, default=0, help="long-poll 秒数。0 で即時読み取り（既定。long-poll は 30s 保持される実測のため）")
     ap.add_argument("--dry-run", action="store_true", help="投稿せず内容を表示")
     ap.add_argument("--sweep", type=int, default=60, help="/export の保険スキャン間隔（秒）。0 で無効")
     a = ap.parse_args()
