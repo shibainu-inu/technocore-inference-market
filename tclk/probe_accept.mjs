@@ -30,48 +30,31 @@ try {
   const input = JSON.parse(readFileSync(0, "utf8"));
   const room = input.room ?? "technocore";
 
-  // 公式デコーダを優先。未知フィールド／必須欠落で拒否された場合のみ、JSON を直接読んで補完する。
-  // tclk/1 の offer 必須項目は 12（frame-fields.generated）。probe の offer は 5 項目しかないため、
-  // 応答するには残りを創作するほかない。何を創作したかは fabricated として呼び出し元に返し、
-  // 呼び出し元が平文で先に明示してから accept を投稿する。値の書き換えはしない。
-  const OFFER_ALLOWED = ["type", "from", "role", "amount", "asset", "lock", "rails",
-    "claimByMs", "refundAfterMs", "expiresMs", "paymentKey", "job", "nonce", "id"];
-  let offer = null, ignored = [], fabricated = [];
-  const hl = generateHashLock();   // statement 用。offer に lock が無い場合はその lock にも使う
-  try {
-    offer = core.decodeFrame(input.text);
-  } catch (e) {
-    const raw = JSON.parse(input.text.replace(/^\s*tclk1\s+/, ""));
-    if (raw.type !== "offer") out({ ok: false, error: `not an offer: ${e.message}` });
-    ignored = Object.keys(raw).filter((k) => !OFFER_ALLOWED.includes(k));
-    offer = {};
-    for (const k of OFFER_ALLOWED) if (k in raw) offer[k] = raw[k];
-    const now = Date.now();
-    const fill = {
-      from: input.signer_did,                       // 署名から自明（創作ではないが欠落なので補う）
-      role: "payer",                                // offer を出す側。列挙は payer|payee の2値
-      lock: hl.hash,                                // 本来は offer 側が提示するもの
-      claimByMs: now + 10 * 60_000,
-      refundAfterMs: now + 20 * 60_000,
-      expiresMs: now + 30 * 60_000,
-      nonce: Math.floor(Math.random() * 2 ** 48).toString(16),
-    };
-    for (const [k, v] of Object.entries(fill)) {
-      if (offer[k] === undefined) { offer[k] = v; fabricated.push(k); }
-    }
-  }
-  if (!offer || offer.type !== "offer") out({ ok: false, error: "not an offer" });
-  if (input.probe_only) out({ ok: true, probe_only: true, ignored_fields: ignored, fabricated_fields: fabricated });
+  // 契約IDは contractId(offer, acceptCore) = sha256(domain ‖ canonicalJson({offer, accept})) で、
+  // offer の検証（validateFrame）を経由しない。accept フレームの検証（encodeFrame）も offer を見ない。
+  // したがって probe の offer は一字も変えず（note も含めてそのまま）、何も創作せずに正規の accept を組める。
+  // 9/9 実測: 第三者 z6MkkCR2…obrj の accept（.272, contract 0xd8656a…）を「note あり生 offer + accept core」で再現し一致。
+  // makeAccept は validateFrame(offer) を通すため amount:"0" で落ちる（AMOUNT=/^[1-9][0-9]*$/）が、それは便利関数の制約。
+  const { contractId } = core;
+  const raw = JSON.parse(input.text.replace(/^\s*tclk1\s+/, ""));
+  if (raw.type !== "offer" || typeof raw.id !== "string") out({ ok: false, error: "not an offer" });
+  if (input.probe_only) out({ ok: true, probe_only: true, offer_id: raw.id });
 
-  // accept を組む（statement はハッシュロック。支払いゼロだが形式上必要なので鋳造し、0600 で保存）
+  const hl = generateHashLock();
+  const frameNonce = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const acceptCore = { from: me.did, ref: raw.id, statement: hl.hash, nonce: frameNonce };
+  const accept = { type: "accept", ...acceptCore, contract: contractId(raw, acceptCore) };
+
+  // 秘密は 0600 で保存（支払いゼロだが形式上の statement なので、後から preimage を示せるように）
   const dir = path.join(homedir(), "tclk-ours");
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, `probe_secret_${hl.hash.slice(2, 18)}.json`),
-    JSON.stringify({ ...hl, offer_id: offer.id }), { mode: 0o600 });
-  const accept = makeAccept(offer, { from: me.did, statement: hl.hash });
+    JSON.stringify({ ...hl, offer_id: raw.id, contract: accept.contract }), { mode: 0o600 });
 
   // 投稿（payee.mjs の post と同じ本文形式・署名。再送はしない: 1回失敗なら失敗として返す）
-  const text = sweep(encodeFrame(accept));
+  // encodeFrame は accept.ref に offerId 形式（0x+64hex）を要求するが、probe の id は自由文字列。
+  // 契約IDと同じ canonicalJson で本文を組む（第三者は contractId(offer, acceptCore) で再計算できる）。
+  const text = sweep("tclk1 " + core.canonicalJson(accept));
   const nonce = nextNonce();
   const sig = me.sign(canonicalMessage(room, nonce, text));
   const res = await fetch(`${BASE}/r/${room}`, {
@@ -83,7 +66,7 @@ try {
     const body = (await res.text()).split("\n").filter((l) => l.trim())[0] ?? "";
     out({ ok: false, error: `post ${res.status} ${body}` });
   }
-  out({ ok: true, contract: accept.contract, room, text, ignored_fields: ignored, fabricated_fields: fabricated });
+  out({ ok: true, contract: accept.contract, room, text });
 } catch (e) {
   out({ ok: false, error: `${e.name}: ${e.message}` });
 }

@@ -311,38 +311,21 @@ def handle(m, a, key, me, c, st, lock):
         via = "ask-data" if "which room" in payload.lower() else "ask-qwen"
         reply = compose_room_answer(pid, seq) if via == "ask-data" else compose_generic_answer(pid, seq, payload)
     elif kind == "offer":
-        # 1) 何を補完しないと accept できないかを先に確かめる（投稿しない）
+        # 契約IDは contractId(生の offer, accept core) で計算でき offer の検証を経由しない。
+        # probe の offer を一字も変えず、創作もせずに正規の accept フレームを投稿する（9/9 に第三者の contract を再現して確認）。
+        via = "offer-accept"
         pre = try_accept(payload, a.room, a.key, m.get("from", ""), probe_only=True)
         if not pre.get("ok"):
             via = "offer-decline"
             reply = (f"re:{seq} probe v1 {pid} — cannot accept: {sanitize(str(pre.get('error')), 160)}. "
                      f"Nothing is paid, so nothing is claimed.")[:MAX_TEXT]
+        elif a.dry_run:
+            print(f"[dry] would post accept frame for {pre.get('offer_id')}", flush=True)
+            return finish(via=via, dry=True)
         else:
-            fab = pre.get("fabricated_fields") or []
-            via = "offer-accept"
-            if fab:
-                # 2) 創作した項目を平文で明示してから accept を投稿する（順序は指摘が先）
-                notice = (f"re:{seq} probe v1 {pid} — this is not a valid tclk/1 offer: it is missing the required "
-                          f"fields {', '.join(fab)}. As written no counterparty can accept it. To answer anyway I "
-                          f"fabricated them (role=payer, from=your signing DID, lock=my own hashlock, "
-                          f"claim/refund/expiry=+10/+20/+30min, random nonce), so the contract id in my next line "
-                          f"comes from my invention, not from yours. Nothing is paid, so nothing is claimed.")[:MAX_TEXT]
-                if a.dry_run:
-                    print(f"[dry] {notice}", flush=True)
-                else:
-                    try:
-                        _, nseq, _ = post_to(key, a.room, notice)
-                        rec["notice_seq"] = nseq
-                    except Exception as e:
-                        rec["notice_error"] = fm.err_kind(e)
-            if a.dry_run:
-                print(f"[dry] would post accept frame (fabricated: {fab})", flush=True)
-                return finish(via=via, dry=True, fabricated_fields=fab)
             res = try_accept(payload, a.room, a.key, m.get("from", ""))
             if res.get("ok"):
                 return finish(via=via, accept=True, contract=res.get("contract"),
-                              fabricated_fields=res.get("fabricated_fields"),
-                              ignored_fields=res.get("ignored_fields"),
                               latency_ms=int((utc_now() - t_probe) * 1000))
             via = "offer-decline"
             reply = (f"re:{seq} probe v1 {pid} — accept failed: {sanitize(str(res.get('error')), 160)}. "
