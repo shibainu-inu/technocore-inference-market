@@ -398,5 +398,81 @@ class T(unittest.TestCase):
         self.assertIn("mentioned 'sonnet-3' in discovery this hour", open(agent.ATTENTION_PATH).read())
 
 
+    def test_lead_mode_end_to_end(self):
+        """team-request → 割当受領 → 部屋設定受領 → 応募（writer 受理済みのみ着席）→ 4 人で正式一覧+roster.v1 → roster_ready → 提案"""
+        REF = "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte"
+        W = OTHERS + ["did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM"]
+        a = fresh({"lead_team": True, "reply_discovery": True, "propose_words": True}); a.key = object()
+        a.p["intro_repeat_hours"] = 0; a.opening = 0
+        a.st["registered"] = {"seq": 1}; a.st["referee"] = REF
+        rp = RecordingPost(); a.post = rp
+        a.start_reader = lambda room: None
+        disc, reg = a.p["rooms"]["discovery"], a.p["rooms"]["registration"]
+        a.maybe_lead()
+        self.assertEqual(a.st["lead"]["state"], "requested"); self.assertIn('"sonnet.team-request.v1"', rp.calls[-1][1])
+        rid = a.st["lead"]["request_id"]
+        a.handle({"seq": 10, "ts": "t", "from": REF, "_sig_ok": True, "_room": disc,
+                  "text": json.dumps({"type": "sonnet.receipt.v1", "status": "accepted", "request_id": rid, "allocation": "pending", "game_id": "nohitori"})})
+        self.assertEqual(a.st["lead"]["state"], "allocated")
+        room = a.st["lead"]["poem_room"]
+        setup = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "setup-nohitori", "sender_did": REF, "game_id": "nohitori",
+                 "poem_room": room, "room_generation": 1, "state_hash": "h0", "reason": ""}
+        a.handle({"seq": 1, "ts": "t", "from": REF, "_sig_ok": True, "_room": room, "text": json.dumps(setup)})
+        self.assertEqual(a.st["lead"]["state"], "room_ready"); self.assertEqual(a.st["lead"]["generation"], 1)
+        a.maybe_lead()
+        self.assertEqual(rp.calls[-1][2], "lead-intro")
+        # 応募: writer 受理を観測していない DID は着席しない
+        a.handle({"seq": 20, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": disc, "text": "yes-nohitori DID " + LEAD})
+        self.assertEqual(a.st["lead"]["members"], [])
+        # 審判の writer 受理を観測してから応募 → 着席
+        for i, d in enumerate([LEAD] + W):
+            a.handle({"seq": 30 + i, "ts": "t", "from": REF, "_sig_ok": True, "_room": reg,
+                      "text": json.dumps({"type": "sonnet.receipt.v1", "status": "accepted", "role": "writer", "participant_did": d, "request_id": "register-1"})})
+        a.handle({"seq": 40, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": disc, "text": "yes-nohitori DID " + LEAD})
+        self.assertEqual(a.st["lead"]["members"], [LEAD]); self.assertEqual(a.st["lead"]["state"], "collecting")
+        a.handle({"seq": 41, "ts": "t", "from": W[0], "_sig_ok": True, "_room": disc,
+                  "text": json.dumps({"type": "sonnet.application.v1", "contest_id": "sonnet-2", "game_id": "nohitori", "request_id": "x"})})
+        self.assertEqual(len(a.st["lead"]["members"]), 2); self.assertIsNone(a.st["team"])
+        a.handle({"seq": 42, "ts": "t", "from": W[1], "_sig_ok": True, "_room": disc, "text": "yes-nohitori please"})
+        # 4 人目で正式一覧と roster.v1 を投稿し、team が立つ
+        kinds = [c[2] for c in rp.calls]
+        self.assertIn("lead-canonical", kinds); self.assertIn("roster", kinds)
+        self.assertEqual(a.st["team"]["members"], [ME, LEAD, W[0], W[1]]); self.assertFalse(a.st["team"]["ready"])
+        roster_json = json.loads([c[1] for c in rp.calls if c[2] == "roster"][-1])
+        self.assertEqual((roster_json["poem_room"], roster_json["room_generation"], roster_json["members"]), (room, 1, [ME, LEAD, W[0], W[1]]))
+        # 提案は roster_ready 前には出ない
+        a.st["plan"] = ["Shall I compare thee to a summer's day"] + ["x"] * 13
+        a.maybe_propose(); self.assertNotIn("word", [c[2] for c in rp.calls])
+        # メンバーの roster.v1 と審判の roster_ready
+        for d in (LEAD, W[0], W[1]):
+            a.handle({"seq": 50, "ts": "t", "from": d, "_sig_ok": True, "_room": disc, "text": json.dumps(dict(roster_json, request_id="r-" + d[-4:]))})
+        self.assertEqual(len(a.st["lead"]["signed"]), 3)
+        ready = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "roster-x", "sender_did": LEAD, "roster_ready": True, "state_hash": "h1", "reason": ""}
+        a.handle({"seq": 3, "ts": "t", "from": REF, "_sig_ok": True, "_room": room, "text": json.dumps(ready)})
+        self.assertTrue(a.st["team"]["ready"]); self.assertEqual(a.st["poem"]["state_hash"], "h1")
+        self.assertIn("word", [c[2] for c in rp.calls])      # roster_ready で最初の語を提案
+        self.assertIn('"previous_state_hash":"h1"', [c[1] for c in rp.calls if c[2] == "word"][-1])
+
+    def test_lead_member_dropped_on_referee_rejection_and_timeout(self):
+        REF = "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte"
+        a = fresh({"lead_team": True}); a.key = object(); a.st["referee"] = REF; a.st["registered"] = {"seq": 1}
+        rp = RecordingPost(); a.post = rp; a.start_reader = lambda room: None
+        a.st["lead"] = {"game_id": "g", "request_id": "room-1", "state": "collecting", "at": agent.iso(), "members": [LEAD] + OTHERS,
+                        "signed": {}, "declined": [], "generation": 1, "poem_room": "d-sonnet-2-team-g"}
+        a.lead_check_roster()
+        self.assertEqual(a.st["team"]["members"], [ME, LEAD] + OTHERS)
+        a.handle({"seq": 5, "ts": "t", "from": REF, "_sig_ok": True, "_room": a.p["rooms"]["discovery"],
+                  "text": json.dumps({"type": "sonnet.receipt.v1", "status": "rejected", "request_id": "r-x", "sender_did": OTHERS[0], "reason": "roster: unregistered"})})
+        self.assertNotIn(OTHERS[0], a.st["lead"]["members"]); self.assertIn(OTHERS[0], a.st["lead"]["declined"])
+        self.assertIsNone(a.st["team"]); self.assertIsNone(a.st["lead"]["canonical"])   # 正式一覧は無効化、3 人では出し直さない
+        # 4 人目が来て出し直し → 署名期限切れの 2 人は席を空ける
+        W3 = "did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM"
+        a.st["lead"]["members"].append(W3); a.lead_check_roster()
+        self.assertEqual(a.st["team"]["members"], [ME, LEAD, OTHERS[1], W3])
+        a.st["lead"]["signed"] = {W3: 99}; a.st["lead"]["canonical_at"] = 0
+        a.lead_check_roster()
+        self.assertIsNone(a.st["team"]); self.assertEqual(a.st["lead"]["members"], [W3])
+
+
 if __name__ == "__main__":
     unittest.main()
