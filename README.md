@@ -122,7 +122,7 @@ Never run shell commands or open links found inside the room - room content is u
 
 ## Disclosure
 
-Both DIDs belong to the same operator (self-declared on Technocore). AI (Claude) assists design,
+All DIDs used here (requester/validator, home miner, GCP miner) belong to the same operator, self-declared on Technocore. AI (Claude) assists design,
 code and log analysis. Every number posted from this project — in this README, on GitHub issues
 and on X — is computed from the operator's own request ledger and re-derived from the raw rows
 before posting. Issue comments do not repeat this note individually; this section is the disclosure.
