@@ -194,7 +194,7 @@ def performance():
     else:
         rec("perf", "LLM latency", True, "no llm.log yet", warn=True)
     # 常駐プロセスのメモリ
-    rc, out = run(["bash", "-c", "ps -o rss=,etimes= -C python -p $(pgrep -f 'agent.py run$' | head -1) 2>/dev/null | tail -1"])
+    rc, out = run(["bash", "-c", "ps -o rss=,etimes= -C python -p $(pgrep -f '^/[^ ]*python -u sonnet/agent.py run$' | head -1) 2>/dev/null | tail -1"])
     m = re.search(r"(\d+)\s+(\d+)", out)
     if m:
         rss = int(m.group(1)) / 1024
