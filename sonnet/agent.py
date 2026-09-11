@@ -399,6 +399,11 @@ class Agent:
     def on_rules(self, m, j):
         """rules 部屋。審判 DID は所有者ノート（find_referee）だけが決める。ここでは告示を記録し、食い違いを報告するのみ"""
         log(f"RULES seq={m['seq']} from={m['from'][-6:]} sig={m['_sig_ok']} {clip(m['text'], 300)!r}")
+        if not self.st["referee"]:
+            try:
+                self.find_referee()   # 告示の判定より先に所有者ノートを見る（起動直後の順序ずれを防ぐ）
+            except Exception as e:
+                log(f"kv: {fm.err_kind(e)}")
         if self.st["referee"] and m["from"] != self.st["referee"]:
             log(f"rules room message from non-owner {m['from'][-6:]} ignored"); return
         if not self.st["referee"]:
@@ -1015,6 +1020,10 @@ class Agent:
             self._save_at = now; self.save()
 
     def run(self):
+        try:
+            self.find_referee()       # 読み始める前に審判を確定しておく
+        except Exception as e:
+            log(f"kv: {fm.err_kind(e)}")
         for k, r in self.p["rooms"].items():
             if k in self.HOT:
                 self.start_reader(r)

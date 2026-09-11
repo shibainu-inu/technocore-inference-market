@@ -210,6 +210,14 @@ class T(unittest.TestCase):
         agent.kv_get = lambda ns, key: LEAD
         a.find_referee(); self.assertEqual(a.st["referee"], LEAD)
 
+    def test_rules_message_checks_owner_note_first(self):
+        a = fresh(); a.p["referee_did"] = LEAD
+        agent.kv_get = lambda ns, key: LEAD
+        launch = {"type": "sonnet.launch.v1", "referee": LEAD, "configuration": {"contest_id": "sonnet-2"}}
+        a.handle({"seq": 1, "ts": "t", "from": LEAD, "_sig_ok": True, "text": json.dumps(launch), "_room": a.p["rooms"]["rules"]})
+        self.assertEqual(a.st["referee"], LEAD); self.assertEqual(a.st["launch"]["seq"], 1)
+        self.assertNotIn("EXPECT A VENUE CHANGE", open(agent.ATTENTION_PATH).read())
+
     def test_pending_word_is_not_left_stuck(self):
         a = fresh({"propose_words": True}); a.key = object()
         a.opening = 0
