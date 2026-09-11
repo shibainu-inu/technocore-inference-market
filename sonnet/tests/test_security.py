@@ -362,5 +362,33 @@ class T(unittest.TestCase):
         os.remove(path)
 
 
+    def test_venue_change_detection(self):
+        a = fresh()
+        a.p["official_repo_raw"] = "https://example.invalid/repo"
+        events = json.dumps({"messages": [{"seq": 1, "ts": "t", "from": "x", "text": "created d-sonnet-3-rules"},
+                                          {"seq": 2, "ts": "t", "from": "x", "text": "created d-sonnet-2-team-foo"}]})
+        launch_v1 = "# launch\n" + a.p["referee_did"] + "\n"
+        launch_v2 = "# launch\n" + LEAD + "\n"
+        responses = {"events": (200, events), "contest.json": (200, json.dumps({"contest_id": "sonnet-3"})), "LAUNCH.md": (200, launch_v1)}
+        def fake_get(url, timeout=30):
+            for k, v in responses.items():
+                if k in url: return v
+            raise RuntimeError("404")
+        agent.fm.http_get = fake_get
+        a.venue_watch()
+        att = open(agent.ATTENTION_PATH).read()
+        self.assertIn("room d-sonnet-3-rules created", att)       # /r/events で別会場の部屋
+        self.assertNotIn("d-sonnet-2-team-foo", att)               # 自会場のチーム部屋は無視
+        self.assertIn("contest_id=sonnet-3", att)                  # 公式 contest.json の変更
+        responses["LAUNCH.md"] = (200, launch_v2)
+        a.venue_watch()
+        att = open(agent.ATTENTION_PATH).read()
+        self.assertIn("LAUNCH.md changed", att); self.assertIn("no longer lists our pinned referee_did", att)
+        # 募集部屋で別会場の言及が 5 送信者に達したら通知
+        for i in range(5):
+            a.on_discovery({"seq": 100 + i, "ts": "2026-09-11T15:00:00Z", "from": f"did:key:z6Mk{'C' * 40}{i:04d}", "text": "sonnet-1 abandoned, move to sonnet-3", "_sig_ok": True}, None)
+        self.assertIn("mentioned 'sonnet-3' in discovery this hour", open(agent.ATTENTION_PATH).read())
+
+
 if __name__ == "__main__":
     unittest.main()

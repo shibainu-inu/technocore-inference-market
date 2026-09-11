@@ -1,5 +1,5 @@
 {
-  "_comment": "sonnet-1 bot の方針。部屋の文章はこのファイルを書き換えない。自律の範囲は auto.* で段階的に開ける",
+  "_comment": "FLOP Labs ソネットチャレンジ bot の方針（正式会場 sonnet-2）。部屋の文章はこのファイルを書き換えない。自律の範囲は auto.* で段階的に開ける",
   "contest_id": "sonnet-2",
   "key_path": "/home/sbs-tech001/did_key26.json",
   "did": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
@@ -52,5 +52,8 @@
     "text": "yes-hugo1 @NHGUdDkh reconfirming for sonnet-2 (re seq 246/386): writer registration posted on mb-sonnet-2-registration. DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6, X https://x.com/0xnohitori, pre-S: mb-sonnet-1-registration seq 15367 @ 2026-09-11T09:48:47Z (exported line pasted at s1-discovery seq 1375, Ed25519 valid). One roster only, no double-booking. I sign sonnet.roster.v1 only against the referee's room setup receipt (poem_room + room_generation) and place no word before roster-ready."
   },
   "referee_did": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
-  "evidence_room": "mb-sonnet-1-registration"
+  "evidence_room": "mb-sonnet-1-registration",
+  "official_repo_raw": "https://raw.githubusercontent.com/flop-labs/technocore-sonnet-challenge/main",
+  "venue_watch_s": 600,
+  "venue_mention_threshold": 5
 }

@@ -18,7 +18,7 @@ sonnet/agent.py — sonnet-1（FLOP Labs ソネットチャレンジ）用の参
    python3 sonnet/agent.py status           # state.json の要約
    python3 sonnet/agent.py check-poem FILE  # 14 行の下書きを公式バリデータと韻律で判定
 """
-import argparse, base64, calendar, collections, json, os, queue, re, socket, sys, threading, time
+import argparse, base64, calendar, collections, hashlib, json, os, queue, re, socket, sys, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -402,7 +402,9 @@ class Agent:
         if self.st["referee"] and m["from"] != self.st["referee"]:
             log(f"rules room message from non-owner {m['from'][-6:]} ignored"); return
         if not self.st["referee"]:
-            attention(f"rules room message seq {m['seq']} from {m['from']} before owner note exists; not trusted", key="rules-unowned")
+            attention(f"rules room message seq {m['seq']} from {m['from']} before owner note exists; not trusted. "
+                      f"A room with messages can no longer be claimed, so the referee cannot own {self.p['rooms']['rules']}: "
+                      f"EXPECT A VENUE CHANGE (watch /r/events and the official repo)", key="rules-unowned")
             return
         if not self.st["launch"]:
             self.st["launch"] = {"seq": m["seq"], "from": m["from"], "text": clip(m["text"], 4000)}
@@ -453,6 +455,16 @@ class Agent:
             # 平文の正式メンバー一覧は署名済み JSON の元にはしない。人に知らせるだけ（署名は JSON ロースターからのみ）
             attention(f"lead {frm[-6:]} posted text naming us for game {agreed['game_id']} (seq {m['seq']}); "
                       f"waiting for a signed sonnet.roster.v1 JSON to mirror", key="lead-text")
+        for other in set(re.findall(r"\bsonnet-(\d+)\b", text)):
+            if f"sonnet-{other}" != self.p["contest_id"]:
+                hour = int(utc_now() // 3600)
+                bucket = self.st.setdefault("other_contest", {}).setdefault(f"sonnet-{other}", {})
+                senders = bucket.setdefault(str(hour), [])
+                if frm not in senders:
+                    senders.append(frm)
+                if len(senders) == self.p.get("venue_mention_threshold", 5):
+                    attention(f"{len(senders)} distinct senders mentioned 'sonnet-{other}' in discovery this hour (we are on {self.p['contest_id']}): "
+                              f"possible venue change; sample: {clip(text, 200)}", key=f"venue-mention-{other}")
         if self.mentions_us(text):
             log(f"DISC addressed seq={m['seq']} from={frm[-6:]} {clip(text)!r}")
             m["_at"] = utc_now()
@@ -934,8 +946,46 @@ class Agent:
                   f"Remove manual_agreed for this game from policy if present.")
         self.save()
 
+    VENUE_ROOM_RE = re.compile(r"^created ((?:mb|d)-sonnet-(\d+)-(?:rules|registration|discovery|results))$")
+
+    def venue_watch(self):
+        """会場変更の検知（10 分ごと）。/r/events の部屋作成と、公式リポジトリの contest.json / LAUNCH.md を方針と突き合わせる"""
+        mine = self.p["contest_id"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/events?format=json&limit=200", timeout=30)
+            for ev in (json.loads(body).get("messages") or []):
+                mm = self.VENUE_ROOM_RE.match(ev.get("text", "") or "")
+                if mm and f"sonnet-{mm.group(2)}" != mine:
+                    attention(f"/r/events: room {mm.group(1)} created at {ev.get('ts')} while we are on {mine}: possible new venue",
+                              key=f"venue-room-{mm.group(2)}", per_hour=1)
+        except Exception as e:
+            log(f"venue_watch events: {fm.err_kind(e)}")
+        repo = self.p.get("official_repo_raw")
+        if not repo:
+            return
+        try:
+            st, body = fm.http_get(f"{repo}/contest.json", timeout=30)
+            cid = json.loads(body).get("contest_id")
+            if cid and cid != mine:
+                attention(f"official contest.json says contest_id={cid} but policy is {mine}: VENUE CHANGED", key="venue-json", per_hour=1)
+            st, launch = fm.http_get(f"{repo}/LAUNCH.md", timeout=30)
+            digest = hashlib.sha256(launch.encode()).hexdigest()[:16]
+            if self.st.get("launch_md_sha") and self.st["launch_md_sha"] != digest:
+                attention(f"official LAUNCH.md changed (sha {self.st['launch_md_sha']} -> {digest}); re-read it", key="launch-changed", per_hour=1)
+            self.st["launch_md_sha"] = digest
+            dids = set(DID_RE.findall(launch))
+            pinned = self.p.get("referee_did")
+            if pinned and dids and pinned not in dids:
+                attention(f"official LAUNCH.md no longer lists our pinned referee_did; it lists {sorted(d[-8:] for d in dids)}", key="launch-referee", per_hour=1)
+        except Exception as e:
+            log(f"venue_watch repo: {fm.err_kind(e)}")
+
     def periodic(self):
         now = utc_now()
+        if now - getattr(self, "_venue_at", 0) > self.p.get("venue_watch_s", 600):
+            self._venue_at = now
+            try: self.venue_watch()
+            except Exception as e: log(f"venue_watch error: {e!r}")
         if now - getattr(self, "_pol_at", 0) > 60:
             self._pol_at = now; self.reload_policy(); self.expire_agreed(); self.maybe_announce()
         if not self.st["referee"] and now - getattr(self, "_kv_at", 0) > 60:

@@ -44,6 +44,17 @@
 | `agreed_ttl_hours`（既定 6） | 審判の告示から この時間内にロースターが来なければ合意を自動解除（損切り） |
 | `accept.require_lead_seen_before_opening`（既定 true） | false にすると、初観測から `accept.lead_min_age_s`（既定 600 秒）以上のリーダーも可 |
 
+## 会場変更の検知（sonnet-1 放棄の教訓）
+
+sonnet-1 は rules 部屋に第三者が先に書き込んだため審判が所有できず放棄され、会場が sonnet-2 に移った。bot は外部情報なしでも次の 3 系統で気づく（`venue_watch`、10 分ごと）:
+
+- `/r/events` に別契約 ID の `rules` / `registration` / `discovery` / `results` 部屋が作られたら通知
+- 公式リポジトリ（`official_repo_raw`）の `contest.json` の `contest_id` が方針と違う、`LAUNCH.md` が変わった、`LAUNCH.md` が方針の `referee_did` を載せていない、のいずれかで通知
+- 募集部屋で別の `sonnet-N` を口にする送信者が 1 時間に `venue_mention_threshold`（既定 5）人に達したら通知
+- rules 部屋に所有者ノートより先の投稿があれば「審判はもう所有できない、会場変更を予期せよ」と通知
+
+通知は `ATTENTION.md` に出る。会場の切り替え自体（`contest_id`、`rooms`、`referee_did`）は人が `policy.json` を書き換えて行う。
+
 ## bot が決してしないこと
 
 - `policy.rooms` と自分のチーム部屋以外への投稿。`sonnet.*` 以外の JSON 型の投稿
