@@ -41,20 +41,45 @@ class T(unittest.TestCase):
 
     def test_parse_receipt(self):
         a = fresh()
-        r = a.parse_receipt({"type": "x.receipt", "accepted": True, "word": "The", "version": 3, "state_hash": "ab", "contributor": LEAD}, "")
-        self.assertEqual((r["word"], r["version"], r["state_hash"], r["accepted"]), ("The", 3, "ab", True))
+        r = a.parse_receipt({"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "w0-x", "sender_did": LEAD, "version": 3, "state_hash": "ab", "syllables": 4, "complete": False}, "")
+        self.assertEqual((r["status"], r["version"], r["state_hash"], r["syllables"], r["complete"]), ("accepted", 3, "ab", 4, False))
         self.assertTrue(a.parse_receipt({"type": "note", "text": "hi"}, "")["unknown"])
         self.assertTrue(a.parse_receipt(None, "plain")["unknown"])
+        self.assertTrue(a.parse_receipt({"type": "sonnet.room.v1", "game_id": "g"}, "")["room"])
+        self.assertTrue(a.parse_receipt({"type": "sonnet.notice.v1", "subject": "x"}, "")["notice"])
 
     def test_apply_receipt_builds_lines(self):
+        """sonnet-2 実物: 提案(request_id→語) と受領(version/state_hash/syllables) から行を組み立てる"""
         a = fresh()
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-1-team-g", "generation": 1, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 1, "members": [ME, LEAD]}
+        a.st["referee"] = "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte"
+        REF = a.st["referee"]
+        setup = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "room-1", "sender_did": REF, "game_id": "g",
+                 "poem_room": "d-sonnet-2-team-g", "room_generation": 1, "state_hash": "h0", "reason": ""}
+        a.on_team({"seq": 1, "from": REF, "_sig_ok": True, "text": json.dumps(setup)}, setup)
+        self.assertEqual((a.st["poem"]["version"], a.st["poem"]["state_hash"], a.st["poem"]["syllables"]), (0, "h0", 0))
         words = "Shall I compare thee to a summer's day".split()
+        total = 0
         for i, w in enumerate(words):
-            a.apply_receipt({"accepted": True, "word": w, "version": i + 1, "state_hash": f"h{i}", "contributor": LEAD}, {"seq": i})
+            prop = {"type": "sonnet.word.v1", "contest_id": "sonnet-2", "game_id": "g", "room_generation": 1, "version": i,
+                    "previous_state_hash": f"h{i}", "word": w, "request_id": f"w{i}-x-{LEAD[-6:]}"}
+            a.on_team({"seq": 10 + 2 * i, "from": LEAD, "_sig_ok": True, "text": json.dumps(prop)}, prop)
+            total += agent.prosody.line_syllables([w])
+            rc = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": prop["request_id"], "sender_did": LEAD,
+                  "version": i + 1, "state_hash": f"h{i + 1}", "syllables": total, "complete": False, "reason": ""}
+            a.on_team({"seq": 11 + 2 * i, "from": REF, "_sig_ok": True, "text": json.dumps(rc)}, rc)
         self.assertEqual(a.st["poem"]["lines"], ["Shall I compare thee to a summer's day"])
         self.assertEqual(a.st["poem"]["current"], [])
+        self.assertEqual((a.st["poem"]["version"], a.st["poem"]["syllables"], a.st["poem"]["last_contributor"]), (8, 10, LEAD))
+        # 拒否は状態を変えない
+        rej = {"type": "sonnet.receipt.v1", "status": "rejected", "request_id": "w8-x-zzz", "sender_did": LEAD, "reason": "version: stale"}
+        a.on_team({"seq": 40, "from": REF, "_sig_ok": True, "text": json.dumps(rej)}, rej)
         self.assertEqual(a.st["poem"]["version"], 8)
+        # complete
+        fin = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "w8-x-fin", "sender_did": LEAD, "version": 9,
+               "state_hash": "h9", "syllables": 140, "complete": True, "reason": ""}
+        a.on_team({"seq": 41, "from": REF, "_sig_ok": True, "text": json.dumps(fin)}, fin)
+        self.assertTrue(a.st["poem"]["frozen"]); self.assertTrue(a.st["poem"]["desync"])   # 提案未観測の語 → desync 印
 
     def test_valid_word_rules(self):
         a = fresh()

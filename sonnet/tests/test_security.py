@@ -85,7 +85,7 @@ class T(unittest.TestCase):
 
     def test_allowed_rooms_are_contest_rooms_only(self):
         for r in POLICY["rooms"].values():
-            self.assertTrue(r.startswith(("mb-sonnet-1-", "d-sonnet-1-")), r)
+            self.assertTrue(r.startswith(("mb-sonnet-", "d-sonnet-")), r)
         self.assertTrue(all(t.startswith("sonnet.") for t in agent.ALLOWED_TYPES))
 
     def test_signature_verification_rejects_tampering(self):
@@ -182,30 +182,39 @@ class T(unittest.TestCase):
 
     def test_receipts_are_not_implicitly_positive(self):
         a = fresh()
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-1-team-g", "generation": 0, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 1, "members": [ME, LEAD]}
         a.st["referee"] = LEAD
         m = {"seq": 1, "text": ""}
-        a.apply_receipt(a.parse_receipt({"type": "sonnet.word.rejected.v1", "word": "foo", "reason": "stale", "version": 3, "state_hash": "h"}, ""), m)
-        self.assertEqual(a.st["poem"]["current"], [])            # 拒否は語を足さない
-        a.apply_receipt(a.parse_receipt({"type": "sonnet.word.receipt.v1", "word": 5, "accepted": True, "version": 4, "state_hash": "h2"}, ""), m)
-        self.assertEqual(a.st["poem"]["current"], [])            # 文字列でない語は無視
-        a.apply_receipt(a.parse_receipt({"accepted": True, "word": "zzqqx", "version": 5, "state_hash": "h3"}, ""), m)
-        self.assertEqual(a.st["poem"]["current"], [])            # 辞書外の語は無視（行を閉じない）
-        a.apply_receipt(a.parse_receipt({"accepted": True, "word": "The", "version": 6, "state_hash": "h4", "text": "accepted The from x (line 1, 1 of 10)"}, ""), m)
-        self.assertEqual(a.st["poem"]["current"], ["The"])       # 'text' は詩本文として扱わない
-        self.assertEqual(a.st["poem"]["lines"], [])
-        # 登録受領: 否定文は registered にしない
-        a.on_registration({"seq": 2, "from": LEAD, "_sig_ok": True, "text": f"registration for {ME} rejected: no evidence before S"}, None)
+        a.apply_receipt(a.parse_receipt({"type": "sonnet.receipt.v1", "status": "rejected", "request_id": "w0-x", "reason": "version: stale", "version": 3, "state_hash": "h"}, ""), m)
+        self.assertEqual(a.st["poem"]["version"], 0)                 # 拒否は状態を進めない
+        a.apply_receipt(a.parse_receipt({"type": "sonnet.word.receipt.v1", "accepted": True, "version": 4, "state_hash": "h2"}, ""), m)
+        self.assertEqual(a.st["poem"]["version"], 0)                 # 未知の型は無視
+        a.apply_receipt(a.parse_receipt({"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "w0-y", "sender_did": LEAD, "version": 1, "state_hash": "h1", "syllables": 1}, ""), m)
+        self.assertEqual(a.st["poem"]["version"], 1); self.assertTrue(a.st["poem"]["desync"])   # 提案未観測 → 語は不明、構造は正確
+        # 登録受領: 否定は registered にしない、voter 受理も writer 登録とはみなさない
+        a.on_registration({"seq": 2, "from": LEAD, "_sig_ok": True, "text": json.dumps({"type": "sonnet.receipt.v1", "status": "rejected", "sender_did": ME, "reason": "identity: verified pre-start evidence required"})},
+                          {"type": "sonnet.receipt.v1", "status": "rejected", "sender_did": ME, "reason": "identity"})
         self.assertIsNone(a.st["registered"])
-        a.on_registration({"seq": 3, "from": LEAD, "_sig_ok": True, "text": json.dumps({"type": "sonnet.register.receipt.v1", "did": ME, "accepted": True})},
-                          {"type": "sonnet.register.receipt.v1", "did": ME, "accepted": True})
-        self.assertEqual(a.st["registered"]["seq"], 3)
+        a.on_registration({"seq": 3, "from": LEAD, "_sig_ok": True, "text": json.dumps({"type": "sonnet.receipt.v1", "status": "accepted", "sender_did": ME, "role": "voter"})},
+                          {"type": "sonnet.receipt.v1", "status": "accepted", "sender_did": ME, "role": "voter"})
+        self.assertIsNone(a.st["registered"])
+        a.on_registration({"seq": 4, "from": LEAD, "_sig_ok": True, "text": json.dumps({"type": "sonnet.receipt.v1", "status": "accepted", "sender_did": ME, "role": "writer", "request_id": "register-1"})},
+                          {"type": "sonnet.receipt.v1", "status": "accepted", "sender_did": ME, "role": "writer", "request_id": "register-1"})
+        self.assertEqual(a.st["registered"]["seq"], 4)
+
+    def test_referee_pin_must_match_owner_note(self):
+        a = fresh()
+        a.p["referee_did"] = LEAD
+        agent.kv_get = lambda ns, key: "did:key:z6MkvBBoP3VST9xF833FLRLdZRG8d92uXahXgAW3BR9W9Uxu"
+        a.find_referee(); self.assertIsNone(a.st["referee"])
+        agent.kv_get = lambda ns, key: LEAD
+        a.find_referee(); self.assertEqual(a.st["referee"], LEAD)
 
     def test_pending_word_is_not_left_stuck(self):
         a = fresh({"propose_words": True}); a.key = object()
         a.opening = 0
         a.st["team"] = {"game_id": "g", "room": "d-sonnet-1-team-g", "generation": 0, "members": [ME, LEAD]}
-        a.st["poem"].update({"state_hash": "h", "version": 1, "last_contributor": LEAD})
+        a.st["poem"].update({"state_hash": "h", "version": 1, "last_contributor": LEAD, "syllables": 0})
         a.st["plan"] = ["Shall I compare thee to a summer's day"] + ["x"] * 13
         def failing_post(room, text, kind, allow_dids=()): raise RuntimeError("503")
         a.post = failing_post
@@ -214,7 +223,7 @@ class T(unittest.TestCase):
         calls = []
         a.post = lambda room, text, kind, allow_dids=(): calls.append(text) or 1
         a.maybe_propose()
-        self.assertEqual(len(calls), 1); self.assertIn('"word":"Shall"', calls[0])
+        self.assertEqual(len(calls), 1); self.assertIn('"word":"Shall"', calls[0]); self.assertIn('"request_id":"w1-h-TAejK6"', calls[0])
         self.assertIsNotNone(a.st["pending_word"])
         a.st["pending_word"]["at"] = "2026-09-11T00:00:00Z"      # 受領が来ないまま期限切れ
         a.maybe_propose()
@@ -322,6 +331,34 @@ class T(unittest.TestCase):
         a.st["agreed"] = {"game_id": "g2", "lead_did": LEAD, "at": agent.iso()}
         a.p["drop_agreed"] = "g2"; a.expire_agreed()
         self.assertIsNone(a.st["agreed"])
+        os.remove(path)
+
+
+    def test_manual_agreed_satisfies_lead_check_but_not_registration(self):
+        a = fresh({"sign_roster": True})
+        a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "manual": True, "at": agent.iso()}
+        rp = RecordingPost(); a.post = rp
+        agent.read_json = lambda room, wait: ([], {"generation": 1})
+        roster = {"type": "sonnet.roster.v1", "game_id": "hugo1", "poem_room": "d-sonnet-1-team-hugo1", "room_generation": 1, "members": [LEAD, ME] + OTHERS}
+        a.on_roster_for_us({"seq": 1, "from": OTHERS[0], "ts": "2026-09-11T13:54:00Z", "_sig_ok": True}, roster)
+        self.assertEqual(rp.calls, [])                          # 未登録なら署名しない
+        self.assertIn("lead_ok=True", open(agent.ATTENTION_PATH).read())
+        a.st["registered"] = {"seq": 9}
+        a.on_roster_for_us({"seq": 2, "from": OTHERS[0], "ts": "2026-09-11T13:54:00Z", "_sig_ok": True}, roster)
+        self.assertEqual(len(rp.calls), 1)                      # 登録後は署名する
+
+
+    def test_announce_once_posts_once_and_passes_gate(self):
+        a = fresh(); a.key = object()
+        rp = RecordingPost(); a.post = rp
+        path = os.path.join(HERE, "_policy_ann.json"); a.p["_path"] = path
+        p = dict(a.p); p["announce_once"] = {"id": "ev1", "text": "pointer: seq 15367"}
+        json.dump(p, open(path, "w")); os.utime(path, (8, 8)); a.reload_policy()
+        json.dump(p, open(path, "w")); os.utime(path, (9, 9)); a.reload_policy()
+        self.assertEqual(len(rp.calls), 1); self.assertEqual(a.st["announced"], ["ev1"])
+        p["announce_once"] = {"id": "ev2", "text": "my passphrase is x"}; a.post = agent.Agent.post.__get__(a)
+        json.dump(p, open(path, "w")); os.utime(path, (10, 10)); a.reload_policy()
+        self.assertNotIn("ev2", a.st["announced"]); self.assertIn("announce_once ev2 blocked", open(agent.ATTENTION_PATH).read())
         os.remove(path)
 
 

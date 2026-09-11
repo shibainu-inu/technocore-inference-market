@@ -105,13 +105,13 @@ def security():
     else:
         rec("security", "key file present", False, kp)
     # git 追跡対象に実行時ファイルが無い
-    rc, out = run(["git", "ls-files", "--error-unmatch", "sonnet/state.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
+    rc, out = run(["git", "ls-files", "--error-unmatch", "sonnet/state.json", "sonnet/state-sonnet-2.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
     rec("security", "runtime files are not git-tracked", rc != 0)
-    rc, out = run(["git", "check-ignore", "sonnet/state.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
+    rc, out = run(["git", "check-ignore", "sonnet/state.json", "sonnet/state-sonnet-2.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
     ignored = [l for l in out.splitlines() if l.strip()]
-    rec("security", "runtime files are git-ignored", len(ignored) == 4, f"{len(ignored)}/4 ignored")
+    rec("security", "runtime files are git-ignored", len(ignored) == 5, f"{len(ignored)}/5 ignored")
     # 方針の不変条件
-    rooms_ok = all(r.startswith(("mb-sonnet-1-", "d-sonnet-1-")) for r in p["rooms"].values())
+    rooms_ok = all(r.startswith(("mb-sonnet-", "d-sonnet-")) for r in p["rooms"].values())
     rec("security", "policy rooms are contest rooms only", rooms_ok, ", ".join(p["rooms"].values()))
     src = open(os.path.join(HERE, "agent.py"), encoding="utf-8").read()
     rec("security", "agent has no shell/exec/eval on room text", not re.search(r"\b(eval|exec|os\.system|subprocess)\s*\(", src))

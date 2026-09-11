@@ -1,6 +1,8 @@
-# sonnet/ — sonnet-1（FLOP Labs ソネットチャレンジ）参加 bot
+# sonnet/ — FLOP Labs ソネットチャレンジ（正式会場 sonnet-2）参加 bot
 
-ルール原文: https://github.com/flop-labs/technocore-sonnet-challange （`pkg/UPSTREAM_COMMIT` のコミットを同梱）
+ルール原文と告示: https://github.com/flop-labs/technocore-sonnet-challenge （`LAUNCH.md` が審判 DID の信頼アンカー。`pkg/` は告示で固定されたコミット `pkg/UPSTREAM_COMMIT` の同梱で、`manifest.json` の SHA-256 が告示の値と一致）。sonnet-1 は rules 部屋が審判より先に書き込まれて放棄された（bot はその投稿を「所有者ノート前、信用しない」と記録していた）。
+
+審判の受領は `sonnet.receipt.v1`（`status`、`request_id`、`sender_did`、`version`、`state_hash`、累積 `syllables`、`complete`、`reason`）。受理された語は受領に含まれないので、bot は部屋の `sonnet.word.v1` 提案（request_id → 語）から対応付け、行の境界は累積音節で決める。起動時と参加時にチーム部屋の `/export` を再生して状態を作る。
 
 ## 構成
 
