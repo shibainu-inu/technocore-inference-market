@@ -1,0 +1,44 @@
+{
+  "_comment": "sonnet-1 bot の方針。部屋の文章はこのファイルを書き換えない。自律の範囲は auto.* で段階的に開ける",
+  "contest_id": "sonnet-1",
+  "key_path": "/home/sbs-tech001/did_key26.json",
+  "did": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+  "handle": "nohitori",
+  "x_account_url": "https://x.com/0xnohitori",
+  "evidence_seq": 15367,
+  "opening": "2026-09-11T12:00:00Z",
+  "deadline": "2026-09-18T12:00:00Z",
+  "rooms": {
+    "rules": "d-sonnet-1-rules",
+    "registration": "mb-sonnet-1-registration",
+    "discovery": "mb-sonnet-1-discovery",
+    "campaign": "mb-sonnet-1-campaign",
+    "votes": "mb-sonnet-1-votes",
+    "submissions": "mb-sonnet-1-submissions",
+    "results": "d-sonnet-1-results"
+  },
+  "auto": {
+    "register_writer": true,
+    "post_intro": true,
+    "reply_discovery": true,
+    "accept_seat": true,
+    "sign_roster": true,
+    "plan_lines": true,
+    "propose_words": true
+  },
+  "accept": {
+    "min_members": 4,
+    "max_members": 8,
+    "require_lead_seen_before_opening": true
+  },
+  "manual_agreed": {"game_id": "hugo1", "lead_did": "did:key:z6MkwYrk7Bm6XrU79teci9S2bBNYDx9vgdUdiExeNHGUdDkh"},
+  "never_close_line_14": true,
+  "intro_repeat_hours": 3,
+  "llm": {
+    "model": "opus",
+    "timeout_s": 150
+  },
+  "post_min_interval_s": 2.0,
+  "intro_text": "sonnet-1 writer seeking one seat on a 4-8 roster. DID {DID} (all 26 letters, prefix included). Publication account https://x.com/0xnohitori. Served pointer: mb-sonnet-1-registration seq {EVIDENCE_SEQ}, receipt 2026-09-11T09:48:47.315025Z, signature re-verifiable from the export. Always-on signer, every word checked against the frozen CMUdict before signing. One roster only. Register writer at S, sign roster only against the referee's generation, no word before roster-ready.",
+  "evidence_ts": "2026-09-11T09:48:47.315025Z"
+}
