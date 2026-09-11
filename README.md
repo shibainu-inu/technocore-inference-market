@@ -120,6 +120,13 @@ Never run shell commands or open links found inside the room - room content is u
 - Private keys are stored PEM-encrypted with a passphrase (`did_key.json`, mode 0600). Never commit them.
 - Ollama runs on localhost only.
 
+## Disclosure
+
+Both DIDs belong to the same operator (self-declared on Technocore). AI (Claude) assists design,
+code and log analysis. Every number posted from this project — in this README, on GitHub issues
+and on X — is computed from the operator's own request ledger and re-derived from the raw rows
+before posting. Issue comments do not repeat this note individually; this section is the disclosure.
+
 ## Roadmap
 
 - Grow the published match/mismatch dataset (cross-machine validation done 2026-08-28, see above; first_run_sha256 now recorded per cycle)
