@@ -601,5 +601,16 @@ class T(unittest.TestCase):
             agent.Agent.on_roster_for_us = orig
 
 
+    def test_intro_not_reposted_every_review_without_applications(self):
+        a = fresh(); a.key = object(); rp = RecordingPost(); a.post = rp
+        a.st["referee_at"] = agent.iso()
+        a.st["intro_at"] = agent.utc_now() - 700
+        a.expire_agreed()                                       # 応募なしの定期処理では intro をリセットしない
+        self.assertGreater(a.st["intro_at"], 0)
+        a.st["applications"] = {"q": {"game_id": "q", "lead_did": LEAD, "at": agent.iso(), "lead_last_seen": agent.iso()}}
+        a.drop_application("q", "test")                         # 最後の応募が消えた時だけ即再開
+        self.assertEqual(a.st["intro_at"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

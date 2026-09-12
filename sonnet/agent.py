@@ -366,6 +366,8 @@ class Agent:
         if not ap:
             return
         self.st.setdefault("dropped", []).append(gid)
+        if not apps:
+            self.st["intro_at"] = 0   # 応募が無くなった時だけ、募集を即再開
         attention(f"application to {gid} dropped ({why}); open applications {sorted(apps)}")
         note_text = self.p.get("release_note_text")
         if note and note_text and self.key is not None:
@@ -1203,8 +1205,6 @@ class Agent:
                 self.drop_application(gid, f"lead silent for {silence // 3600}h"); continue
         if not self.applications():
             self.st["agreed"] = None
-            if self.st.get("intro_at", 0) and now - self.st["intro_at"] > 600:
-                self.st["intro_at"] = 0
 
     VENUE_ROOM_RE = re.compile(r"^created ((?:mb|d)-sonnet-(\d+)-(?:rules|registration|discovery|results))$")
 
