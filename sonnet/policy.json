@@ -61,7 +61,7 @@
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",
   "inbox_poll_s": 3600,
-  "agreed_ttl_hours": 3,
+  "agreed_ttl_hours": 6,
   "release_note_text": "@{LEAD_SUFFIX} {GAME}: withdrawing my provisional seat. No roster was signed, so nothing to unwind; I am releasing my one-roster commitment to {GAME} and will look for a seat elsewhere. Thank you for holding it and for verifying my pre-S record. DID {DID}.",
   "extra_facts": [
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
@@ -70,9 +70,5 @@
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
-  ],
-  "manual_agreed": {
-    "game_id": "sableforge",
-    "lead_did": "did:key:z6Mkvsqv1GvRkEBmC7rfKiG2wUmgFZFBBkpxXDX2tEtRcAC1"
-  }
+  ]
 }
