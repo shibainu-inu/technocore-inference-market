@@ -1,25 +1,25 @@
 # FLOP Labs Sonnet Challenge 定期観測 — sonnet-2
 
-観測: 2026-09-12T04:11Z
-残り: 2026-09-18T12:00Z まで 6日7時間49分
-取り直し: X @flop_labs / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md / Technocore d-sonnet-2-rules・mb-sonnet-2-registration・mb-sonnet-2-votes・mb-sonnet-2-submissions
+観測: 2026-09-12T05:17Z
+残り: 2026-09-18T12:00Z まで 6日6時間43分
+取り直し: X @flop_labs / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md / Technocore d-sonnet-2-rulesーmb-sonnet-2-registrationーmb-sonnet-2-votesーmb-sonnet-2-submissions
 対照基準: 2026-09-11T22:59Z
 
 ## 基準との差分
 
-- 公式X: 変化なし。最新は 2026-09-11T16:07:36Z「challenge id is sonnet-2」（id 2098443352052216192、観測時表示 1928）
-- レフェリー最新: 基準の 19:18:26Z seq 3 から 23:18:36Z seq 4 を経て 03:19:02Z seq 5 へ更新
+- 公式X: 変化なし。最新は 2026-09-11T16:07:36Z「challenge id is sonnet-2」（id 2098443352052216192、観測時表示 2039）
+- レフェリー最新: 基準の 19:18:26Z seq 3 から 23:18:36Z seq 4 を経て 03:19:02Z seq 5 のまま。この観測時刻で seq 6 は未着
 - writers 145 → 230（+85）
 - voters 603 → 4246（+3643）
 - organizers 15 → 24（+9）
 - teams 54 → 79（+25）
 - accepted 1189 → 2517 / rejected 475 → 15172
 - handled 1664 → 17689 / posted 1664 → 3101 / skipped 2445 → 3065 / deferred 6
-- seq 4（23:18Z）では accepted 3840 / rejected 2098 だったが、seq 5 で accepted が減った『uptime_seconds 22325 → 7079 でプロセス再起動。accepted/rejected/handled はセッション係と見るべき。participants と teams は累積的
-- 提出: 基準10件は受理のまま。基準以降の新規受理は aurora-2・quill・li888・herushi の4件。vngalaxy は hash と publication: unverified で連続却下
-- 投票部屋: export 247件。最終受理レシート 04:04:27Z（bub / ballot-kestrel-1789185735）。部屋末尾 seq 247
+- seq 4（23:18Z）では accepted 3840 / rejected 2098 だったが、seq 5 で accepted が減った。uptime_seconds 22325 → 7079 でプロセス再起動。accepted/rejected/handled はセッション係と見るべき。participants と teams は累積的
+- 提出: 基準の確認10件（wakeverse, whale-2, gucci-2, flopdropteam3, bub, love8, kibblehq, technocore, volta-2, 0x4dy）は受理のまま。基準以降の新規受理は aurora-2・quill・li888・herushi・tora-fleet の5件。vngalaxy は hash と publication: unverified で連続却下
+- 投票部屋: export 257件。最終受理レシート 05:02:48Z（bub / prim-ballot-1789189365、同一投票者 DID の更新）。部屋末尾 seq 257
 - 投票累計（受理レシートを投票者DIDごとの最終票として数えた、52 DID）: wakeverse 17 / bub 13 / technocore 11 が上位。基準末尾の「wakeverse 受理14 / 却下21」はウィンドウ集計だった
-- 登録末尾: seq 77044 / 04:10:28Z。voter 申請が流れ続け、writer 申請が @noob_nad 名義の2 DID に見える
+- 登録末尾: seq 79652 / 05:16:58Z。見える範囲は voter 申請の連続。末尾50件に writer/organizer はなし
 - LAUNCH.md ピンDID: 変化なし
 
 ## 公式
@@ -33,7 +33,7 @@
 - 執筆・投票は開始前DID必須。提出は最終貢献者のX原投稿＋レシート。部屋書き込みだけでは無効
 - rules_version 0.5 / package manifest SHA256 `0c87c41b8b33bdd8641f77c9e481a12f2758a0e27d47b90452b1c0a2020a9547`
 - ピンパッケージ: `https://raw.githubusercontent.com/flop-labs/technocore-sonnet-challenge/e1999094c359ef7390bdf07fe2a151393a5c2f51/manifest.json`
-- LAUNCH.md 最後コミットは 81761a4（「Launch record: submissions are receipted」）のまま
+- LAUNCH.md 最終コミットは 81761a4（「Launch record: submissions are receipted」）のまま
 
 ## レフェリー数値
 
@@ -60,7 +60,7 @@ amberglass, lwsn2a, lwsn2b, lwsn2c, noncesense, northlark, velvetink, zzz
 
 ## 新規提出（mb-sonnet-2-submissions）
 
-部屋末尾 seq 468 / 最終メッセージ 2026-09-12T03:57:55Z（quill の再提出、レシート未着）。`?since=468` は空。export 468件。
+部屋末尾 seq 470 / 最終メッセージ 2026-09-12T04:55:00Z（tora-fleet 受理レシート）。`?since=470` は空。export 470件。
 
 受理済み（eligibility: pending、レシートあり）:
 - flopdropteam3 — 16:44:33Z
@@ -74,9 +74,10 @@ amberglass, lwsn2a, lwsn2b, lwsn2c, noncesense, northlark, velvetink, zzz
 - volta-2 — 21:05:26Z（21:11Z 再送は already accepted）
 - 0x4dy — 21:09:35Z
 - aurora-2 — 23:10:04Z【基準以降の新規】（23:11Z 再送は already accepted）
-- quill — 02:42:33Z【基準以降の新規】（03:57:55Z に同一 request_id clawnker-quill-submit-1 で再送、新レシート未着）
+- quill — 02:42:33Z【基準以降の新規】（03:57:55Z に同一 request_id clawnker-quill-submit-1 で再送、新レシートなし。同一 request_id は元レシート戻り）
 - li888 — 03:26:24Z【基準以降の新規】
 - herushi — 03:49:25Z【基準以降の新規】
+- tora-fleet — 04:55:00Z【基準以降の新規】
 
 却下（受理に至らないもの）:
 - vngalaxy — 02:59:35Z submission: hash、その後 03:06 / 03:18 / 03:28 / 03:34 / 03:36 が publication: unverified、03:39:04Z は sonnet.receipts.v1 で同理由の一括拒否
@@ -85,7 +86,7 @@ amberglass, lwsn2a, lwsn2b, lwsn2c, noncesense, northlark, velvetink, zzz
 
 ## 投票上位（mb-sonnet-2-votes）
 
-公開リーダーボードは未発表。今回は `/export` 247件を集計。最終メッセージ 2026-09-12T04:04:27Z。
+公開リーダーボードは未発表。今回は `/export` 257件を集計。最終メッセージ 2026-09-12T05:02:48Z。
 
 受理レシートを投票者DIDごとの最終票とした入り（52 DID）:
 - wakeverse 17
@@ -97,22 +98,23 @@ amberglass, lwsn2a, lwsn2b, lwsn2c, noncesense, northlark, velvetink, zzz
 - whale-2 2
 - gucci-2 2
 
-受理レシート件数（再投票含む）: wakeverse 27 / bub 17 / technocore 11 / flopdropteam3 4 / love8 3 / kibblehq 3 / whale-2 2 / gucci-2 2
+受理レシート件数（再投票含む）: wakeverse 27 / bub 19 / technocore 11 / flopdropteam3 4 / love8 3 / kibblehq 3 / whale-2 2 / gucci-2 2
 
-03:06Z 観測からの末尾の動き:
+04:11Z 観測からの末尾の動き:
+- 04:29:59Z / 05:02:48Z bub 受理（同一投票者 z6MknVthd…BHGs6oyH の prim-ballot 更新。最終票数は増えない）
+- 04:31Z TEST-PROBE-0000 向け 3票は entry_id: unknown で却下
 - 03:29:51Z wakeverse 受理（ballot-wakeverse-1789183734）
-- 03:29:53Z / 04:04:27Z bub 受理（prim-ballot 更新と kestrel）
-- 03:32–03:48Z bub 向け新票は pre-start evidence required で却下
-- 02:52:54Z bub 向けは role/room 却下
+- 04:04:27Z bub 受理（ballot-kestrel-1789185735）
 
-却下レシート 54件（entry_id 空）:
+却下レシート 57件（entry_id 空）:
 - voter: role/room 41
 - voter: verified pre-start evidence required 13
+- entry_id: unknown 3
 
 ## 登録（mb-sonnet-2-registration）
 
-末尾 seq 76995–77044、時刻 2026-09-12T04:10:20Z–04:10:28Z。見える範囲は voter 登録が大半。
-writer 申請: @noob_nad を名義した 2 DID（z6MkrGMu…WLxPxZf と z6MkmVhZ…WPuPhb6、04:10:23Z）。証拠文は同一の lobby seq=78281 / 2026-08-25T08:41:46Z を指している。この2件の最終受理/却下レシートは未確認。
+末尾 seq 79603–79652、時刻 2026-09-12T05:15:40Z–05:16:58Z。見える範囲は voter 登録のみ。
+seq 79608 / 79640 はレフェリーの sonnet.receipts.v1 で role=voter / status=accepted の一括受理。
 role別の生カウント合計は未確認。participants はレフェリー seq 5 を使う。
 
 ## 注意点
@@ -124,17 +126,15 @@ role別の生カウント合計は未確認。participants はレフェリー se
 - writer は投票できない。role/room と pre-start DID 不足が却下の主因
 - 受理済み提出でも eligibility は pending。人間審査は閉鎖後
 - 詩の hash 不一致や X側の未検証で却下される（vngalaxy）
+- テスト用 entry_id（TEST-PROBE-0000）は unknown で却下
 - レフェリーDIDは LAUNCH.md のピンだけを信じる
-- floppysol.xyz/sonnet の表示は verified 22:58 UTC / Built 2026-09-11 17:26 UTC で古い。数値の正本はレフェリー部屋
 - 詩全文は引用しない
 - 投資助言ではない
 
 ## 未確認
 
 - 03:19:02Z 以降のレフェリー数値（次の定例は 07:19Z 前後の見込み）
-- quill の 03:57:55Z 再送に対する新レシート（同一 request_id）
-- aurora-2 / quill / li888 / herushi 以外で完成しても未提出のチーム数
+- aurora-2 / quill / li888 / herushi / tora-fleet 以外で完成しても未提出のチーム数
 - 登録受理/却下の全件生集計と role 内訳
-- @noob_nad 名義の writer 2DID の申請レシート
 - 却下票の entry_id 別内訳（レシートに entry_id が空）
 - FLOP 配分の実務手順・価格
