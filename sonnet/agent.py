@@ -1112,6 +1112,13 @@ class Agent:
         why = "operator drop_agreed" if dropped else f"no signed roster within {ttl // 3600}h of the launch"
         attention(f"agreed seat for game {ag['game_id']} released ({why}); back to recruiting. "
                   f"Remove manual_agreed for this game from policy if present.")
+        note = self.p.get("release_note_text")
+        if note and self.key is not None:
+            text = note.replace("{GAME}", ag["game_id"]).replace("{LEAD_SUFFIX}", ag["lead_did"][-8:]).replace("{DID}", self.did)
+            try:
+                self.post(self.p["rooms"]["discovery"], text, "release-note")
+            except Exception as e:
+                attention(f"release note for {ag['game_id']} not posted: {e!r}", key="release-note")
         self.save()
 
     VENUE_ROOM_RE = re.compile(r"^created ((?:mb|d)-sonnet-(\d+)-(?:rules|registration|discovery|results))$")

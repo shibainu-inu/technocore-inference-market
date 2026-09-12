@@ -351,10 +351,13 @@ class T(unittest.TestCase):
         p = dict(a.p); p["manual_agreed"] = {"game_id": "hugo1", "lead_did": LEAD}
         json.dump(p, open(path, "w")); os.utime(path, (7, 7)); a.reload_policy()
         self.assertIsNone(a.st["agreed"])
-        # drop_agreed で即時解除
+        # drop_agreed で即時解除 + リーダーへの一言
+        a.key = object(); rp = RecordingPost(); a.post = rp
+        a.p["release_note_text"] = "@{LEAD_SUFFIX} {GAME}: withdrawing. DID {DID}."
         a.st["agreed"] = {"game_id": "g2", "lead_did": LEAD, "at": agent.iso()}
         a.p["drop_agreed"] = "g2"; a.expire_agreed()
         self.assertIsNone(a.st["agreed"])
+        self.assertEqual(rp.calls[-1][2], "release-note"); self.assertIn("g2: withdrawing", rp.calls[-1][1]); self.assertIn(LEAD[-8:], rp.calls[-1][1])
         os.remove(path)
 
 
