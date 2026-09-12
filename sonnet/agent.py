@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-sonnet/agent.py — sonnet-1（FLOP Labs ソネットチャレンジ）用の参加 bot
+sonnet/agent.py — FLOP Labs ソネットチャレンジ用の参加 bot（会場は policy.json の contest_id）
 
  段階（policy.json の auto.* で開ける。全て false なら読むだけ）
    観測      全部屋を監視し、募集・ロースター・語提案・審判受領を構造化して agent.log と state.json に残す
@@ -590,23 +590,23 @@ class Agent:
                     "poem_room": j.get("poem_room"), "room_generation": j.get("room_generation"),
                     "members": members, "request_id": self.req_id("roster")}
             if not isinstance(mine["room_generation"], int):
-                attention(f"roster seq {m['seq']} has no integer room_generation; not signing", key="roster-bad"); return
+                attention(f"CRITICAL roster seq {m['seq']} for our game {j.get('game_id')} has no integer room_generation; not signing", key="roster-bad"); return
             gid = j.get("game_id")
             if not (isinstance(gid, str) and GAME_RE.match(gid)) or mine["poem_room"] != f"d-{self.p['contest_id']}-team-{gid}":
-                attention(f"roster seq {m['seq']} has unexpected game_id/poem_room {gid!r}/{mine['poem_room']!r}; not signing", key="roster-bad")
+                attention(f"CRITICAL roster seq {m['seq']} for our game has unexpected game_id/poem_room {gid!r}/{mine['poem_room']!r}; not signing", key="roster-bad")
                 return
             try:
                 _, view = read_json(mine["poem_room"], 0)
                 gen = view.get("generation")
                 if mine["room_generation"] != gen:
-                    attention(f"roster room_generation {mine['room_generation']} != room {gen}; not signing")
+                    attention(f"CRITICAL roster room_generation {mine['room_generation']} != room {gen}; not signing")
                     return
             except Exception as e:
                 attention(f"could not read {mine['poem_room']} before signing: {e}"); return
             try:
                 seq = self.post(self.p["rooms"]["discovery"], self.compact(mine), "roster", allow_dids=set(members))
             except Exception as e:
-                attention(f"roster post failed for game {j['game_id']}: {e!r}", key="roster-post"); return
+                attention(f"CRITICAL roster post failed for game {j['game_id']}: {e!r}", key="roster-post"); return
             self.st["team"] = {"game_id": j["game_id"], "room": mine["poem_room"], "generation": gen,
                                "members": members, "lead": agreed["lead_did"], "roster_signed": seq, "source_seq": m["seq"]}
             attention(f"signed roster for game {j['game_id']} ({n} members), team room {mine['poem_room']}")
@@ -623,7 +623,8 @@ class Agent:
             self.start_reader(mine["poem_room"])
             self.save()
         else:
-            attention(f"roster seq {m['seq']} names us (game {j.get('game_id')}, {n} members) but not auto-signed: "
+            sev = "CRITICAL " if same_game else ""
+            attention(f"{sev}roster seq {m['seq']} names us (game {j.get('game_id')}, {n} members) but not auto-signed: "
                       f"ok={ok} agreed={same_game} signer_ok={signer_ok} lead_ok={lead_ok} registered={bool(self.st.get('registered'))}", key=f"roster-{m['from']}")
 
     # ----- チームを率いる（lead mode）-----
@@ -690,7 +691,7 @@ class Agent:
         lead = self.st.get("lead")
         if not lead or lead["state"] not in ("requested", "allocated"):
             return
-        lead.update({"state": "room_ready", "generation": r.get("room_generation"), "poem_room": r.get("poem_room") or f"d-sonnet-2-team-{lead['game_id']}"})
+        lead.update({"state": "room_ready", "generation": r.get("room_generation"), "poem_room": r.get("poem_room") or f"d-{self.p['contest_id']}-team-{lead['game_id']}"})
         self.st["intro_at"] = 0   # すぐ募集
         attention(f"lead: team room {lead['poem_room']} set up by the referee (generation {lead['generation']}); recruiting")
         self.save()
@@ -1411,7 +1412,7 @@ class Agent:
         if ok:
             log(f"selfcheck: roster signing path OK for {self.p['contest_id']}")
         else:
-            attention(f"SELFCHECK FAILED: a roster for {self.p['contest_id']} would NOT be signed by this build; fix before relying on sign_roster")
+            attention(f"CRITICAL SELFCHECK FAILED: a roster for {self.p['contest_id']} would NOT be signed by this build; fix before relying on sign_roster")
         return ok
 
     def run(self):

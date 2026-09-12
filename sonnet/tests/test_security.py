@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 POLICY = json.load(open(os.path.join(os.path.dirname(HERE), "policy.json")))
 ME = POLICY["did"]
+TEAM = f"d-{POLICY['contest_id']}-team-"
 LEAD = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
 OTHERS = ["did:key:z6MkvBBoP3VST9xF833FLRLdZRG8d92uXahXgAW3BR9W9Uxu", "did:key:z6MktrGB8UZGApSNcRuhxTbyHdf8aGVS5ruLMJZhWMTg9Njo"]
 
@@ -166,24 +167,24 @@ class T(unittest.TestCase):
         self.assertEqual(rp.calls, [])
         # 署名検証に通らないロースターは写さない
         a.on_roster_for_us({"seq": 6, "from": LEAD, "ts": "2026-09-11T08:00:00Z", "_sig_ok": False},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": TEAM + "g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
         # 合意したリーダーでもロースター記載者でもない第三者の JSON は写さない
         a.on_roster_for_us({"seq": 7, "from": "did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM", "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": TEAM + "g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
         a.on_roster_for_us({"seq": 8, "from": LEAD, "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": TEAM + "g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(len(rp.calls), 1)
-        self.assertEqual(a.st["team"]["room"], "d-sonnet-2-team-g")
+        self.assertEqual(a.st["team"]["room"], TEAM + "g")
         # 2 度目（他メンバーのミラー）は署名しない
         a.on_roster_for_us({"seq": 9, "from": OTHERS[0], "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": TEAM + "g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(len(rp.calls), 1)
 
     def test_receipts_are_not_implicitly_positive(self):
         a = fresh()
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 1, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD]}
         a.st["referee"] = LEAD
         m = {"seq": 1, "text": ""}
         a.apply_receipt(a.parse_receipt({"type": "sonnet.receipt.v1", "status": "rejected", "request_id": "w0-x", "reason": "version: stale", "version": 3, "state_hash": "h"}, ""), m)
@@ -222,7 +223,7 @@ class T(unittest.TestCase):
     def test_pending_word_is_not_left_stuck(self):
         a = fresh({"propose_words": True}); a.key = object()
         a.opening = 0
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 0, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 0, "members": [ME, LEAD]}
         a.st["poem"].update({"state_hash": "h", "version": 1, "last_contributor": LEAD, "syllables": 0})
         a.st["plan"] = ["Shall I compare thee to a summer's day"] + ["x"] * 13
         def failing_post(room, text, kind, allow_dids=()): raise RuntimeError("503")
@@ -367,7 +368,7 @@ class T(unittest.TestCase):
         a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "manual": True, "at": agent.iso()}
         rp = RecordingPost(); a.post = rp
         agent.read_json = lambda room, wait: ([], {"generation": 1})
-        roster = {"type": "sonnet.roster.v1", "game_id": "hugo1", "poem_room": "d-sonnet-2-team-hugo1", "room_generation": 1, "members": [LEAD, ME] + OTHERS}
+        roster = {"type": "sonnet.roster.v1", "game_id": "hugo1", "poem_room": TEAM + "hugo1", "room_generation": 1, "members": [LEAD, ME] + OTHERS}
         a.on_roster_for_us({"seq": 1, "from": OTHERS[0], "ts": "2026-09-11T13:54:00Z", "_sig_ok": True}, roster)
         self.assertEqual(rp.calls, [])                          # 未登録なら署名しない
         self.assertIn("lead_ok=True", open(agent.ATTENTION_PATH).read())
@@ -406,7 +407,7 @@ class T(unittest.TestCase):
         a.venue_watch()
         att = open(agent.ATTENTION_PATH).read()
         self.assertIn("room d-sonnet-3-rules created", att)       # /r/events で別会場の部屋
-        self.assertNotIn("d-sonnet-2-team-foo", att)               # 自会場のチーム部屋は無視
+        self.assertNotIn(TEAM + "foo", att)               # 自会場のチーム部屋は無視
         self.assertIn("contest_id=sonnet-3", att)                  # 公式 contest.json の変更
         responses["LAUNCH.md"] = (200, launch_v2)
         a.venue_watch()
@@ -482,7 +483,7 @@ class T(unittest.TestCase):
         a = fresh({"lead_team": True}); a.key = object(); a.st["referee"] = REF; a.st["registered"] = {"seq": 1}
         rp = RecordingPost(); a.post = rp; a.start_reader = lambda room: None
         a.st["lead"] = {"game_id": "g", "request_id": "room-1", "state": "collecting", "at": agent.iso(), "members": [LEAD] + OTHERS,
-                        "signed": {}, "declined": [], "generation": 1, "poem_room": "d-sonnet-2-team-g"}
+                        "signed": {}, "declined": [], "generation": 1, "poem_room": TEAM + "g"}
         a.lead_check_roster()
         self.assertEqual(a.st["team"]["members"], [ME, LEAD] + OTHERS)
         a.handle({"seq": 5, "ts": "t", "from": REF, "_sig_ok": True, "_room": a.p["rooms"]["discovery"],
@@ -538,7 +539,7 @@ class T(unittest.TestCase):
         a.st["agreed"] = {"game_id": "g", "lead_did": LEAD, "manual": True, "at": agent.iso()}
         agent.read_json = lambda room, wait: ([], {"generation": 1})
         a.on_roster_for_us({"seq": 2, "from": LEAD, "ts": "t", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
 
 
@@ -559,7 +560,7 @@ class T(unittest.TestCase):
         # g2 のロースターが先に来た → 署名し、g1 には辞退を送る
         agent.read_json = lambda room, wait: ([], {"generation": 1})
         a.on_roster_for_us({"seq": 30, "from": OTHERS[0], "ts": "t", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g2", "poem_room": "d-sonnet-2-team-g2", "room_generation": 1, "members": [OTHERS[0], ME, LEAD, L2]})
+                           {"type": "sonnet.roster.v1", "game_id": "g2", "poem_room": TEAM + "g2", "room_generation": 1, "members": [OTHERS[0], ME, LEAD, L2]})
         self.assertEqual(a.st["team"]["game_id"], "g2")
         kinds = [c[2] for c in rp.calls]; self.assertIn("roster", kinds); self.assertIn("release-note", kinds)
         self.assertEqual(a.applications(), {"g2": a.st["agreed"]} if a.st.get("agreed") else {})

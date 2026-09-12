@@ -5,6 +5,7 @@ import agent
 
 POLICY = json.load(open(os.path.join(os.path.dirname(HERE), "policy.json")))
 ME = POLICY["did"]
+TEAM = f"d-{POLICY['contest_id']}-team-"
 LEAD = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
 OTHERS = ["did:key:z6MkvBBoP3VST9xF833FLRLdZRG8d92uXahXgAW3BR9W9Uxu", "did:key:z6MktrGB8UZGApSNcRuhxTbyHdf8aGVS5ruLMJZhWMTg9Njo"]
 
@@ -52,11 +53,11 @@ class T(unittest.TestCase):
     def test_apply_receipt_builds_lines(self):
         """sonnet-2 実物: 提案(request_id→語) と受領(version/state_hash/syllables) から行を組み立てる"""
         a = fresh()
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 1, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD]}
         a.st["referee"] = "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte"
         REF = a.st["referee"]
         setup = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "room-1", "sender_did": REF, "game_id": "g",
-                 "poem_room": "d-sonnet-2-team-g", "room_generation": 1, "state_hash": "h0", "reason": ""}
+                 "poem_room": TEAM + "g", "room_generation": 1, "state_hash": "h0", "reason": ""}
         a.on_team({"seq": 1, "from": REF, "_sig_ok": True, "text": json.dumps(setup)}, setup)
         self.assertEqual((a.st["poem"]["version"], a.st["poem"]["state_hash"], a.st["poem"]["syllables"]), (0, "h0", 0))
         words = "Shall I compare thee to a summer's day".split()
