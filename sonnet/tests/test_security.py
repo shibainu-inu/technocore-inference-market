@@ -612,5 +612,15 @@ class T(unittest.TestCase):
         self.assertEqual(a.st["intro_at"], 0)
 
 
+    def test_lead_receipt_without_request_id_is_not_ours(self):
+        a = fresh(); a.st["referee"] = LEAD
+        a.st["lead"] = {"game_id": "g", "request_id": "room-1", "state": "allocated", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g"}
+        a.handle({"seq": 1, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": a.p["rooms"]["discovery"],
+                  "text": json.dumps({"type": "sonnet.receipt.v1", "status": "rejected", "reason": "consent: withdraw before changing",
+                                      "receipts": [{"request_id": "x", "sender_did": OTHERS[0]}]})})
+        self.assertNotIn("our roster.v1 rejected", open(agent.ATTENTION_PATH).read())
+        self.assertEqual(a.st["lead"]["state"], "allocated")
+
+
 if __name__ == "__main__":
     unittest.main()

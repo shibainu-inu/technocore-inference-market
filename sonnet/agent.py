@@ -137,10 +137,10 @@ def verify_sig(room, m):
     except Exception:
         return False
 
-def read_json(room, wait):
+def read_json(room, wait, since=0):
     if not ROOM_RE.fullmatch(room):
         raise ValueError(f"bad room name {room!r}")
-    st, body = fm.http_get(f"{BASE}/r/{room}?since=0&wait={wait}&limit={READ_LIMIT}&format=json", timeout=wait + 20)
+    st, body = fm.http_get(f"{BASE}/r/{room}?since={since}&wait={wait}&limit={READ_LIMIT}&format=json", timeout=wait + 20)
     view = json.loads(body)
     return (view.get("messages") or []), view
 
@@ -190,6 +190,8 @@ class Agent:
                 "plan": None, "pending_word": None, "teams": {}, "receipts_unknown": 0}
 
     def save(self):
+        if not getattr(self, "_can_save", False):
+            return   # run() 以外（テスト、status、自己検査、他プロセスの構築）は状態ファイルに書かない
         with S_LOCK:
             tmp = STATE_PATH + ".tmp"
             json.dump(self.st, open(tmp, "w"), ensure_ascii=False, indent=1)
@@ -197,6 +199,12 @@ class Agent:
 
     # ----- 読み取り -----
     HOT = ("rules", "registration", "discovery")   # 常時 long-poll する部屋（＋チーム部屋）
+
+    def hot_rooms(self):
+        rooms = {self.p["rooms"][k] for k in self.HOT if k in self.p["rooms"]}
+        if self.st.get("team"): rooms.add(self.st["team"]["room"])
+        if self.st.get("lead") and self.st["lead"].get("poem_room"): rooms.add(self.st["lead"]["poem_room"])
+        return rooms
 
     def start_reader(self, room):
         if room in self.readers:
@@ -225,7 +233,8 @@ class Agent:
                 self.st["seen"][room] = int(new[-1]["seq"])
         if gap:
             log(f"gap {room}: {gap[1] - gap[0] - 1} msgs unseen between {gap[0]} and {gap[1]}")
-            self.backfill(room, gap[0], gap[1])
+            if room in self.hot_rooms():
+                self.backfill(room, gap[0], gap[1])
         for m in new:
             m["_room"] = room
             m["_sig_ok"] = verify_sig(room, m)
@@ -265,7 +274,7 @@ class Agent:
         wait, sleep_429 = self.p.get("read_wait_s", 10), 30
         while True:
             try:
-                msgs, view = read_json(room, wait)
+                msgs, view = read_json(room, wait, since=self.st["seen"].get(room, 0))
                 sleep_429 = 30
             except Exception as e:
                 sleep_429 = self.backoff(room, e, sleep_429); continue
@@ -555,6 +564,15 @@ class Agent:
             for gid in self.applications():
                 if f'"{gid}"' in text:
                     log(f"referee message about our applied game {gid} seq {m['seq']}: {clip(text, 200)}")
+            team = self.st.get("team")
+            if team and j and j.get("sender_did") == self.did and j.get("request_id") == team.get("roster_request_id"):
+                if j.get("status") == "rejected":
+                    attention(f"CRITICAL our roster.v1 for {team['game_id']} was rejected by the referee: {j.get('reason')}; seat released, back to applying", key="roster-rejected")
+                    self.st["team"] = None
+                    self.st.setdefault("dropped", []).append(team["game_id"]); self.st["intro_at"] = 0
+                    self.save()
+                elif j.get("status") == "accepted":
+                    log(f"our roster.v1 for {team['game_id']} accepted by the referee (consent recorded)")
         if not j and not self.st.get("team") and self.did in text:
             for gid, ap in self.applications().items():
                 if frm == ap["lead_did"]:
@@ -616,7 +634,8 @@ class Agent:
             except Exception as e:
                 attention(f"CRITICAL roster post failed for game {j['game_id']}: {e!r}", key="roster-post"); return
             self.st["team"] = {"game_id": j["game_id"], "room": mine["poem_room"], "generation": gen,
-                               "members": members, "lead": agreed["lead_did"], "roster_signed": seq, "source_seq": m["seq"]}
+                               "members": members, "lead": agreed["lead_did"], "roster_signed": seq, "source_seq": m["seq"],
+                               "ready": False, "roster_request_id": mine["request_id"]}
             attention(f"signed roster for game {j['game_id']} ({n} members), team room {mine['poem_room']}")
             self.withdraw_others(j["game_id"])
             lead = self.st.get("lead")
@@ -645,6 +664,8 @@ class Agent:
         lead = self.st.get("lead")
         now = utc_now()
         if not lead:
+            if now < self.st.get("lead_block_until", 0) or self.st.get("lead_attempts", 0) >= p.get("lead_max_attempts", 3):
+                return
             gid = p.get("lead_game_id") or f"nohitori{int(now) % 1000}"
             if not GAME_RE.match(gid):
                 attention(f"lead_game_id {gid!r} is not a valid game_id", key="lead-gid"); return
@@ -665,7 +686,7 @@ class Agent:
 
     def on_lead_receipt(self, m, j):
         lead = self.st["lead"]
-        if j.get("request_id") == lead.get("request_id"):
+        if lead.get("request_id") and j.get("request_id") == lead.get("request_id"):
             if j.get("status") == "accepted":
                 lead["state"] = "allocated"; log(f"lead: room request accepted (allocation {j.get('allocation')})")
                 lead["poem_room"] = f"d-{self.p['contest_id']}-team-{lead['game_id']}"
@@ -674,16 +695,21 @@ class Agent:
             else:
                 reason = str(j.get("reason", ""))
                 attention(f"lead: room request for {lead['game_id']} rejected: {reason}", key="lead-reject")
-                if "already assigned" in reason or "not claimable" in reason:
+                attempts = self.st.get("lead_attempts", 0) + 1
+                self.st["lead_attempts"] = attempts
+                if attempts >= self.p.get("lead_max_attempts", 3):
+                    attention(f"CRITICAL lead mode stopped after {attempts} rejected room requests (last: {reason}); set auto.lead_team false or fix the cause", key="lead-stop")
+                    self.p["auto"]["lead_team"] = False; self.st["lead"] = None
+                elif "already assigned" in reason or "not claimable" in reason:
                     lead["game_id"] = f"{lead['game_id'][:12]}-{int(utc_now()) % 97}"; lead["state"] = "requested"
                     lead["request_id"] = self.req_id("room")
                     self.post(self.p["rooms"]["discovery"], self.compact({"type": "sonnet.team-request.v1", "contest_id": self.p["contest_id"],
                                                                           "game_id": lead["game_id"], "request_id": lead["request_id"]}), "team-request")
                 else:
-                    self.st["lead"] = None
+                    self.st["lead"] = None; self.st["lead_block_until"] = utc_now() + self.p.get("lead_retry_s", 1800)
                 self.save()
             return
-        if j.get("request_id") == lead.get("roster_request_id") and j.get("status") == "rejected":
+        if lead.get("roster_request_id") and j.get("request_id") == lead.get("roster_request_id") and j.get("status") == "rejected":
             attention(f"lead: our roster.v1 rejected: {j.get('reason')}", key="lead-roster-reject")
         # メンバーのロースターが拒否されたら席を空ける（未登録など）
         if j.get("status") == "rejected" and j.get("sender_did") in lead.get("members", []) and str(j.get("reason", "")).startswith("roster:"):
@@ -819,10 +845,13 @@ class Agent:
         if mine:
             log(f"our proposal {pend['word']!r} -> {r.get('status')} {r.get('reason', '')}")
             self.st["pending_word"] = None
+            if not accepted:
+                rej = poem.setdefault("rejected", {})
+                rej.setdefault(str(poem["version"]), []).append({"word": pend["word"], "reason": str(r.get("reason", ""))[:80], "at": iso()})
+                n = len(rej[str(poem["version"])])
+                attention(f"our word {pend['word']!r} rejected ({r.get('reason')}); attempt {n} at version {poem['version']}", key="word-reject")
         if not accepted:
-            if mine and not self._replaying:
-                self.save(); self.maybe_propose()
-            return
+            self.save(); return
         if r.get("roster_ready"):
             poem.update({"version": 0, "state_hash": r.get("state_hash"), "syllables": 0, "lines": [], "current": [],
                          "last_contributor": None, "frozen": False, "desync": False})
@@ -908,6 +937,9 @@ class Agent:
         poem, team = self.st["poem"], self.st.get("team")
         if not (team and self.p["auto"]["propose_words"]) or poem["frozen"] or utc_now() < self.opening:
             return
+        rej = (poem.get("rejected") or {}).get(str(poem["version"]), [])
+        if rej and (len(rej) >= self.p.get("max_word_attempts", 3) or utc_now() - parse_iso(rej[-1]["at"]) < self.p.get("word_retry_s", 120)):
+            return   # 同じ版で拒否が続く／直後の再提案はしない（状態が進めば rejected は版ごとなので自然に解ける）
         pend = self.st.get("pending_word")
         if pend and utc_now() - parse_iso(pend["at"]) > self.p.get("pending_word_ttl_s", 120):
             log(f"pending word {pend['word']!r} expired without a receipt; clearing"); self.st["pending_word"] = pend = None
@@ -952,6 +984,9 @@ class Agent:
         log("no valid word from LLM")
 
     def valid_word(self, word, line_no, remaining):
+        tried = {x["word"] for x in (self.st["poem"].get("rejected") or {}).get(str(self.st["poem"]["version"]), [])}
+        if word in tried:
+            return False
         try:
             syl = sv.validate_word(word, self.did, self.lexicon())
         except ValueError as e:
@@ -1115,8 +1150,9 @@ class Agent:
         offer_ok = None
         if offer and not self.st.get("team") and self.p["auto"]["accept_seat"]:
             gid, lead = offer["game_id"], offer["lead_did"]
-            if self.application_for(gid):
-                offer_ok = True   # 応募済みのゲームからの再提示: 受諾文はそのまま出す
+            ap = self.application_for(gid)
+            if ap:
+                offer_ok = bool(lead == ap["lead_did"] and any(x["from"] == lead for x in batch) and lead not in self.ignored())
             else:
                 offer_ok = bool(GAME_RE.match(gid) and DID_RE.fullmatch(lead) and any(x["from"] == lead for x in batch)
                                 and lead not in self.ignored() and self.lead_acceptable(lead)
@@ -1131,13 +1167,15 @@ class Agent:
             offer_ok = False
             attention(f"seat offer for game {offer['game_id']} ignored: roster already signed for {self.st['team']['game_id']}", key="offer-dup")
         text = " ".join(out["text"].split())[:700]
-        negated = re.search(r"\b(already|decline|declining|cannot|can't|not available|no double|other game|another game|stay on|hold(ing)? one roster)\b", text, re.I)
+        negated = re.search(r"\b(already (agreed|accepted|hold|have)|declin(e|ing)|cannot|can't|not (free|available)|another game|other game|stay(ing)? on)\b", text, re.I)
         accepting = bool(re.match(r"\s*yes-", text, re.I) or (re.search(r"\baccept(ing)?\b.*\bseat\b", text, re.I) and not negated))
         if accepting and not offer_ok:
             # 内部で受諾していない席を公開で受諾しない（返信と判断を一致させる）
             attention(f"suppressed an accepting reply for an offer that policy did not accept: {clip(text, 200)}", key="reply-suppress")
             self.save(); return
         if out["action"] == "reply" and text and self.p["auto"]["reply_discovery"]:
+            if parse_json(text) is not None or re.search(r'"type"\s*:\s*"sonnet\.', text):
+                attention(f"reply blocked: LLM produced a protocol frame instead of prose: {clip(text, 160)}", key="reply-json"); self.save(); return
             try:
                 self.post(self.p["rooms"]["discovery"], text, "disc-reply")
             except RuntimeError as e:
@@ -1374,7 +1412,7 @@ class Agent:
             j = {"type": "sonnet.register.v1", "contest_id": self.p["contest_id"], "role": "writer",
                  "x_account_url": self.p["x_account_url"], "request_id": "register-1"}
             self.post(self.p["rooms"]["registration"], self.compact(j), "register")
-        if a["post_intro"] and not self.st.get("team") and not self.st.get("agreed") \
+        if a["post_intro"] and not self.st.get("team") and not self.st.get("agreed") and not self.st.get("lead") \
                 and now - self.st.get("intro_at", 0) > self.p["intro_repeat_hours"] * 3600:
             self.st["intro_at"] = now
             text = self.p["intro_text"].replace("{DID}", self.did).replace("{EVIDENCE_SEQ}", str(self.p["evidence_seq"]))
@@ -1384,6 +1422,10 @@ class Agent:
             self.maybe_lead()
         except Exception as e:
             log(f"maybe_lead error: {e!r}")
+        if self.st.get("team") and now - getattr(self, "_propose_at", 0) > 60:
+            self._propose_at = now
+            try: self.maybe_propose()
+            except Exception as e: log(f"maybe_propose error: {e!r}")
         if a["plan_lines"] and self.st.get("team") and self.st.get("plan") is None and now >= self.opening \
                 and now - getattr(self, "_plan_at", 0) > 600:
             self._plan_at = now
@@ -1399,8 +1441,10 @@ class Agent:
         import copy
         saved_st, saved_post, saved_read, saved_key = copy.deepcopy(self.st), self.post, globals()["read_json"], self.key
         saved_auto = dict(self.p["auto"])
+        saved_can_save = getattr(self, "_can_save", False)
         calls = []
         _QUIET["on"] = True
+        self._can_save = False
         try:
             self.p["auto"]["sign_roster"] = True
             gid = "selfcheck"; lead = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
@@ -1421,6 +1465,7 @@ class Agent:
             self.st = saved_st; self.post = saved_post; globals()["read_json"] = saved_read; self.key = saved_key
             self.p["auto"] = saved_auto
             _QUIET["on"] = False
+            self._can_save = saved_can_save
             for attr in ("start_reader", "replay_room"):
                 self.__dict__.pop(attr, None)
         if ok:
@@ -1431,6 +1476,7 @@ class Agent:
 
     def run(self):
         self.selfcheck()
+        self._can_save = True
         try:
             self.find_referee()       # 読み始める前に審判を確定しておく
         except Exception as e:
@@ -1442,6 +1488,9 @@ class Agent:
         if self.st.get("team"):
             self.replay_room(self.st["team"]["room"])
             self.start_reader(self.st["team"]["room"])
+        lead = self.st.get("lead")
+        if lead and lead.get("poem_room") and not self.st.get("team"):
+            self.start_reader(lead["poem_room"])
         threading.Thread(target=self.llm_worker, daemon=True, name="llm").start()
         log(f"agent {self.did[-6:]} started; auto={self.p['auto']}; opening in {int((self.opening - utc_now()) / 60)} min")
         while True:
