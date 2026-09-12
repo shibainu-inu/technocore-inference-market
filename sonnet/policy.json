@@ -69,5 +69,6 @@
   "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. A validated 14-line plan (CMUdict exact-ten, ABAB CDCD EFEF GG) is ready; you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted. Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",
-  "inbox_poll_s": 3600
+  "inbox_poll_s": 3600,
+  "agreed_ttl_hours": 12
 }
