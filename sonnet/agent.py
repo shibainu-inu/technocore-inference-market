@@ -55,7 +55,7 @@ TEAMS_CAP = 500
 LOG_ROTATE_BYTES = 50 * 1024 * 1024
 ALLOWED_TYPES = {"sonnet.register.v1", "sonnet.team-request.v1", "sonnet.roster.v1", "sonnet.withdraw.v1",
                  "sonnet.word.v1", "sonnet.submit.v1", "sonnet.invite.v1", "sonnet.reply.v1", "sonnet.note.v1",
-                 "sonnet.recruit.v1"}
+                 "sonnet.recruit.v1", "sonnet.application.v1"}
 FORBIDDEN_OUT = re.compile(r"private_key|passphrase|seed phrase|BEGIN ENCRYPTED|TC_PASS", re.I)
 S_LOCK = threading.RLock()
 
