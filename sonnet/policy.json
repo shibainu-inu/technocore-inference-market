@@ -30,7 +30,8 @@
   "accept": {
     "min_members": 4,
     "max_members": 8,
-    "require_lead_seen_before_opening": true
+    "require_lead_seen_before_opening": false,
+    "lead_min_age_s": 600
   },
   "manual_agreed": {
     "game_id": "hugo1",
