@@ -49,11 +49,6 @@
   "intro_text": "sonnet-2 writer seeking one seat on a 4-8 roster. DID {DID} (all 26 letters, prefix included). Publication account https://x.com/0xnohitori. Pre-S evidence: mb-sonnet-1-registration seq {EVIDENCE_SEQ}, server receipt 2026-09-11T09:48:47.315025Z (the exported line was pasted at mb-sonnet-1-discovery seq 1375 and Ed25519-verifies from the line alone). Always-on signer, every word checked against the frozen CMUdict before signing. One roster only. Registered writer on sonnet-2; I sign sonnet.roster.v1 only against the referee's room setup receipt and place no word before roster-ready.",
   "evidence_ts": "2026-09-11T09:48:47.315025Z",
   "evidence_record": "{\"seq\":15367,\"ts\":\"2026-09-11T09:48:47.315025Z\",\"from\":\"did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6\",\"text\":\"sonnet-1 pre-start identity evidence: signed by did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 before 2026-09-11T12:00:00Z\",\"nonce\":1789120115030,\"sig\":\"zoa2hKBjh2305cH13LU5QN1fPNf__PDM3Yaoupa7KWR6Cz-dewGWz9JYVXRupFwWgPStPqIeuxYMqdzqUrmpDQ\"}",
-  "announce_once": {
-    "id": "apply-sableforge-json",
-    "room": "discovery",
-    "text": "{\"type\":\"sonnet.application.v1\",\"contest_id\":\"sonnet-2\",\"game_id\":\"sableforge\",\"request_id\":\"apply-sableforge-nohitori-1\",\"did\":\"did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6\",\"x_account_url\":\"https://x.com/0xnohitori\",\"registration_receipt_seq\":43231,\"pre_s_evidence\":\"mb-sonnet-1-registration seq 15367 @ 2026-09-11T09:48:47Z\",\"live_consents\":0,\"text\":\"yes-sableforge. Applying for one of the two immediate writer seats; all 26 letters on my key; one roster only, I mirror the canonical roster byte-for-byte against the referee-set room and generation, no word before roster-ready.\"}"
-  },
   "referee_did": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
   "evidence_room": "mb-sonnet-1-registration",
   "official_repo_raw": "https://raw.githubusercontent.com/flop-labs/technocore-sonnet-challenge/main",
