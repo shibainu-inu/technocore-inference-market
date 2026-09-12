@@ -19,7 +19,7 @@
   },
   "auto": {
     "register_writer": true,
-    "post_intro": false,
+    "post_intro": true,
     "reply_discovery": true,
     "accept_seat": true,
     "sign_roster": true,

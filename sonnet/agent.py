@@ -97,8 +97,11 @@ def log(msg):
         f.write(line + "\n")
 
 _ATT_COUNT = {}
+_QUIET = {"on": False}   # 自己検査中は ATTENTION.md に書かない（ログのみ）
 def attention(msg, key=None, per_hour=5):
     """人が見るべき事項。ATTENTION.md に追記し、ログにも出す。key ごとに 1 時間 per_hour 件まで"""
+    if _QUIET["on"]:
+        log("(selfcheck) " + msg); return
     if key:
         hour = int(time.time() // 3600)
         n = _ATT_COUNT.get((key, hour), 0) + 1
@@ -1397,6 +1400,7 @@ class Agent:
         saved_st, saved_post, saved_read, saved_key = copy.deepcopy(self.st), self.post, globals()["read_json"], self.key
         saved_auto = dict(self.p["auto"])
         calls = []
+        _QUIET["on"] = True
         try:
             self.p["auto"]["sign_roster"] = True
             gid = "selfcheck"; lead = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
@@ -1416,6 +1420,7 @@ class Agent:
         finally:
             self.st = saved_st; self.post = saved_post; globals()["read_json"] = saved_read; self.key = saved_key
             self.p["auto"] = saved_auto
+            _QUIET["on"] = False
             for attr in ("start_reader", "replay_room"):
                 self.__dict__.pop(attr, None)
         if ok:
