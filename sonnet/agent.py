@@ -343,6 +343,9 @@ class Agent:
         fs = self.st["first_seen"].get(did)
         return bool(fs) and utc_now() - parse_iso(fs) >= self.p["accept"].get("lead_min_age_s", 600)
 
+    def model_for(self, task):
+        return (self.p["llm"].get("models") or {}).get(task) or self.p["llm"]["model"]
+
     def lexicon(self):
         if self.lex is None:
             self.lex = prosody.lexicon()
@@ -884,7 +887,7 @@ class Agent:
                            "our_plan": self.st.get("plan"), "recent_team_room_messages": disc}, ensure_ascii=False)
         schema = {"type": "object", "properties": {"word": {"type": "string"}, "alternatives": {"type": "array", "items": {"type": "string"}},
                                                    "reason": {"type": "string"}}, "required": ["word", "alternatives", "reason"], "additionalProperties": False}
-        model, tmo = self.p["llm"]["model"], self.p["llm"]["timeout_s"]
+        model, tmo = self.model_for("word"), self.p["llm"]["timeout_s"]
         self.submit_llm("word", lambda: llm.ask(SYSTEM_WORD, user, schema, model=model, timeout_s=tmo, task="word"),
                         {"version": poem["version"], "line_no": line_no, "cur": list(cur), "remaining": remaining})
 
@@ -894,7 +897,7 @@ class Agent:
         schema = {"type": "object", "properties": {"lines": {"type": "array", "items": {"type": "string"}, "minItems": 14, "maxItems": 14},
                                                    "notes": {"type": "string"}}, "required": ["lines", "notes"], "additionalProperties": False}
         accepted, lex = list(self.st["poem"]["lines"]), self.lexicon()
-        model, tmo = self.p["llm"]["model"], self.p["llm"]["timeout_s"]
+        model, tmo = self.model_for("plan"), self.p["llm"]["timeout_s"]
 
         def job():
             feedback = ""
@@ -997,7 +1000,7 @@ class Agent:
                                                                    "member_list_seq": {"type": ["integer", "null"]}},
                            "required": ["game_id", "lead_did", "member_list_seq"], "additionalProperties": False},
             "reason": {"type": "string"}}, "required": ["action", "text", "seat_offer", "reason"], "additionalProperties": False}
-        model, tmo = self.p["llm"]["model"], self.p["llm"]["timeout_s"]
+        model, tmo = self.model_for("disc"), self.p["llm"]["timeout_s"]
         self.submit_llm("disc", lambda: llm.ask(SYSTEM_DISC, user, schema, model=model, timeout_s=tmo, task="disc"),
                         {"batch": [{"seq": x["seq"], "from": x["from"]} for x in batch]})
 

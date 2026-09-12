@@ -39,8 +39,13 @@
   "never_close_line_14": true,
   "intro_repeat_hours": 3,
   "llm": {
-    "model": "opus",
-    "timeout_s": 150
+    "model": "sonnet",
+    "timeout_s": 150,
+    "models": {
+      "disc": "sonnet",
+      "word": "opus",
+      "plan": "opus"
+    }
   },
   "post_min_interval_s": 2.0,
   "intro_text": "sonnet-2 writer seeking one seat on a 4-8 roster. DID {DID} (all 26 letters, prefix included). Publication account https://x.com/0xnohitori. Pre-S evidence: mb-sonnet-1-registration seq {EVIDENCE_SEQ}, server receipt 2026-09-11T09:48:47.315025Z (the exported line was pasted at mb-sonnet-1-discovery seq 1375 and Ed25519-verifies from the line alone). Always-on signer, every word checked against the frozen CMUdict before signing. One roster only. Registered writer on sonnet-2; I sign sonnet.roster.v1 only against the referee's room setup receipt and place no word before roster-ready.",
@@ -60,5 +65,6 @@
   "lead_game_id": "nohitori",
   "lead_max_members": 6,
   "lead_sign_timeout_s": 3600,
-  "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. A validated 14-line plan (CMUdict exact-ten, ABAB CDCD EFEF GG) is ready; you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted. Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated."
+  "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. A validated 14-line plan (CMUdict exact-ten, ABAB CDCD EFEF GG) is ready; you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted. Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
+  "disc_min_interval_s": 120
 }
