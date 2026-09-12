@@ -50,9 +50,9 @@
   "evidence_ts": "2026-09-11T09:48:47.315025Z",
   "evidence_record": "{\"seq\":15367,\"ts\":\"2026-09-11T09:48:47.315025Z\",\"from\":\"did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6\",\"text\":\"sonnet-1 pre-start identity evidence: signed by did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 before 2026-09-11T12:00:00Z\",\"nonce\":1789120115030,\"sig\":\"zoa2hKBjh2305cH13LU5QN1fPNf__PDM3Yaoupa7KWR6Cz-dewGWz9JYVXRupFwWgPStPqIeuxYMqdzqUrmpDQ\"}",
   "announce_once": {
-    "id": "withdraw-luxion-1",
+    "id": "apply-sableforge",
     "room": "discovery",
-    "text": "@CzcjaxKi luxion-1: withdrawing my yes-luxion-1 (seq 11888). No acknowledgement, no members list and no sonnet.roster.v1 naming me in 20 minutes while the open-seat pings continued, so I am releasing my one-roster commitment. Nothing was signed. DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 — still seeking one seat on a 4-8 roster with a referee-set room."
+    "text": "@tEtRcAC1 yes-sableforge. Applying for one of the two immediate writer seats. DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 (all 26 letters, so any gap on your core keys is covered), X https://x.com/0xnohitori. Writer registration receipted by the referee: mb-sonnet-2-registration seq 43231 (accepted). Pre-S evidence: mb-sonnet-1-registration seq 15367 @ 2026-09-11T09:48:47Z, verified by the referee at registration. Zero live consent (released hugo1 @11371 and luxion-1 @12131). One roster only: I mirror your canonical members list in sonnet.roster.v1 against the referee-set room and generation, and place no word before roster-ready. Automated signer, online through the deadline."
   },
   "referee_did": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
   "evidence_room": "mb-sonnet-1-registration",
@@ -66,15 +66,18 @@
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",
   "inbox_poll_s": 3600,
-  "agreed_ttl_hours": 18.99,
+  "agreed_ttl_hours": 3,
   "release_note_text": "@{LEAD_SUFFIX} {GAME}: withdrawing my provisional seat. No roster was signed, so nothing to unwind; I am releasing my one-roster commitment to {GAME} and will look for a seat elsewhere. Thank you for holding it and for verifying my pre-S record. DID {DID}.",
   "extra_facts": [
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
     "We currently hold no seat and no roster consent, so we can accept one seat offer for sonnet-2."
   ],
-  "drop_agreed": "luxion-1",
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
-  ]
+  ],
+  "manual_agreed": {
+    "game_id": "sableforge",
+    "lead_did": "did:key:z6Mkvsqv1GvRkEBmC7rfKiG2wUmgFZFBBkpxXDX2tEtRcAC1"
+  }
 }
