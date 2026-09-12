@@ -42,10 +42,7 @@ def quality():
     rc, out = run([PY, "-m", "unittest", "discover", "-s", "sonnet/tests"], timeout=900)
     m = re.search(r"Ran (\d+) tests", out)
     rec("quality", "unit tests", rc == 0 and bool(m), f"{m.group(1) if m else '?'} tests in {time.time() - t0:.1f}s" + ("" if rc == 0 else " — " + out[-1500:]))
-    for f in os.listdir(os.path.join(HERE, "tests")):
-        if f.startswith("_"):
-            p = os.path.join(HERE, "tests", f)
-            os.remove(p) if os.path.isfile(p) else None
+    pass  # テストの一時ファイルは各テストが自分で片付ける（並行実行中の他のテストを壊さない）
     rc, out = run([PY, "scripts/verify.py"], cwd=os.path.join(HERE, "pkg"))
     rec("quality", "official package integrity (manifest)", rc == 0, out.strip().splitlines()[-1] if out.strip() else "")
 
@@ -105,8 +102,10 @@ def security():
     else:
         rec("security", "key file present", False, kp)
     # git 追跡対象に実行時ファイルが無い
-    rc, out = run(["git", "ls-files", "--error-unmatch", "sonnet/state.json", "sonnet/state-sonnet-2.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
-    rec("security", "runtime files are not git-tracked", rc != 0)
+    runtime = ["sonnet/state.json", "sonnet/state-sonnet-2.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md", "sonnet/console.log"]
+    rc, out = run(["git", "ls-files", "--", *runtime], cwd=ROOT)
+    tracked = [l for l in out.splitlines() if l.strip()]
+    rec("security", "runtime files are not git-tracked", not tracked, ", ".join(tracked) or "none tracked")
     rc, out = run(["git", "check-ignore", "sonnet/state.json", "sonnet/state-sonnet-2.json", "sonnet/agent.log", "sonnet/llm.log", "sonnet/ATTENTION.md"], cwd=ROOT)
     ignored = [l for l in out.splitlines() if l.strip()]
     rec("security", "runtime files are git-ignored", len(ignored) == 5, f"{len(ignored)}/5 ignored")
@@ -114,7 +113,7 @@ def security():
     rooms_ok = all(r.startswith(("mb-sonnet-", "d-sonnet-")) for r in p["rooms"].values())
     rec("security", "policy rooms are contest rooms only", rooms_ok, ", ".join(p["rooms"].values()))
     src = open(os.path.join(HERE, "agent.py"), encoding="utf-8").read()
-    rec("security", "agent has no shell/exec/eval on room text", not re.search(r"\b(eval|exec|os\.system|subprocess)\s*\(", src))
+    rec("security", "agent has no shell/exec/eval on room text", not re.search(r"\b(eval|exec|os\.system|os\.popen|subprocess\.\w+)\s*\(", src))
     rec("security", "LLM adapter disables tools and MCP", all(s in open(os.path.join(HERE, "llm.py")).read() for s in ['"--tools", ""', "--strict-mcp-config"]))
     rec("security", "outgoing text gate present", all(s in src for s in ["FORBIDDEN_OUT", "ALLOWED_TYPES", "post refused: room"]))
 
@@ -153,8 +152,10 @@ def performance():
         assert agent.verify_sig("r", msg); n += 1
     rec("perf", "signature verification throughput", n > 1000, f"{n}/s (registration room peaks ~4/s)", warn=n <= 1000)
     # メッセージ処理
-    agent.STATE_PATH = os.path.join(HERE, "tests", "_state_perf.json"); agent.ATTENTION_PATH = os.path.join(HERE, "tests", "_att_perf.md")
-    agent.LOG_PATH = os.path.join(HERE, "tests", "_log_perf.log")
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix="sonnet-audit-")
+    agent.STATE_PATH = os.path.join(tmp, "state.json"); agent.ATTENTION_PATH = os.path.join(tmp, "attention.md")
+    agent.LOG_PATH = os.path.join(tmp, "agent.log"); agent.INBOX_DIR = os.path.join(tmp, "inbox")
     p = json.load(open(os.path.join(HERE, "policy.json"))); p["auto"] = {k: False for k in p["auto"]}
     a = agent.Agent(p); a.save = lambda: None
     disc = p["rooms"]["discovery"]
@@ -167,9 +168,8 @@ def performance():
         a.handle({"seq": i, "ts": "2026-09-11T08:00:00Z", "from": f"did:key:z6Mk{'A' * 40}{i % 97:04d}", "text": t % i if "%d" in t else t, "_room": disc, "_sig_ok": True})
     dt = time.time() - t0
     rec("perf", "message handling throughput", N / dt > 500, f"{N / dt:.0f} msg/s (rooms peak ~4 msg/s)", warn=N / dt <= 500)
-    for f in ("_state_perf.json", "_att_perf.md", "_log_perf.log"):
-        fp = os.path.join(HERE, "tests", f)
-        if os.path.exists(fp): os.remove(fp)
+    import shutil
+    shutil.rmtree(tmp, ignore_errors=True)
     # 読み取り予算の見積り
     hot = len(agent.Agent.HOT) + 1  # チーム部屋
     wait, gap, cold_every = p.get("read_wait_s", 10), p.get("hot_poll_gap_s", 2), p.get("cold_poll_s", 120)
@@ -194,11 +194,13 @@ def performance():
     else:
         rec("perf", "LLM latency", True, "no llm.log yet", warn=True)
     # 常駐プロセスのメモリ
-    rc, out = run(["bash", "-c", "ps -o rss=,etimes= -C python -p $(pgrep -f '^/[^ ]*python -u sonnet/agent.py run$' | head -1) 2>/dev/null | tail -1"])
+    rc, out = run(["bash", "-c", "pid=$(pgrep -f '^/[^ ]*python -u sonnet/agent.py run$' | head -1); [ -n \"$pid\" ] && ps -o rss=,etimes= -p \"$pid\""])
     m = re.search(r"(\d+)\s+(\d+)", out)
     if m:
         rss = int(m.group(1)) / 1024
         rec("perf", "running agent RSS", rss < 600, f"{rss:.0f} MB, uptime {int(m.group(2)) // 60} min", warn=rss >= 600)
+    else:
+        rec("perf", "running agent RSS", True, "agent not running (skipped)", warn=True)
 
 
 def main():

@@ -146,24 +146,25 @@ def iambic_fit(words: list[str], prons_: dict | None = None) -> float:
     positions available when the line is not exactly 10 syllables.
     """
     prons_ = prons_ or prons()
+    lex = lexicon()
     matched = 0
     pos = 0
     for w in words:
         pats = stress_patterns(w, prons_)
+        n = lex.get(bare(w), max((len(p) for p in pats), default=1))   # 公式の音節数（最大値）で位置を進める
+        cands = [p for p in pats if len(p) == n] or pats
         best = -1
-        best_len = 0
-        for pat in pats:
+        for pat in cands:
             score = 0
-            for j, s in enumerate(pat):
+            for j, st_ in enumerate(pat):
                 k = pos + j
                 if k >= len(IAMBIC):
                     break
-                if len(pat) == 1 or s == 2 or s == IAMBIC[k]:
+                if len(pat) == 1 or st_ == 2 or st_ == IAMBIC[k]:
                     score += 1
-            if score > best:
-                best, best_len = score, len(pat)
-        matched += best
-        pos += best_len
+            best = max(best, score)
+        matched += max(best, 0)
+        pos += n
     total = min(pos, len(IAMBIC))
     return matched / total if total else 0.0
 

@@ -29,10 +29,14 @@ def fresh(auto=None):
 class T(unittest.TestCase):
     def setUp(self):
         self._ask = agent.llm.ask
+        self._kv, self._read, self._get = agent.kv_get, agent.read_json, agent.fm.http_get
         agent.llm.ask = lambda *x, **k: (_ for _ in ()).throw(AssertionError("real LLM call in test"))
+        agent.kv_get = lambda ns, key: None
+        agent.fm.http_get = lambda url, timeout=30: (_ for _ in ()).throw(AssertionError("network call in test"))
 
     def tearDown(self):
         agent.llm.ask = self._ask
+        agent.kv_get, agent.read_json, agent.fm.http_get = self._kv, self._read, self._get
 
     def test_mentions(self):
         a = fresh()

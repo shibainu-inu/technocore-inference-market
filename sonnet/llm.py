@@ -21,7 +21,10 @@ def ask(system: str, user: str, schema: dict, *, model: str = "opus", timeout_s:
     """system/user を渡し、schema に従う dict を返す。失敗時は LLMError"""
     cmd = [CLAUDE_BIN, "-p", "--model", model, "--output-format", "json", "--no-session-persistence",
            "--tools", "", "--system-prompt", system, "--json-schema", json.dumps(schema, ensure_ascii=False),
+           "--setting-sources", "", "--max-budget-usd", str(os.environ.get("SONNET_LLM_BUDGET_USD", "1.00")),
            "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}']
+    workdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "llm-cwd")   # CLAUDE.md の自動読込を避ける空ディレクトリ
+    os.makedirs(workdir, exist_ok=True)
     # 子プロセスに渡す環境は白リストのみ（TC_PASS 等の秘密と、入れ子セッション判定の CLAUDECODE を渡さない）
     env = {k: v for k, v in os.environ.items() if k in ("HOME", "PATH", "TERM", "LANG", "LC_ALL", "USER", "SHELL", "TMPDIR")
            or k.startswith("XDG_")}
@@ -29,7 +32,7 @@ def ask(system: str, user: str, schema: dict, *, model: str = "opus", timeout_s:
     for _ in range(retries + 1):
         t0 = time.time()
         try:
-            p = subprocess.run(cmd, input=user, capture_output=True, text=True, timeout=timeout_s, env=env)  # プロンプトは stdin
+            p = subprocess.run(cmd, input=user, capture_output=True, text=True, encoding="utf-8", timeout=timeout_s, env=env, cwd=workdir)  # プロンプトは stdin
         except subprocess.TimeoutExpired:
             last = LLMError(f"timeout after {timeout_s}s")
             _log(task, model, t0, None, str(last)); continue

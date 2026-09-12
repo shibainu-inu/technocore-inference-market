@@ -55,10 +55,14 @@ class RecordingPost:
 class T(unittest.TestCase):
     def setUp(self):
         self._ask, self._run = agent.llm.ask, agent.llm.subprocess.run
+        self._kv, self._read, self._get = agent.kv_get, agent.read_json, agent.fm.http_get
         agent.llm.ask = lambda *x, **k: (_ for _ in ()).throw(AssertionError("real LLM call in test"))
+        agent.kv_get = lambda ns, key: None
+        agent.fm.http_get = lambda url, timeout=30: (_ for _ in ()).throw(AssertionError("network call in test"))
 
     def tearDown(self):
         agent.llm.ask, agent.llm.subprocess.run = self._ask, self._run
+        agent.kv_get, agent.read_json, agent.fm.http_get = self._kv, self._read, self._get
 
     def test_injections_cause_no_posts(self):
         a = fresh({"sign_roster": True, "accept_seat": True})
