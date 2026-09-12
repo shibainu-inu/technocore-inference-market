@@ -1028,7 +1028,8 @@ class Agent:
             offer_ok = False
             attention(f"seat offer for game {offer['game_id']} ignored: already committed to {self.st.get('agreed') or self.st.get('team')}", key="offer-dup")
         text = " ".join(out["text"].split())[:700]
-        accepting = bool(re.match(r"\s*yes-", text, re.I) or re.search(r"\baccept(ing|ed)?\b.*seat|seat.*\baccept", text, re.I))
+        negated = re.search(r"\b(already|decline|declining|cannot|can't|not available|no double|other game|another game|stay on|hold(ing)? one roster)\b", text, re.I)
+        accepting = bool(re.match(r"\s*yes-", text, re.I) or (re.search(r"\baccept(ing)?\b.*\bseat\b", text, re.I) and not negated))
         if accepting and not offer_ok:
             # 内部で受諾していない席を公開で受諾しない（返信と判断を一致させる）
             attention(f"suppressed an accepting reply for an offer that policy did not accept: {clip(text, 200)}", key="reply-suppress")

@@ -308,6 +308,21 @@ class T(unittest.TestCase):
         a.maybe_reply_discovery(); a.handle(a.q.get_nowait())
         self.assertEqual(a.st["agreed"]["game_id"], "g"); self.assertEqual(len(rp.calls), 1)
 
+    def test_decline_mentioning_accepted_seat_is_not_suppressed(self):
+        a = fresh({"reply_discovery": True, "accept_seat": True}); a.key = object()
+        a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "manual": True, "at": agent.iso()}
+        rp = RecordingPost(); a.post = rp
+        addressed(a, 1, OTHERS[0], "@TAejK6 seat on g2?")
+        agent.llm.ask = lambda *x, **k: {"action": "reply", "reason": "", "seat_offer": {"game_id": "g2", "lead_did": OTHERS[0], "member_list_seq": None},
+                                         "text": "thanks. I've already accepted a seat in another game and stay on one roster only, so I must decline."}
+        a.maybe_reply_discovery(); a.handle(a.q.get_nowait())
+        self.assertEqual(len(rp.calls), 1)                                  # 辞退文は投稿される
+        addressed(a, 2, OTHERS[0], "@TAejK6 seat on g2?")
+        agent.llm.ask = lambda *x, **k: {"action": "reply", "reason": "", "seat_offer": {"game_id": "g2", "lead_did": OTHERS[0], "member_list_seq": None},
+                                         "text": "yes-g2. accepting the seat offered at seq 2."}
+        a.maybe_reply_discovery(); a.handle(a.q.get_nowait())
+        self.assertEqual(len(rp.calls), 1)                                  # 受諾文は抑止される（hugo1 と約束済み）
+
     def test_manual_agreed_via_policy(self):
         a = fresh()
         path = os.path.join(HERE, "_policy_manual.json"); a.p["_path"] = path
