@@ -45,6 +45,7 @@ POLICY_PATH = os.path.join(HERE, "policy.json")
 STATE_PATH = os.path.join(HERE, "state.json")   # 実際は契約ごとに state-<contest_id>.json（Agent.__init__ で決める）
 LOG_PATH = os.path.join(HERE, "agent.log")
 ATTENTION_PATH = os.path.join(HERE, "ATTENTION.md")
+INBOX_DIR = os.path.join(HERE, "inbox")
 READ_LIMIT = 200
 DID_RE = re.compile(r"did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{44}")
 GAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,15}$")
@@ -1170,7 +1171,7 @@ class Agent:
         if digest == self.st.get("inbox_sha"):
             return
         self.st["inbox_sha"] = digest
-        d = os.path.join(HERE, "inbox"); os.makedirs(d, exist_ok=True)
+        d = INBOX_DIR; os.makedirs(d, exist_ok=True)
         path = os.path.join(d, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + ".md")
         with open(path, "w", encoding="utf-8") as f:
             f.write(body)

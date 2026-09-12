@@ -16,6 +16,7 @@ def fresh(auto=None):
     agent.STATE_PATH = os.path.join(HERE, "_state_test.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_test.md")
     agent.LOG_PATH = os.path.join(HERE, "_agent_test.log")
+    agent.INBOX_DIR = os.path.join(HERE, "_inbox_test")
     if os.path.exists(agent.STATE_PATH):
         os.remove(agent.STATE_PATH)
     a = agent.Agent(p)

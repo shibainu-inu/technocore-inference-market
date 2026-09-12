@@ -29,6 +29,7 @@ def fresh(auto=None):
     agent.STATE_PATH = os.path.join(HERE, "_state_sec.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_sec.md")
     agent.LOG_PATH = os.path.join(HERE, "_agent_sec.log")
+    agent.INBOX_DIR = os.path.join(HERE, "_inbox_sec")
     if os.path.exists(agent.STATE_PATH):
         os.remove(agent.STATE_PATH)
     a = agent.Agent(p)
@@ -520,9 +521,8 @@ class T(unittest.TestCase):
         a.inbox_watch(); a.handle(a.q.get_nowait())
         after = open(agent.ATTENTION_PATH).read()
         self.assertEqual(after.count("action item"), before + 1); self.assertIn("brand new item", after)
-        import glob
-        for f in glob.glob(os.path.join(os.path.dirname(HERE), "inbox", "*.md")):
-            os.remove(f)
+        import shutil
+        shutil.rmtree(agent.INBOX_DIR, ignore_errors=True)
 
 
 if __name__ == "__main__":
