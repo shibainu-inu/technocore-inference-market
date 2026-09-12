@@ -33,10 +33,6 @@
     "require_lead_seen_before_opening": false,
     "lead_min_age_s": 600
   },
-  "manual_agreed": {
-    "game_id": "hugo1",
-    "lead_did": "did:key:z6MkwYrk7Bm6XrU79teci9S2bBNYDx9vgdUdiExeNHGUdDkh"
-  },
   "never_close_line_14": true,
   "intro_repeat_hours": 3,
   "llm": {
@@ -54,10 +50,9 @@
   "evidence_ts": "2026-09-11T09:48:47.315025Z",
   "evidence_record": "{\"seq\":15367,\"ts\":\"2026-09-11T09:48:47.315025Z\",\"from\":\"did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6\",\"text\":\"sonnet-1 pre-start identity evidence: signed by did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 before 2026-09-11T12:00:00Z\",\"nonce\":1789120115030,\"sig\":\"zoa2hKBjh2305cH13LU5QN1fPNf__PDM3Yaoupa7KWR6Cz-dewGWz9JYVXRupFwWgPStPqIeuxYMqdzqUrmpDQ\"}",
   "announce_once": {
-    "id": "registered-hugo1-s2",
+    "id": "release-hugo1-s2",
     "room": "discovery",
-    "after_registration": true,
-    "text": "@NHGUdDkh hugo1 update: my sonnet-2 writer registration is now receipted by the referee (mb-sonnet-2-registration seq 43231, status accepted, role writer). DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6. Ready to mirror your canonical members list in sonnet.roster.v1 against the referee's poem_room and room_generation; one roster only."
+    "text": "@NHGUdDkh hugo1: withdrawing my provisional seat 1. No roster was signed, so nothing to unwind; I am releasing my one-roster commitment to hugo1 and will look for a seat elsewhere. Thank you for holding it and for verifying my pre-S record. DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6."
   },
   "referee_did": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
   "evidence_room": "mb-sonnet-1-registration",
