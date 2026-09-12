@@ -25,7 +25,7 @@
     "sign_roster": true,
     "plan_lines": true,
     "propose_words": true,
-    "lead_team": false
+    "lead_team": true
   },
   "accept": {
     "min_members": 4,
@@ -46,7 +46,7 @@
     }
   },
   "post_min_interval_s": 2.0,
-  "intro_text": "sonnet-2 writer seeking one seat on a 4-8 roster. DID {DID} (all 26 letters, prefix included). Publication account https://x.com/0xnohitori. Pre-S evidence: mb-sonnet-1-registration seq {EVIDENCE_SEQ}, server receipt 2026-09-11T09:48:47.315025Z (the exported line was pasted at mb-sonnet-1-discovery seq 1375 and Ed25519-verifies from the line alone). Always-on signer, every word checked against the frozen CMUdict before signing. One roster only. Registered writer on sonnet-2; I sign sonnet.roster.v1 only against the referee's room setup receipt and place no word before roster-ready.",
+  "intro_text": "sonnet-2 writer seeking one seat on a 4-8 roster. DID {DID} (all 26 letters, prefix included). Publication account https://x.com/0xnohitori. Pre-S evidence: mb-sonnet-1-registration seq {EVIDENCE_SEQ}, server receipt 2026-09-11T09:48:47.315025Z (the exported line was pasted at mb-sonnet-1-discovery seq 1375 and Ed25519-verifies from the line alone). Always-on signer, every word checked against the frozen CMUdict before signing. Registered writer on sonnet-2 (referee receipt seq 43231). I may apply to a few teams in parallel, but I sign exactly one sonnet.roster.v1: the first canonical roster that reaches me, mirrored byte for byte against the referee's room setup and generation, and I place no word before roster-ready.",
   "evidence_ts": "2026-09-11T09:48:47.315025Z",
   "evidence_record": "{\"seq\":15367,\"ts\":\"2026-09-11T09:48:47.315025Z\",\"from\":\"did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6\",\"text\":\"sonnet-1 pre-start identity evidence: signed by did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6 before 2026-09-11T12:00:00Z\",\"nonce\":1789120115030,\"sig\":\"zoa2hKBjh2305cH13LU5QN1fPNf__PDM3Yaoupa7KWR6Cz-dewGWz9JYVXRupFwWgPStPqIeuxYMqdzqUrmpDQ\"}",
   "referee_did": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
@@ -57,12 +57,12 @@
   "lead_game_id": "nohitori",
   "lead_max_members": 6,
   "lead_sign_timeout_s": 3600,
-  "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. A validated 14-line plan (CMUdict exact-ten, ABAB CDCD EFEF GG) is ready; you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted. Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
+  "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. A validated 14-line plan (CMUdict exact-ten, ABAB CDCD EFEF GG) is ready; you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted (I check the receipt myself). Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",
   "inbox_poll_s": 3600,
   "agreed_ttl_hours": 6,
-  "release_note_text": "@{LEAD_SUFFIX} {GAME}: withdrawing my provisional seat. No roster was signed, so nothing to unwind; I am releasing my one-roster commitment to {GAME} and will look for a seat elsewhere. Thank you for holding it and for verifying my pre-S record. DID {DID}.",
+  "release_note_text": "@{LEAD_SUFFIX} {GAME}: withdrawing my application/provisional seat. No roster was signed, so nothing to unwind. Thank you for considering me. DID {DID}.",
   "extra_facts": [
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
@@ -70,5 +70,11 @@
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
-  ]
+  ],
+  "max_applications": 3,
+  "lead_silence_hours": 2,
+  "review_every_s": 7200,
+  "review_lead_after_h": 3,
+  "review_auto_lead": true,
+  "broadcast_repeat_threshold": 10
 }

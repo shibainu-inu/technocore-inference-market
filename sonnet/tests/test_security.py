@@ -166,19 +166,19 @@ class T(unittest.TestCase):
         self.assertEqual(rp.calls, [])
         # 署名検証に通らないロースターは写さない
         a.on_roster_for_us({"seq": 6, "from": LEAD, "ts": "2026-09-11T08:00:00Z", "_sig_ok": False},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-1-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
         # 合意したリーダーでもロースター記載者でもない第三者の JSON は写さない
         a.on_roster_for_us({"seq": 7, "from": "did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM", "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-1-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
         a.on_roster_for_us({"seq": 8, "from": LEAD, "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-1-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(len(rp.calls), 1)
-        self.assertEqual(a.st["team"]["room"], "d-sonnet-1-team-g")
+        self.assertEqual(a.st["team"]["room"], "d-sonnet-2-team-g")
         # 2 度目（他メンバーのミラー）は署名しない
         a.on_roster_for_us({"seq": 9, "from": OTHERS[0], "ts": "2026-09-11T08:00:00Z", "_sig_ok": True},
-                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-1-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 0, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(len(rp.calls), 1)
 
     def test_receipts_are_not_implicitly_positive(self):
@@ -222,7 +222,7 @@ class T(unittest.TestCase):
     def test_pending_word_is_not_left_stuck(self):
         a = fresh({"propose_words": True}); a.key = object()
         a.opening = 0
-        a.st["team"] = {"game_id": "g", "room": "d-sonnet-1-team-g", "generation": 0, "members": [ME, LEAD]}
+        a.st["team"] = {"game_id": "g", "room": "d-sonnet-2-team-g", "generation": 0, "members": [ME, LEAD]}
         a.st["poem"].update({"state_hash": "h", "version": 1, "last_contributor": LEAD, "syllables": 0})
         a.st["plan"] = ["Shall I compare thee to a summer's day"] + ["x"] * 13
         def failing_post(room, text, kind, allow_dids=()): raise RuntimeError("503")
@@ -337,7 +337,8 @@ class T(unittest.TestCase):
     def test_agreed_expires_after_launch_and_can_be_dropped(self):
         a = fresh()
         a.p["agreed_ttl_hours"] = 6
-        a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "at": agent.iso(agent.utc_now() - 10 * 3600)}
+        a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "at": agent.iso(agent.utc_now() - 10 * 3600), "lead_last_seen": agent.iso()}
+        a.p["lead_silence_hours"] = 48
         a.expire_agreed()
         self.assertIsNotNone(a.st["agreed"])                     # 審判の告示前は期限を数えない
         a.st["referee_at"] = agent.iso(agent.utc_now() - 5 * 3600)
@@ -354,7 +355,7 @@ class T(unittest.TestCase):
         # drop_agreed で即時解除 + リーダーへの一言
         a.key = object(); rp = RecordingPost(); a.post = rp
         a.p["release_note_text"] = "@{LEAD_SUFFIX} {GAME}: withdrawing. DID {DID}."
-        a.st["agreed"] = {"game_id": "g2", "lead_did": LEAD, "at": agent.iso()}
+        a.st["agreed"] = {"game_id": "g2", "lead_did": LEAD, "at": agent.iso(), "lead_last_seen": agent.iso()}
         a.p["drop_agreed"] = "g2"; a.expire_agreed()
         self.assertIsNone(a.st["agreed"])
         self.assertEqual(rp.calls[-1][2], "release-note"); self.assertIn("g2: withdrawing", rp.calls[-1][1]); self.assertIn(LEAD[-8:], rp.calls[-1][1])
@@ -366,7 +367,7 @@ class T(unittest.TestCase):
         a.st["agreed"] = {"game_id": "hugo1", "lead_did": LEAD, "manual": True, "at": agent.iso()}
         rp = RecordingPost(); a.post = rp
         agent.read_json = lambda room, wait: ([], {"generation": 1})
-        roster = {"type": "sonnet.roster.v1", "game_id": "hugo1", "poem_room": "d-sonnet-1-team-hugo1", "room_generation": 1, "members": [LEAD, ME] + OTHERS}
+        roster = {"type": "sonnet.roster.v1", "game_id": "hugo1", "poem_room": "d-sonnet-2-team-hugo1", "room_generation": 1, "members": [LEAD, ME] + OTHERS}
         a.on_roster_for_us({"seq": 1, "from": OTHERS[0], "ts": "2026-09-11T13:54:00Z", "_sig_ok": True}, roster)
         self.assertEqual(rp.calls, [])                          # 未登録なら署名しない
         self.assertIn("lead_ok=True", open(agent.ATTENTION_PATH).read())
@@ -539,6 +540,50 @@ class T(unittest.TestCase):
         a.on_roster_for_us({"seq": 2, "from": LEAD, "ts": "t", "_sig_ok": True},
                            {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
         self.assertEqual(rp.calls, [])
+
+
+    def test_parallel_applications_sign_first_roster_and_withdraw_rest(self):
+        a = fresh({"reply_discovery": True, "accept_seat": True, "sign_roster": True}); a.key = object()
+        a.st["registered"] = {"seq": 1}; a.p["accept"]["require_lead_seen_before_opening"] = False
+        rp = RecordingPost(); a.post = rp
+        L2 = "did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM"
+        for d in (LEAD, OTHERS[0], L2):
+            a.st["first_seen"][d] = agent.iso(agent.utc_now() - 3600)
+        # 2 つの提示を並行で受ける
+        for i, (gid, lead) in enumerate((("g1", LEAD), ("g2", OTHERS[0]))):
+            addressed(a, 10 + i, lead, f"@TAejK6 seat on {gid}")
+            agent.llm.ask = lambda *x, gid=gid, lead=lead, **k: {"action": "reply", "text": f"yes-{gid}. accepting.", "reason": "",
+                                                                 "seat_offer": {"game_id": gid, "lead_did": lead, "member_list_seq": None}}
+            a.maybe_reply_discovery(); a.handle(a.q.get_nowait())
+        self.assertEqual(sorted(a.applications()), ["g1", "g2"]); self.assertEqual(sum(1 for c in rp.calls if c[2] == "disc-reply"), 2)
+        # g2 のロースターが先に来た → 署名し、g1 には辞退を送る
+        agent.read_json = lambda room, wait: ([], {"generation": 1})
+        a.on_roster_for_us({"seq": 30, "from": OTHERS[0], "ts": "t", "_sig_ok": True},
+                           {"type": "sonnet.roster.v1", "game_id": "g2", "poem_room": "d-sonnet-2-team-g2", "room_generation": 1, "members": [OTHERS[0], ME, LEAD, L2]})
+        self.assertEqual(a.st["team"]["game_id"], "g2")
+        kinds = [c[2] for c in rp.calls]; self.assertIn("roster", kinds); self.assertIn("release-note", kinds)
+        self.assertEqual(a.applications(), {"g2": a.st["agreed"]} if a.st.get("agreed") else {})
+        self.assertIn("g1", a.st["dropped"])
+
+    def test_broadcaster_is_auto_ignored_and_dropped(self):
+        a = fresh({"accept_seat": True}); a.key = object(); rp = RecordingPost(); a.post = rp
+        a.st["applications"] = {"lux": {"game_id": "lux", "lead_did": LEAD, "at": agent.iso(), "lead_last_seen": agent.iso()}}
+        for i in range(12):
+            a.handle({"seq": 100 + i, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": a.p["rooms"]["discovery"], "text": "TEAM lux open seat right now! reply yes-lux"})
+        self.assertIn(LEAD, a.st["auto_ignored"]); self.assertNotIn("lux", a.applications()); self.assertIn("lux", a.st["dropped"])
+
+    def test_lead_silence_drops_application(self):
+        a = fresh(); a.key = object(); rp = RecordingPost(); a.post = rp
+        a.st["referee_at"] = agent.iso(agent.utc_now() - 3600)
+        a.st["applications"] = {"q": {"game_id": "q", "lead_did": LEAD, "at": agent.iso(agent.utc_now() - 3 * 3600), "lead_last_seen": agent.iso(agent.utc_now() - 3 * 3600)}}
+        a.expire_agreed()
+        self.assertNotIn("q", a.applications()); self.assertEqual(rp.calls[-1][2], "release-note")
+
+    def test_strategy_review_enables_lead_when_stuck(self):
+        a = fresh(); a.st["registered"] = {"seq": 1}; a.p["auto"]["lead_team"] = False
+        a.st["stage"] = "seeking"; a.st["stage_since"] = agent.iso(agent.utc_now() - 4 * 3600)
+        a.strategy_review()
+        self.assertTrue(a.p["auto"]["lead_team"]); self.assertIn("REVIEW", open(agent.ATTENTION_PATH).read())
 
 
 if __name__ == "__main__":
