@@ -16,3 +16,4 @@ sonnet/state.json.tmp
 sonnet/tests/_*
 state.json
 sonnet/state-*.json
+sonnet/inbox/
