@@ -491,6 +491,8 @@ class Agent:
                     attention(f"{len(senders)} distinct senders mentioned 'sonnet-{other}' in discovery this hour (we are on {self.p['contest_id']}): "
                               f"possible venue change; sample: {clip(text, 200)}", key=f"venue-mention-{other}")
         if self.mentions_us(text):
+            if frm in self.p.get("ignore_senders", []):
+                log(f"DISC addressed by ignored sender {frm[-6:]} (seq {m['seq']}); skipped"); return
             log(f"DISC addressed seq={m['seq']} from={frm[-6:]} {clip(text)!r}")
             m["_at"] = utc_now()
             self.addressed.append(m)
@@ -505,7 +507,8 @@ class Agent:
         agreed = self.st.get("agreed")
         same_game = bool(agreed and agreed.get("game_id") == j.get("game_id"))
         # 署名者はリーダー本人か、そのロースターに載っている writer のどちらか（他人のロースターは写さない）
-        signer_ok = bool(agreed and (m["from"] == agreed["lead_did"] or m["from"] in members)) and m.get("_sig_ok") is True
+        signer_ok = bool(agreed and (m["from"] == agreed["lead_did"] or m["from"] in members)) and m.get("_sig_ok") is True \
+            and m["from"] not in self.p.get("ignore_senders", [])
         lead_ok = bool(agreed) and (bool(agreed.get("manual")) or self.lead_acceptable(agreed["lead_did"]))  # 運用者の手動合意はリーダー条件を満たしたとみなす
         log(f"ROSTER for us seq={m['seq']} game={j.get('game_id')} n={n} ok={ok} agreed={same_game} signer_ok={signer_ok} lead_ok={lead_ok}")
         if self.st.get("team"):
@@ -1019,7 +1022,7 @@ class Agent:
         if offer and not self.st.get("team") and not self.st.get("agreed") and self.p["auto"]["accept_seat"]:
             gid, lead = offer["game_id"], offer["lead_did"]
             offer_ok = bool(GAME_RE.match(gid) and DID_RE.fullmatch(lead) and any(x["from"] == lead for x in batch)
-                            and self.lead_acceptable(lead))
+                            and lead not in self.p.get("ignore_senders", []) and self.lead_acceptable(lead))
             if offer_ok:
                 self.st["agreed"] = {"game_id": gid, "lead_did": lead, "member_list_seq": offer["member_list_seq"], "at": iso()}
                 attention(f"agreed seat: game {gid} lead {lead}")

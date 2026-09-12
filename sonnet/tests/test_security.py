@@ -528,5 +528,18 @@ class T(unittest.TestCase):
         shutil.rmtree(agent.INBOX_DIR, ignore_errors=True)
 
 
+    def test_ignored_senders_never_get_a_seat_or_reply(self):
+        a = fresh({"reply_discovery": True, "accept_seat": True, "sign_roster": True}); a.key = object()
+        a.p["ignore_senders"] = [LEAD]; a.st["registered"] = {"seq": 1}
+        rp = RecordingPost(); a.post = rp
+        a.handle({"seq": 1, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": a.p["rooms"]["discovery"], "text": "@TAejK6 open seat, reply yes"})
+        self.assertEqual(len(a.addressed), 0)
+        a.st["agreed"] = {"game_id": "g", "lead_did": LEAD, "manual": True, "at": agent.iso()}
+        agent.read_json = lambda room, wait: ([], {"generation": 1})
+        a.on_roster_for_us({"seq": 2, "from": LEAD, "ts": "t", "_sig_ok": True},
+                           {"type": "sonnet.roster.v1", "game_id": "g", "poem_room": "d-sonnet-2-team-g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
+        self.assertEqual(rp.calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()
