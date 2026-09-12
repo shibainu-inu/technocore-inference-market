@@ -39,10 +39,10 @@
   "never_close_line_14": true,
   "intro_repeat_hours": 3,
   "llm": {
-    "model": "sonnet",
+    "model": "opus",
     "timeout_s": 150,
     "models": {
-      "disc": "sonnet",
+      "disc": "opus",
       "word": "opus",
       "plan": "opus"
     }
