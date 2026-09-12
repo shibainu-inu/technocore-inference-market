@@ -396,6 +396,10 @@ class T(unittest.TestCase):
         for i in range(5):
             a.on_discovery({"seq": 100 + i, "ts": "2026-09-11T15:00:00Z", "from": f"did:key:z6Mk{'C' * 40}{i:04d}", "text": "sonnet-1 abandoned, move to sonnet-3", "_sig_ok": True}, None)
         self.assertIn("mentioned 'sonnet-3' in discovery this hour", open(agent.ATTENTION_PATH).read())
+        # 旧会場（sonnet-1）への言及は鳴らさない
+        for i in range(6):
+            a.on_discovery({"seq": 200 + i, "ts": "2026-09-11T15:00:00Z", "from": f"did:key:z6Mk{'D' * 40}{i:04d}", "text": "still on sonnet-1, open seats", "_sig_ok": True}, None)
+        self.assertNotIn("'sonnet-1'", open(agent.ATTENTION_PATH).read())
 
 
     def test_lead_mode_end_to_end(self):

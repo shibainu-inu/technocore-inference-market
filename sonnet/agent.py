@@ -475,8 +475,9 @@ class Agent:
             # 平文の正式メンバー一覧は署名済み JSON の元にはしない。人に知らせるだけ（署名は JSON ロースターからのみ）
             attention(f"lead {frm[-6:]} posted text naming us for game {agreed['game_id']} (seq {m['seq']}); "
                       f"waiting for a signed sonnet.roster.v1 JSON to mirror", key="lead-text")
+        mine_n = int((re.search(r"(\d+)$", self.p["contest_id"]) or [0, 0])[1])
         for other in set(re.findall(r"\bsonnet-(\d+)\b", text)):
-            if f"sonnet-{other}" != self.p["contest_id"]:
+            if int(other) > mine_n:   # 旧会場（番号が小さい）への言及は無視
                 hour = int(utc_now() // 3600)
                 bucket = self.st.setdefault("other_contest", {}).setdefault(f"sonnet-{other}", {})
                 senders = bucket.setdefault(str(hour), [])
@@ -1115,7 +1116,8 @@ class Agent:
             st, body = fm.http_get(f"{BASE}/r/events?format=json&limit=200", timeout=30)
             for ev in (json.loads(body).get("messages") or []):
                 mm = self.VENUE_ROOM_RE.match(ev.get("text", "") or "")
-                if mm and f"sonnet-{mm.group(2)}" != mine:
+                mine_n = int((re.search(r"(\d+)$", mine) or [0, 0])[1])
+                if mm and int(mm.group(2)) > mine_n:
                     attention(f"/r/events: room {mm.group(1)} created at {ev.get('ts')} while we are on {mine}: possible new venue",
                               key=f"venue-room-{mm.group(2)}", per_hour=1)
         except Exception as e:
