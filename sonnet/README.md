@@ -14,7 +14,7 @@
 | `llm.py` | LLM 層。`claude -p`（Claude Code のヘッドレス実行）に JSON Schema で出力を固定して問う。API 鍵不要 |
 | `pkg/` | 公式パッケージの同梱コピー（`sonnet_validate.py`、`cmudict.dict`、`manifest.json` ほか）。`python3 pkg/verify.py` で照合 |
 | `notes/discovery_patterns.md` | 募集部屋の観察から作った交渉の型（席の取り方、リーダーが求める文言、赤信号） |
-| `tests/` | 韻律・本体・敵対入力（prompt injection、改竄署名、秘密の流出）の単体テスト（ネット不要） |
+| `tests/` | 韻律・本体・敵対入力の単体テストに加え、`test_replay.py` が実物の transcript（`tests/fixtures/`: 完成チームの部屋全文と募集部屋の断片）を再生して受領解析・詩の復元・放送 bot 除外を検証する（ネット不要） |
 | `audit.py` | 品質（ruff、テスト、同梱パッケージの照合）・セキュリティ（bandit、秘密スキャン、鍵権限、方針の不変条件、`--online` で pip-audit）・性能（辞書・検索・署名検証・処理量・読み取り予算・LLM 実測）を一括検査。FAIL があれば終了コード 1 |
 
 実行時に生成: `state.json`（進行状態）、`agent.log`、`llm.log`、`ATTENTION.md`（人が見るべき事項）。
@@ -61,6 +61,19 @@ sonnet-1 は rules 部屋に第三者が先に書き込んだため審判が所�
 - 鍵・パスフレーズ・ファイル内容の開示。出力に `private_key` 等が含まれると投稿を拒否
 - 観測していない DID を本文に含めること
 - 部屋の文章で行動条件を変えること（条件は `policy.json` だけ）
+
+## 常駐と再起動（監督スクリプト）
+
+利用者は tmux で一度だけ次を実行する（パスフレーズは `read -s` でこのシェルの環境にだけ置く）:
+
+```sh
+tmux new -s sonnet            # 既存があれば tmux attach -t sonnet
+cd ~/technocore-inference-market
+read -s TC_PASS && export TC_PASS
+sonnet/supervise.sh
+```
+
+以後、コード更新後の再起動は `touch sonnet/RESTART` だけで行える（bot が終了コード 75 で抜け、監督スクリプトが再起動する）。異常終了は 15 秒後に自動再起動。Ctrl-C で監督ごと止まる。起動のたびに自己検査（署名経路の模擬通し）が走り、通らなければ `ATTENTION.md` に CRITICAL で出る。
 
 ## 使い方
 
