@@ -512,6 +512,14 @@ class T(unittest.TestCase):
         agent.llm.ask = lambda *x, **k: calls.append(1)
         a.inbox_watch()                                                     # 同じ内容なら再処理しない
         self.assertEqual(calls, [])
+        # 既出の項目は 2 回目の抽出では通知しない
+        agent.fm.http_get = lambda url, timeout=30: (200, note + "\nupdated\n")
+        agent.llm.ask = lambda system, user, schema, **k: {"observed_at": "x", "contest_id": "sonnet-2", "referee_did": None, "deadline": None, "venue_changed": False,
+                                                          "rule_or_referee_changes": ["referee rotated"], "action_items_for_us": ["re-register on sonnet-3", "brand new item"], "summary": "s"}
+        before = open(agent.ATTENTION_PATH).read().count("action item")
+        a.inbox_watch(); a.handle(a.q.get_nowait())
+        after = open(agent.ATTENTION_PATH).read()
+        self.assertEqual(after.count("action item"), before + 1); self.assertIn("brand new item", after)
         import glob
         for f in glob.glob(os.path.join(os.path.dirname(HERE), "inbox", "*.md")):
             os.remove(f)

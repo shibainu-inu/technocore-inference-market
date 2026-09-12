@@ -1201,9 +1201,18 @@ class Agent:
             issues.append("inbox says the venue changed")
         if issues:
             attention("INBOX DISAGREES WITH POLICY: " + "; ".join(issues) + " (policy is not changed automatically)", key="inbox-mismatch", per_hour=2)
-        for item in out.get("rule_or_referee_changes", [])[:5]:
+        seen = self.st.setdefault("inbox_seen_items", [])
+        def new_only(items):
+            out_items = []
+            for it in items:
+                h = hashlib.sha256(re.sub(r"[^a-z0-9]", "", str(it).lower())[:120].encode()).hexdigest()[:12]
+                if h not in seen:
+                    seen.append(h); out_items.append(it)
+            del seen[:-400]
+            return out_items
+        for item in new_only(out.get("rule_or_referee_changes", []))[:5]:
             attention(f"inbox: rule/referee change reported: {clip(item, 200)}", key="inbox-change", per_hour=5)
-        for item in out.get("action_items_for_us", [])[:5]:
+        for item in new_only(out.get("action_items_for_us", []))[:5]:
             attention(f"inbox: action item: {clip(item, 200)}", key="inbox-action", per_hour=5)
         self.save()
 
