@@ -45,6 +45,7 @@ POLICY_PATH = os.path.join(HERE, "policy.json")
 STATE_PATH = os.path.join(HERE, "state.json")   # 実際は契約ごとに state-<contest_id>.json（Agent.__init__ で決める）
 LOG_PATH = os.path.join(HERE, "agent.log")
 ATTENTION_PATH = os.path.join(HERE, "ATTENTION.md")
+RESTART_FLAG = os.path.join(HERE, "RESTART")      # 置かれたら終了コード 75 で終了（supervise.sh が再起動する）
 INBOX_DIR = os.path.join(HERE, "inbox")
 READ_LIMIT = 200
 DID_RE = re.compile(r"did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{44}")
@@ -391,7 +392,9 @@ class Agent:
 
     def note_broadcaster(self, m):
         """同じ本文を短時間に繰り返す送信者（放送だけの bot）を自動で無視リストへ"""
-        frm, text = m.get("from", ""), clip(m.get("text", ""), 120)
+        frm, raw = m.get("from", ""), m.get("text", "")
+        j = parse_json(raw)
+        text = clip(j.get("text") if j and isinstance(j.get("text"), str) else raw, 120)   # JSON ノートは内側の本文で比較
         if not frm or frm == self.did or frm in self.ignored():
             return
         hist = self.st.setdefault("sender_hist", {})
@@ -771,7 +774,8 @@ class Agent:
             if len(props) >= 4000:
                 for k in list(props)[:1000]:
                     del props[k]
-            props[j["request_id"]] = {"word": j["word"], "from": m["from"], "seq": m["seq"]}
+            key = f"{m['from']}|{j['request_id']}"
+            props.setdefault(key, {"word": j["word"], "from": m["from"], "seq": m["seq"]})   # 同じ ID の再提案は最初の語が有効（審判は別内容を拒否する）
             return
         log(f"TEAM {m['from'][-6:]} {clip(text)!r}")
 
@@ -843,7 +847,7 @@ class Agent:
             if isinstance(r.get("syllables"), int):
                 poem["syllables"] = r["syllables"]
             poem["last_contributor"] = r.get("sender_did")
-            word = (pend["word"] if mine else (self.st.get("proposals", {}).get(rid) or {}).get("word"))
+            word = (pend["word"] if mine else (self.st.get("proposals", {}).get(f"{r.get('sender_did')}|{rid}") or {}).get("word"))
             if word:
                 self.append_word(word)
             elif not poem.get("desync"):
@@ -1337,6 +1341,11 @@ class Agent:
 
     def periodic(self):
         now = utc_now()
+        if os.path.exists(RESTART_FLAG):
+            try: os.remove(RESTART_FLAG)
+            except OSError: pass
+            self.save(); log("restart requested via RESTART flag; exiting 75 for the supervisor")
+            sys.exit(75)
         if now - getattr(self, "_review_at", 0) > self.p.get("review_every_s", 7200):
             self._review_at = now
             try: self.strategy_review()
