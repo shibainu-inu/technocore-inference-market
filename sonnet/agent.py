@@ -1380,7 +1380,42 @@ class Agent:
         if now - getattr(self, "_save_at", 0) > 60:
             self._save_at = now; self.save()
 
+    def selfcheck(self):
+        """起動時の自己検査: 今の会場のロースターが署名経路を通るかを、投稿せずに通しで確かめる。
+        失敗したら ATTENTION に出す（会場固定のような不具合を実物のロースターが来る前に見つける）"""
+        import copy
+        saved_st, saved_post, saved_read, saved_key = copy.deepcopy(self.st), self.post, globals()["read_json"], self.key
+        saved_auto = dict(self.p["auto"])
+        calls = []
+        try:
+            self.p["auto"]["sign_roster"] = True
+            gid = "selfcheck"; lead = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
+            others = ["did:key:z6MkvBBoP3VST9xF833FLRLdZRG8d92uXahXgAW3BR9W9Uxu", "did:key:z6MktrGB8UZGApSNcRuhxTbyHdf8aGVS5ruLMJZhWMTg9Njo"]
+            self.key = object(); self.post = lambda room, text, kind, allow_dids=(): calls.append((room, kind)) or 1
+            globals()["read_json"] = lambda room, wait: ([], {"generation": 1})
+            self.st["team"] = None; self.st["registered"] = {"seq": 1}
+            self.st["applications"] = {gid: {"game_id": gid, "lead_did": lead, "at": iso(), "manual": True}}
+            self.st["agreed"] = self.st["applications"][gid]
+            self.start_reader = lambda room: None; self.replay_room = lambda room: None
+            roster = {"type": "sonnet.roster.v1", "game_id": gid, "poem_room": f"d-{self.p['contest_id']}-team-{gid}",
+                      "room_generation": 1, "members": [lead, self.did] + others}
+            self.on_roster_for_us({"seq": 0, "from": lead, "ts": iso(), "_sig_ok": True}, roster)
+            ok = any(k == "roster" for _, k in calls)
+        except Exception as e:
+            ok = False; log(f"selfcheck error: {e!r}")
+        finally:
+            self.st = saved_st; self.post = saved_post; globals()["read_json"] = saved_read; self.key = saved_key
+            self.p["auto"] = saved_auto
+            for attr in ("start_reader", "replay_room"):
+                self.__dict__.pop(attr, None)
+        if ok:
+            log(f"selfcheck: roster signing path OK for {self.p['contest_id']}")
+        else:
+            attention(f"SELFCHECK FAILED: a roster for {self.p['contest_id']} would NOT be signed by this build; fix before relying on sign_roster")
+        return ok
+
     def run(self):
+        self.selfcheck()
         try:
             self.find_referee()       # 読み始める前に審判を確定しておく
         except Exception as e:

@@ -586,5 +586,19 @@ class T(unittest.TestCase):
         self.assertTrue(a.p["auto"]["lead_team"]); self.assertIn("REVIEW", open(agent.ATTENTION_PATH).read())
 
 
+    def test_selfcheck_detects_venue_mismatch(self):
+        a = fresh(); a.key = object()
+        self.assertTrue(a.selfcheck())
+        self.assertIsNone(a.st.get("team")); self.assertIsNone(a.st.get("registered"))     # 検査は状態を汚さない
+        a.p["contest_id"] = "sonnet-9"; a.p["rooms"] = {k: v.replace("sonnet-2", "sonnet-9") for k, v in a.p["rooms"].items()}
+        self.assertTrue(a.selfcheck())                                                     # 会場が変わっても通る（固定でない）
+        orig = agent.Agent.on_roster_for_us
+        agent.Agent.on_roster_for_us = lambda self, m, j: None                              # 署名経路が壊れた状況を模擬
+        try:
+            self.assertFalse(a.selfcheck()); self.assertIn("SELFCHECK FAILED", open(agent.ATTENTION_PATH).read())
+        finally:
+            agent.Agent.on_roster_for_us = orig
+
+
 if __name__ == "__main__":
     unittest.main()
