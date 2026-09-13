@@ -601,8 +601,13 @@ class Agent:
                     or re.search(rf"\byes-{re.escape(lead['game_id'])}\b", text):
                 self.on_lead_application(m, j)
             if typ == "sonnet.roster.v1" and gid == lead["game_id"] and frm in lead.get("members", []):
-                lead.setdefault("signed", {})[frm] = m["seq"]
-                log(f"lead: member {frm[-6:]} posted roster.v1 (seq {m['seq']})")
+                # 署名は「どの members[] / generation / poem_room に対してか」ごと憶える。同じ枠を出し直しても同意は生きたままなので引き継げる
+                lead.setdefault("sigs", {})[frm] = {"seq": m["seq"], "members": j.get("members"), "gen": j.get("room_generation"), "room": j.get("poem_room")}
+                if not lead.get("canonical") or self.sig_matches(lead, lead["sigs"][frm]):
+                    lead.setdefault("signed", {})[frm] = m["seq"]
+                    log(f"lead: member {frm[-6:]} posted roster.v1 (seq {m['seq']})")
+                else:
+                    log(f"lead: member {frm[-6:]} posted a roster.v1 that does not match the canonical frame (seq {m['seq']}); not counted")
         if self.is_referee(m):
             if j:
                 self.note_withdraw_receipt(j)
@@ -1542,6 +1547,10 @@ class Agent:
         self.save()
         self.lead_check_roster()
 
+    @staticmethod
+    def sig_matches(lead, r):
+        return bool(r) and r.get("members") == lead.get("canonical") and r.get("gen") == lead.get("generation") and r.get("room") == lead.get("poem_room")
+
     def seat_from_waitlist(self):
         """空いた席に待機列の先頭から座らせる（writer 証跡があり、他所の同意が生きていない相手だけ）"""
         lead = self.st["lead"]; cap = self.p.get("lead_max_members", 6) - 1
@@ -1608,7 +1617,10 @@ class Agent:
         except Exception as e:
             attention(f"lead: could not post canonical roster: {e!r}", key="lead-post"); return
         lead["canonical"] = members; lead["roster_request_id"] = roster["request_id"]; lead["canonical_at"] = utc_now()
-        lead["signed"] = {}
+        # 同じ枠（members[]・generation・poem_room が一致）に既に出ている署名は生きている: 引き継ぐ
+        lead["signed"] = {f: r["seq"] for f, r in (lead.get("sigs") or {}).items() if f in members and self.sig_matches(lead, r)}
+        if lead["signed"]:
+            log(f"lead: carried over {len(lead['signed'])} signature(s) on the identical frame: {[f[-8:] for f in lead['signed']]}")
         for gid in list(self.applications()):
             self.drop_application(gid, f"leading {lead['game_id']} (roster issued)")
         self.st["team"] = {"game_id": lead["game_id"], "room": lead["poem_room"], "generation": lead["generation"], "members": members,
@@ -2225,6 +2237,12 @@ class Agent:
                 self.lead_check_roster()
             except Exception as e:
                 log(f"lead_check_roster after reissue: {e!r}")
+        for did, seq in (p.get("lead_mark_signed") or {}).items():
+            # 起動前に観測済みの、現行の枠と同一内容の署名を手で登録する（出し直し前の版に出た同意を引き継ぐため）
+            if lead and lead.get("canonical") and did in lead["members"] and lead.get("signed", {}).get(did) != seq:
+                lead.setdefault("sigs", {})[did] = {"seq": seq, "members": lead["canonical"], "gen": lead.get("generation"), "room": lead.get("poem_room")}
+                lead.setdefault("signed", {})[did] = seq
+                attention(f"operator lead_mark_signed: {did[-8:]} counted as signed (seq {seq})"); self.save()
         for did in p.get("lead_unseat", []) or []:
             if lead and did in lead.get("members", []):
                 lead["members"].remove(did); lead.setdefault("declined", []).append(did)

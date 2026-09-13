@@ -142,7 +142,9 @@
   "lead_undecline": [
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
   ],
-  "lead_unseat": [
-    "did:key:z6MkgoiWuGuyN6RSuWDeWjmrbW3qf6c8xM4xk8MZfb55BEWV"
-  ]
+  "lead_unseat": [],
+  "lead_mark_signed": {
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz": 60854,
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ": 65698
+  }
 }

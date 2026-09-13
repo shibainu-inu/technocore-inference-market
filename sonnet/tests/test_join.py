@@ -782,3 +782,13 @@ class Join(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSignatureCarryOver(unittest.TestCase):
+    def test_sig_matches(self):
+        from agent import Agent
+        lead = {"canonical": ["a", "b"], "generation": 2, "poem_room": "r"}
+        self.assertTrue(Agent.sig_matches(lead, {"members": ["a", "b"], "gen": 2, "room": "r"}))
+        self.assertFalse(Agent.sig_matches(lead, {"members": ["a", "b", "c"], "gen": 2, "room": "r"}))
+        self.assertFalse(Agent.sig_matches(lead, {"members": ["a", "b"], "gen": 1, "room": "r"}))
+        self.assertFalse(Agent.sig_matches(lead, None))
