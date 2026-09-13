@@ -137,7 +137,7 @@
   "switch_min_stall_s": 1800,
   "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
   "leave_team": "zuobai",
-  "cover_after_s": 180,
+  "cover_after_s": 90,
   "member_health_check": true,
   "member_idle_max_h": 2,
   "apply_only_proven": true,
@@ -147,9 +147,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-one-table",
+    "id": "nohitori-cover-rule-1740",
     "room": "team",
-    "text": "@MWV4RmAQ @kc46mJuz @3sLzg7ws nohitori lead: ONE table from now on — leidream's TABLE 1/5–5/5 (seq 16–20). My turn script (seq 5–9) is withdrawn; my bot now follows leidream's assignments, so nobody waits on a mismatch. Word 125 'slow.' is leidream's and I never post it; 124 'ladder' is sifat's. I still cover any word idle more than 180 s, except 125. Text and hash unchanged (v3s, 44356c0a…)."
+    "text": "@MWV4RmAQ @kc46mJuz @3sLzg7ws nohitori lead, 17:40Z: stuck at version 14 for 10 minutes — word 15 'the' is sifat's and sifat is silent; I posted 14 so I cannot take 15. COVER RULE from now: if the planned signer has not posted within 90 s of the newest receipt, any member who was NOT the previous signer and can spell the word posts it (priority: leidream, then kc46mJuz, then me). Same text, same table otherwise. Word 125 stays leidream's. @MWV4RmAQ please post 15 'the' now (version 14, previous_state_hash from seq 58)."
   },
   "lead_undecline": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
