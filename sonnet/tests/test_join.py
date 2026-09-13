@@ -579,6 +579,13 @@ class Join(unittest.TestCase):
             a.handle(mk())
             self.assertNotIn("withdraw", rp.kinds(), name); self.assertIsNotNone(a.st["team"], name)
 
+    def test_switch_ignores_offers_naming_our_own_lead_game(self):
+        a = fresh({"switch_to_proven_offer": True, "lead_team": True}); rp = RecordingPost(); a.post = rp
+        a.st["lead"] = {"game_id": "h", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD], "signed": {}, "declined": [], "poem_room": TEAM + "h", "generation": 1}
+        a.handle(setup_msg(500, "h")); a.st["first_seen"][LEAD2] = BEFORE; self.proven(a)
+        a.handle(self.offer())          # game_id h = 自分のゲーム
+        self.assertEqual([k for k in rp.kinds() if k in ("withdraw", "disc-reply")], []); self.assertIsNone(a.application_for("h"))
+
     def test_switch_when_no_team(self):
         a = fresh({"switch_to_proven_offer": True}); rp = RecordingPost(); a.post = rp
         a.readdress_recent_offers = lambda: None; a.sign_recent_lead_roster = lambda gid, lead: None

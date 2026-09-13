@@ -997,6 +997,8 @@ class Agent:
                 cands.append(g)
         if team:
             cands = [g for g in cands if g != team["game_id"]]
+        lead_gid = (self.st.get("lead") or {}).get("game_id")
+        cands = [g for g in cands if g != lead_gid]   # 自分が率いるゲームへの「誘い」は存在しない（相手の返信を誘いと誤読しない）
         if not cands or self.application_for(cands[0]):
             return False
         gid = cands[0]
@@ -2175,6 +2177,13 @@ class Agent:
             self.maybe_submit(p)
         except Exception as e:
             log(f"maybe_submit error: {e!r}")
+        for gid in p.get("forget_application", []) or []:
+            apps = self.st.setdefault("applications", {})
+            if gid in apps:
+                apps.pop(gid); attention(f"operator forget_application: {gid} removed (not dropped)")
+                if (self.st.get("agreed") or {}).get("game_id") == gid:
+                    self.st["agreed"] = next(iter(apps.values()), None)
+                self.save()
         lead = self.st.get("lead")
         rt = p.get("lead_reissue_token")
         if rt and lead and lead.get("canonical") and self.st.get("lead_reissue_done") != rt:
