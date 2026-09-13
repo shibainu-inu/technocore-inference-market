@@ -34,6 +34,7 @@
 | `apply_recruits` | 開かれた募集（`sonnet.recruit.v1`）に自分から応募する。条件は決定的: 審判の部屋設定（results 部屋の `sonnet.setup.v1`）がある、募集が `recruit_fresh_hours` 以内、リーダーは writer 受理を観測済みで `lead_acceptable` を満たし無視対象でない、自分のゲーム・落ちたゲーム・応募済みでない、応募数が `max_applications` 未満。`apply_interval_s` ごとに 1 件、開始前から見えているリーダーを優先、次に新しい募集。`application_text`（yes-{GAME} で始まる散文）と `sonnet.application.v1` の 2 投稿を出し、応募として記録する。署名は既存の `sign_roster` 経路（リーダーが自分を載せたロースターを出した時）で 1 つだけ |
 | `lead_team` | 自分でチーム部屋を要求し募集する。実物の審判は部屋設定（poem_room / room_generation）をチーム部屋ではなく **results 部屋の `sonnet.setup.v1`** に出すので、bot は results を読んで `room_ready` に進め、`lead_intro_text` を投稿する。起動時に results の /export を 1 回読んで設定を取り込む（`sync_setups`） |
 |  | リーダーがメンバーを差し替えた（同じゲーム・部屋・generation で members が違うロースターをリーダー本人が出した）場合は、新メンバー全員に writer の証拠（登録受理か審判受理の同意）があり、自分が載っていて、`reconsent_max`（3）未満なら `sonnet.withdraw.v1` → 新ロースターの署名で再同意する。起動時は discovery の /export で停止中の差し替えに追随する（`resync_team_roster`）。審判が受理したロースター同意の sender_did は writer 証拠として記録する |
+|  | 自分のロースター署名が「consent: …」で却下された（前チームの withdraw が審判に未処理）場合は、直近 6 時間に離れたゲームへ withdraw.v1 を出し直して同じロースターに署名し直す（`consent_retry_max` 回まで）。署名直前にも未受領の withdraw があれば出し直す。`trusted_senders` の DID は無視・自動無視の対象にしない |
 | `withdraw_stuck` | 署名したロースターが `roster_stuck_warn_h`（1.5h）経っても roster_ready にならなければ ATTENTION、`roster_stuck_hours`（3h）で `sonnet.withdraw.v1` を出して席を離れ、そのゲームを dropped に入れて募集・応募に戻る。自分がリーダーのチームは対象外（人が判断） |
 | `plan_lines` | 開始後、チーム部屋の議論を踏まえ 14 行の下書きを LLM で作り、公式バリデータと韻律で検証して投稿 |
 | `propose_words` | 審判受領で状態が進むたび、下書きか LLM から次の 1 語を選び、手元検証を通ったものだけ提案 |

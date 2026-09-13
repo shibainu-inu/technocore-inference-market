@@ -90,5 +90,9 @@
     "halftongue",
     "pasukanlima"
   ],
-  "readdress_token": "2026-09-13T07:31Z"
+  "readdress_token": "2026-09-13T07:31Z",
+  "trusted_senders": [
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
+  ],
+  "consent_retry_max": 2
 }

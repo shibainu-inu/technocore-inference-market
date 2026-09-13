@@ -52,6 +52,15 @@ def recruit_msg(seq, gid, frm, ts="2026-09-13T00:21:39Z", sig=True):
     return {"seq": seq, "ts": ts, "from": frm, "_sig_ok": sig, "_room": DISC, "text": json.dumps(j)}
 
 
+def roster_agent_like(tc):
+    """署名条件を満たした bot（応募済み・登録済み・鍵あり・部屋 generation 1）"""
+    a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp
+    a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": agent.iso(), "manual": True}}; a.st["agreed"] = a.st["applications"]["g"]
+    agent.read_json = lambda room, wait: ([], {"generation": 1})
+    a.withdraw_others = lambda gid: None
+    return a, rp
+
+
 class Join(unittest.TestCase):
     def setUp(self):
         self._now = agent.utc_now
@@ -365,6 +374,49 @@ class Join(unittest.TestCase):
         a.st["pending_withdraw"] = {"game_id": "g", "request_id": "w1", "at": "2026-09-13T06:00:00Z", "n": 3}
         agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:00:00Z"); a.check_pending_withdraw()
         self.assertEqual(rp.calls, []); self.assertTrue(a.st["pending_withdraw"]["gave_up"]); self.assertIn("may still count as live", att())
+
+    # ---- halftongue 本命: 合流を取りこぼさない ----
+    def test_consent_rejection_of_our_roster_resends_withdraw_and_resigns(self):
+        a, rp = self.signed_team(); a.st["team"]["roster_request_id"] = "roster-1"
+        a.st["sent"] = [{"ts": agent.iso(), "kind": "withdraw", "room": DISC, "seq": 1, "text": json.dumps({"type": "sonnet.withdraw.v1", "game_id": "oldgame"})}]
+        rc_ = {"type": "sonnet.receipt.v1", "status": "rejected", "reason": "consent: withdraw before changing", "request_id": "roster-1", "sender_did": ME}
+        a.handle({"seq": 50, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertEqual(rp.kinds(), ["withdraw", "roster"]); self.assertEqual(json.loads(rp.calls[0][1])["game_id"], "oldgame")
+        self.assertEqual(json.loads(rp.calls[1][1])["members"], [LEAD, OTHERS[0], OTHERS[1], ME])
+        self.assertIsNotNone(a.st["team"]); self.assertEqual(a.st["team"]["consent_retries"], 1); self.assertNotEqual(a.st["team"]["roster_request_id"], "roster-1")
+        self.assertNotIn("g", a.st.get("dropped", []))
+        # 2 回目も consent なら再試行、3 回目は席を手放す
+        rc_["request_id"] = a.st["team"]["roster_request_id"]
+        a.handle({"seq": 51, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)}); self.assertEqual(len(rp.calls), 4)
+        rc_["request_id"] = a.st["team"]["roster_request_id"]
+        a.handle({"seq": 52, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertIsNone(a.st["team"]); self.assertIn("g", a.st["dropped"]); self.assertEqual(len(rp.calls), 4)
+
+    def test_non_consent_rejection_still_releases_seat(self):
+        a, rp = self.signed_team(); a.st["team"]["roster_request_id"] = "roster-1"
+        rc_ = {"type": "sonnet.receipt.v1", "status": "rejected", "reason": "roster: writer required", "request_id": "roster-1", "sender_did": ME}
+        a.handle({"seq": 50, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertEqual(rp.calls, []); self.assertIsNone(a.st["team"]); self.assertIn("g", a.st["dropped"])
+
+    def test_initial_signing_resends_unreceipted_withdraw_first(self):
+        a, rp = roster_agent_like(self)
+        a.st["pending_withdraw"] = {"game_id": "zzz", "request_id": "w1", "at": agent.iso(), "n": 1}
+        a.st["sent"] = [{"ts": agent.iso(), "kind": "withdraw", "room": DISC, "seq": 1, "text": json.dumps({"type": "sonnet.withdraw.v1", "game_id": "zzz"})}]
+        a.on_roster_for_us({"seq": 5, "from": LEAD, "ts": "t", "_sig_ok": True},
+                           {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
+        self.assertEqual(rp.kinds(), ["withdraw", "roster"]); self.assertEqual(json.loads(rp.calls[0][1])["game_id"], "zzz")
+        # 未受領の withdraw が無ければ余計な投稿はしない
+        a2, rp2 = roster_agent_like(self)
+        a2.on_roster_for_us({"seq": 5, "from": LEAD, "ts": "t", "_sig_ok": True},
+                            {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1, "members": [LEAD, ME] + OTHERS})
+        self.assertEqual(rp2.kinds(), ["roster"])
+
+    def test_trusted_sender_is_never_ignored_or_auto_ignored(self):
+        a = fresh(); a.p["trusted_senders"] = [LEAD]; a.p["ignore_senders"].append(LEAD); a.st["auto_ignored"] = [LEAD]
+        self.assertNotIn(LEAD, a.ignored())
+        for i in range(25):
+            a.note_broadcaster({"from": LEAD, "text": "same text every time"})
+        self.assertEqual(a.st.get("auto_ignored"), [LEAD]); self.assertNotIn(LEAD, a.ignored())   # 増えない・無視されない
 
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):

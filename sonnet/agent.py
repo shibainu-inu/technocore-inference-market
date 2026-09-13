@@ -402,14 +402,14 @@ class Agent:
         self.save()
 
     def ignored(self):
-        return set(self.p.get("ignore_senders", [])) | set(self.st.get("auto_ignored", []))
+        return (set(self.p.get("ignore_senders", [])) | set(self.st.get("auto_ignored", []))) - set(self.p.get("trusted_senders", []))
 
     def note_broadcaster(self, m):
         """同じ本文を短時間に繰り返す送信者（放送だけの bot）を自動で無視リストへ"""
         frm, raw = m.get("from", ""), m.get("text", "")
         j = parse_json(raw)
         text = clip(j.get("text") if j and isinstance(j.get("text"), str) else raw, 120)   # JSON ノートは内側の本文で比較
-        if not frm or frm == self.did or frm in self.ignored():
+        if not frm or frm == self.did or frm in self.ignored() or frm in self.p.get("trusted_senders", []):
             return
         hist = self.st.setdefault("sender_hist", {})
         h = hist.setdefault(frm, [])
@@ -582,7 +582,21 @@ class Agent:
             team = self.st.get("team")
             if team and j and j.get("sender_did") == self.did and j.get("request_id") == team.get("roster_request_id"):
                 if j.get("status") == "rejected":
-                    attention(f"CRITICAL our roster.v1 for {team['game_id']} was rejected by the referee: {j.get('reason')}; seat released, back to applying", key="roster-rejected")
+                    reason = str(j.get("reason", ""))
+                    if reason.startswith("consent") and team.get("consent_retries", 0) < self.p.get("consent_retry_max", 2) and self.key is not None:
+                        # 前のチームの withdraw が審判に未処理のまま残っている: withdraw を出し直してから同じロースターに署名し直す
+                        team["consent_retries"] = team.get("consent_retries", 0) + 1
+                        games = self.resend_withdrawals(force=True)
+                        mine = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
+                                "room_generation": team["generation"], "members": team["members"], "request_id": self.req_id("roster")}
+                        try:
+                            seq = self.post(self.p["rooms"]["discovery"], self.compact(mine), "roster", allow_dids=set(team["members"]))
+                            team["roster_request_id"] = mine["request_id"]; team["roster_signed"] = seq
+                            attention(f"our roster.v1 for {team['game_id']} was rejected ({reason}); re-sent withdraw for {games} and re-signed (attempt {team['consent_retries']})", key="consent-retry")
+                        except Exception as e:
+                            attention(f"CRITICAL re-sign after consent rejection failed: {e!r}", key="roster-post")
+                        self.save(); return
+                    attention(f"CRITICAL our roster.v1 for {team['game_id']} was rejected by the referee: {reason}; seat released, back to applying", key="roster-rejected")
                     self.st["team"] = None
                     self.st.setdefault("dropped", []).append(team["game_id"]); self.st["intro_at"] = 0
                     self.save()
@@ -666,6 +680,7 @@ class Agent:
                     return
             except Exception as e:
                 attention(f"could not read {mine['poem_room']} before signing: {e}"); return
+            self.resend_withdrawals()   # 未受領の withdraw が残っていれば先に出し直す（同意の残りで却下されないため）
             try:
                 seq = self.post(self.p["rooms"]["discovery"], self.compact(mine), "roster", allow_dids=set(members))
             except Exception as e:
@@ -1037,6 +1052,42 @@ class Agent:
         for m in picked[-12:]:
             self.addressed.append(m)
         log(f"readdress: {len(picked)} recent notes addressed to us re-queued for reply (kept {min(len(picked), 12)})")
+
+    def recent_withdrawn_games(self, hours=6):
+        """直近 hours 時間に自分が withdraw.v1 を出したゲーム（送信履歴から。pending_withdraw も含む）"""
+        cutoff = utc_now() - hours * 3600
+        games = []
+        for x in self.st.get("sent", []):
+            if x.get("kind") == "withdraw" or str(x.get("kind", "")).startswith("announce:withdraw"):
+                if parse_iso(x.get("ts") or "1970-01-01T00:00:00Z") < cutoff:
+                    continue
+                j = parse_json(x.get("text") or "")
+                g = j.get("game_id") if j else None
+                if isinstance(g, str) and g not in games:
+                    games.append(g)
+        pw = self.st.get("pending_withdraw")
+        if pw and pw.get("game_id") not in games:
+            games.append(pw["game_id"])
+        return games
+
+    def resend_withdrawals(self, force=False):
+        """署名の直前や consent 却下時に、直近に離れたゲームへの withdraw.v1 を新しい request_id で出し直す。
+        受領済みなら審判は「取り下げる同意が無い」と返すだけで害はない。force でなければ未受領の pending_withdraw がある時だけ"""
+        if self.key is None:
+            return []
+        if not force and not self.st.get("pending_withdraw"):
+            return []
+        games = self.recent_withdrawn_games()
+        sent = []
+        for g in games:
+            j = {"type": "sonnet.withdraw.v1", "contest_id": self.p["contest_id"], "game_id": g, "request_id": self.req_id("withdraw")}
+            try:
+                self.post(self.p["rooms"]["discovery"], self.compact(j), "withdraw"); sent.append(g)
+            except Exception as e:
+                log(f"withdraw re-send for {g} failed: {e!r}")
+        if sent:
+            log(f"re-sent withdraw.v1 for {sent} before/after signing")
+        return sent
 
     def check_pending_withdraw(self):
         """withdraw.v1 に審判の受領が来ない間は同意が生きている扱いになり、次の署名が却下される。
