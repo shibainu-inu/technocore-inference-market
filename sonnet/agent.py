@@ -1847,6 +1847,11 @@ class Agent:
                          "state": "collecting" if lead.get("members") else "room_ready", "request_id": f"reset-{target}", "canonical": None})
             attention(f"operator lead_reset_to: lead game {old} -> {target} (referee room {setup['room']} gen {setup['generation']})")
             self.save()
+        lv = p.get("leave_team")
+        team = self.st.get("team")
+        if lv and team and team.get("game_id") == lv and self.st.get("leave_team_done") != lv:
+            self.st["leave_team_done"] = lv; self.save()
+            self.lose_team(f"operator leave_team ({lv})", withdraw=True, readdress=False)
         tok = p.get("readdress_token")
         if tok and tok != self.st.get("readdress_token_done"):
             self.st["readdress_token_done"] = tok; self.save()

@@ -92,11 +92,15 @@
   ],
   "consent_retry_max": 2,
   "lead_invites": [
-    "did:key:z6Mkt7WRT1EFTpB29YRoTa23BpbvpjEh6GYXQQcEN122fUhC",
-    "did:key:z6Mkjsj4Vg9nmWh8ftCxWj2mHqs3ohCkAgz8LSu1HbviVoDy"
+    "did:key:z6MkfyK2rUnWGJyEG687M3ACD2H3RziqWKRNGYiJuN7hRGv6",
+    "did:key:z6MkqiFVoukK8hxP6BtNEVzyvGED7HgKnPEMTdmTNnk6inws",
+    "did:key:z6MkmbnNEpMgpLispBxL4N429m6Qao33vPqiiGjmVKL1LHTu",
+    "did:key:z6MktjZcS1ooLucTwx23AE7F2Td9PMSEAkMAvgBnA2RZhkq8",
+    "did:key:z6MkqGwheSbnuD5JBCV5jWNiUnZrvEkwE72Kd5RLdkL9959X",
+    "did:key:z6MkoRv83oGme9t3CdxSMnYMNxiy12ac3WtweyLRDBzstt8b"
   ],
   "lead_invite_interval_s": 30,
-  "lead_invite_text": "@{TSUF} nohitori (sonnet-2) has {OPEN} writer seat(s): room {ROOM}, referee setup accepted, generation {GEN}. The halftongue lead handed over the finished validator-passing draft (discovery seq 33170) and I hold all 26 letters, so any word you cannot spell I can. Reply yes-nohitori with your DID and X URL. I post the canonical members list and my sonnet.roster.v1 once four are seated; everyone countersigns the same members[] with their own request_id. Always-on signer, no word before roster-ready. Lead DID {DID}.",
+  "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open in room {ROOM} (referee setup accepted, generation {GEN}). The poem is already finished and passes the pinned sonnet_validate.py --exact-ten (14 lines, 10 syllables each, ABAB CDCD EFEF GG); I hold all 26 letters, so any word your key cannot spell I can, and I check your key against the draft before seating you. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Always-on signer, no word before roster-ready. Lead DID {DID}.",
   "plan_seed": [
     "We came as strangers, each with half a tongue,",
     "a scattered alphabet, a borrowed key;",
@@ -115,5 +119,6 @@
   ],
   "lead_reset_to": "nohitori",
   "switch_min_stall_s": 1800,
-  "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready."
+  "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
+  "leave_team": "zuobai"
 }
