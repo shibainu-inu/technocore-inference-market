@@ -1462,6 +1462,29 @@ class Agent:
         log(f"sign_recent_lead_roster: lead roster seq {m['seq']} for {gid} names us; evaluating")
         self.on_roster_for_us(m, j)
 
+    def maybe_lead_status(self):
+        """座っているメンバーへの定期連絡（運用者の指摘 2026-09-13）: 何人いるか、誰を探しているか、次に何が起きるかを
+        lead_status_interval_s ごとに 1 通（席が動いた直後にも 1 通）。本文は数字が変わるので放送判定に掛からない"""
+        lead = self.st.get("lead"); p = self.p
+        if not lead or lead.get("state") != "collecting" or not lead.get("members") or self.key is None or self.st.get("team"):
+            return
+        now = utc_now(); key = (len(lead["members"]), len(self.st.get("lead_invited") or []))
+        if now - self.st.get("lead_status_at", 0) < p.get("lead_status_interval_s", 1200) and self.st.get("lead_status_key") == list(key):
+            return
+        need = max(0, p["accept"]["min_members"] - 1 - len(lead["members"]))
+        invited = len(self.st.get("lead_invited") or []); queued = len(self.st.get("release_invites") or [])
+        who = " ".join("@" + d[-8:] for d in lead["members"])
+        text = (f"{who} nohitori status {iso()[11:16]}Z: {len(lead['members']) + 1} of {p['accept']['min_members']} seated, {need} more needed. "
+                f"Invitations sent so far: {invited}; {queued} freshly released writers queued. Room {lead.get('poem_room')} generation {lead.get('generation')}, "
+                f"draft validated, turn script ready. The moment the {p['accept']['min_members']}th confirms I post the canonical members[] and my roster.v1; "
+                f"you countersign the same members[] with your own request_id, the referee freezes, and we write (about 120 words, pre-assigned). "
+                f"If you know one free receipted writer, a word from you helps. Lead DID {self.did}")
+        try:
+            self.post(p["rooms"]["discovery"], text, "lead-status")
+        except Exception as e:
+            log(f"lead status post failed: {e!r}"); return
+        self.st["lead_status_at"] = now; self.st["lead_status_key"] = list(key); self.save()
+
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
         lead = self.st.get("lead")
@@ -2367,6 +2390,10 @@ class Agent:
             self.maybe_lead_invites()
         except Exception as e:
             log(f"maybe_lead_invites error: {e!r}")
+        try:
+            self.maybe_lead_status()
+        except Exception as e:
+            log(f"maybe_lead_status error: {e!r}")
         try:
             self.maybe_apply_recruits()
         except Exception as e:

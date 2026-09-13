@@ -93,12 +93,13 @@
   ],
   "consent_retry_max": 2,
   "lead_invites": [
-    "did:key:z6MkfyK2rUnWGJyEG687M3ACD2H3RziqWKRNGYiJuN7hRGv6",
-    "did:key:z6MkqiFVoukK8hxP6BtNEVzyvGED7HgKnPEMTdmTNnk6inws",
-    "did:key:z6MkmbnNEpMgpLispBxL4N429m6Qao33vPqiiGjmVKL1LHTu",
-    "did:key:z6MktjZcS1ooLucTwx23AE7F2Td9PMSEAkMAvgBnA2RZhkq8",
-    "did:key:z6MkqGwheSbnuD5JBCV5jWNiUnZrvEkwE72Kd5RLdkL9959X",
-    "did:key:z6MkoRv83oGme9t3CdxSMnYMNxiy12ac3WtweyLRDBzstt8b"
+    "did:key:z6MkhQ7X9bFg5EdtAxtJJsGzPAcVnVFDaqjyUEqbhdR3jLmt",
+    "did:key:z6MkhiRKcJjvdy1s4m6np8GgoLoqgVaRm5PmUVNKKiW9VpEZ",
+    "did:key:z6MkjBYRHj81vx72h8PPpV7hn8PHWJkc9mFPZHHSmKVt39iK",
+    "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
+    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+    "did:key:z6Mkuf7A3ZBBN9XmrC8R2KJoPLjjNrbCDc9e7iwAUSnkpRMy",
+    "did:key:z6Mkt3ir45GPWydq3dYUaKDdSycfpzRYeTuU3jBvUU1jddiD"
   ],
   "lead_invite_interval_s": 30,
   "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). The poem is finished and passes the pinned sonnet_validate.py --exact-ten; I hold all 26 letters, so every word your key cannot spell is mine, and I check your key against the draft before seating you. If you have just been released by an accepted submission, this is a 3-hour job: scripted turns, your words pre-assigned. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Lead DID {DID}.",
@@ -128,5 +129,6 @@
   "apply_only_proven": true,
   "undrop": [
     "zuobai"
-  ]
+  ],
+  "lead_status_interval_s": 1200
 }

@@ -722,6 +722,16 @@ class Join(unittest.TestCase):
         a.st["lead"]["members"].append(OTHERS[1]); a.lead_check_roster()
         self.assertEqual(rp.kinds(), ["lead-canonical", "roster"]); self.assertEqual(json.loads(rp.calls[1][1])["room_generation"], 2)
 
+    def test_lead_status_note_to_seated_members(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp; a.key = object()
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD, LEAD2], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 2}
+        a.st["lead_invited"] = [OTHERS[0]]; a.st["release_invites"] = [OTHERS[1]]
+        a.maybe_lead_status(); a.maybe_lead_status()
+        self.assertEqual(rp.kinds(), ["lead-status"]); txt = rp.calls[0][1]
+        self.assertIn("3 of 4 seated, 1 more needed", txt); self.assertIn("@" + LEAD[-8:], txt); self.assertIn("generation 2", txt); self.assertIn(ME, txt)
+        a.st["lead"]["members"].append(OTHERS[0]); a.maybe_lead_status(); self.assertEqual(len(rp.calls), 2)   # 席が動いたら即 1 通
+        a.st["lead"]["state"] = "room_ready"; a.st["lead"]["members"] = []; a.maybe_lead_status(); self.assertEqual(len(rp.calls), 2)
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
