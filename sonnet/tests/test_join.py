@@ -168,6 +168,7 @@ class Join(unittest.TestCase):
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME] + OTHERS, "lead": lead,
                         "roster_signed": 7, "ready": False, "signed_generation": 1, "signed_at": "2026-09-13T01:00:00Z"}
         a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": "2026-09-13T00:30:00Z"}}; a.st["agreed"] = a.st["applications"]["g"]
+        a.readdress_recent_offers = lambda: None
         return a, rp
 
     def test_stuck_roster_warns_then_withdraws(self):
@@ -286,6 +287,55 @@ class Join(unittest.TestCase):
             agent.fm.http_get, agent.verify_sig = old_get, old_vs
         self.assertEqual(rp.kinds(), ["withdraw", "roster"]); self.assertEqual(a.st["team"]["members"], [LEAD, LEAD2, OTHERS[1], ME])
         self.assertEqual(a.st["team"]["source_seq"], 32); self.assertIn(LEAD2, a.st["writers_ok"])
+
+    # ---- リーダーに席を外された ----
+    def test_lead_roster_without_us_makes_us_withdraw_and_restore_seat_drops(self):
+        a, rp = self.signed_team()
+        a.st["dropped"] = ["old", "h", "k"]; a.st["dropped_for_seat"] = ["h", "k"]
+        a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": "t"}}; a.st["agreed"] = a.st["applications"]["g"]
+        a.readdress_recent_offers = lambda: None
+        # 自分の署名より古いロースター、他人のロースター、他ゲームは無視
+        a.handle({"seq": 5, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": DISC, "text": json.dumps(self.changed(members=[LEAD, LEAD2] + OTHERS))})
+        a.handle({"seq": 30, "ts": "t", "from": OTHERS[0], "_sig_ok": True, "_room": DISC, "text": json.dumps(self.changed(members=[LEAD, LEAD2] + OTHERS))})
+        a.handle({"seq": 31, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": DISC, "text": json.dumps(self.changed(game_id="z", poem_room=TEAM + "z", members=[LEAD, LEAD2] + OTHERS))})
+        self.assertEqual(rp.calls, []); self.assertIsNotNone(a.st["team"])
+        # リーダーの新しいロースターに自分がいない → withdraw して離脱、席のために落とした h, k を復活
+        a.handle({"seq": 40, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": DISC, "text": json.dumps(self.changed(members=[LEAD, LEAD2] + OTHERS))})
+        self.assertEqual(rp.kinds(), ["withdraw"]); self.assertEqual(json.loads(rp.calls[0][1])["game_id"], "g")
+        self.assertIsNone(a.st["team"]); self.assertEqual(a.applications(), {}); self.assertEqual(a.st["dropped"], ["old", "g"])
+        self.assertNotIn("dropped_for_seat", a.st); self.assertIn("no longer lists us", att())
+
+    def test_resync_detects_lead_roster_without_us(self):
+        a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
+        rows = [{"seq": 40, "ts": "t", "from": LEAD, "text": json.dumps(self.changed(members=[LEAD, LEAD2] + OTHERS))}]
+        body = "\n".join(json.dumps(r) for r in rows) + "\n"
+        old_get, old_vs = agent.fm.http_get, agent.verify_sig
+        agent.fm.http_get = lambda url, timeout=30: (200, body); agent.verify_sig = lambda room, m: True
+        try:
+            a.resync_team_roster()
+        finally:
+            agent.fm.http_get, agent.verify_sig = old_get, old_vs
+        self.assertEqual(rp.kinds(), ["withdraw"]); self.assertIsNone(a.st["team"])
+
+    def test_readdress_requeues_recent_notes_to_us(self):
+        a = fresh(); a.p["ignore_senders"].append(LEAD2)
+        now = agent.utc_now()
+        def ts(sec_ago): return agent.iso() if False else __import__("datetime").datetime.utcfromtimestamp(now - sec_ago).strftime("%Y-%m-%dT%H:%M:%SZ")
+        note = lambda frm, target, text: {"type": "sonnet.note.v1", "contest_id": CID, "game_id": "h", "target_did": target, "request_id": "n", "text": text}
+        rows = [{"seq": 1, "ts": ts(600), "from": LEAD, "text": json.dumps(note(LEAD, ME, "seat for you"))},          # 採用
+                {"seq": 2, "ts": ts(600), "from": LEAD2, "text": json.dumps(note(LEAD2, ME, "ignored sender"))},     # 無視対象
+                {"seq": 3, "ts": ts(5 * 3600), "from": LEAD, "text": json.dumps(note(LEAD, ME, "too old"))},          # 古い
+                {"seq": 4, "ts": ts(600), "from": LEAD, "text": json.dumps(note(LEAD, OTHERS[0], "not us"))},        # 他人宛
+                {"seq": 5, "ts": ts(600), "from": REF, "text": json.dumps(note(REF, ME, "referee"))},                # 審判
+                {"seq": 6, "ts": ts(600), "from": OTHERS[1], "text": json.dumps(note(OTHERS[1], None, "@" + ME[-8:] + " hello"))}]  # @suffix
+        body = "\n".join(json.dumps(r) for r in rows) + "\n"
+        old_get, old_vs = agent.fm.http_get, agent.verify_sig
+        agent.fm.http_get = lambda url, timeout=30: (200, body); agent.verify_sig = lambda room, m: m["seq"] != 6 or True
+        try:
+            a.readdress_recent_offers()
+        finally:
+            agent.fm.http_get, agent.verify_sig = old_get, old_vs
+        self.assertEqual(sorted(m["seq"] for m in a.addressed), [1, 6]); self.assertTrue(all(m.get("_sig_ok") and "_at" in m for m in a.addressed))
 
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):

@@ -397,6 +397,7 @@ class Agent:
         for gid in list(self.applications()):
             if gid != signed_gid:
                 self.drop_application(gid, f"signed roster for {signed_gid}")
+                self.st.setdefault("dropped_for_seat", []).append(gid)
         self.st["agreed"] = self.application_for(signed_gid) or self.st.get("agreed")
         self.save()
 
@@ -555,6 +556,8 @@ class Agent:
                 tm["recruit_seq"], tm["recruit_ts"], tm["recruit_from"] = m["seq"], m["ts"], frm
         if typ == "sonnet.roster.v1" and isinstance(j.get("members"), list) and self.did in j["members"] and m.get("_sig_ok"):
             self.on_roster_for_us(m, j)
+        elif typ == "sonnet.roster.v1" and isinstance(j.get("members"), list) and m.get("_sig_ok"):
+            self.on_roster_without_us(m, j)
         if self.is_referee(m) and j and self.st.get("lead"):
             self.on_lead_receipt(m, j)
         lead = self.st.get("lead")
@@ -950,15 +953,87 @@ class Agent:
                 if verify_sig(room, m):
                     self.st.setdefault("writers_ok", {}).setdefault(j["sender_did"], m["seq"])
             if m.get("from") == team.get("lead") and j.get("type") == "sonnet.roster.v1" and j.get("game_id") == team["game_id"] \
-                    and int(m.get("seq", 0)) > base and isinstance(j.get("members"), list) and self.did in j["members"]:
+                    and int(m.get("seq", 0)) > base and isinstance(j.get("members"), list):
                 latest = (m, j)
         if latest:
             m, j = latest
             m["_room"] = room; m["_sig_ok"] = verify_sig(room, m)
             log(f"resync_team_roster: lead roster seq {m['seq']} newer than our signature {base}; re-evaluating")
-            self.on_roster_for_us(m, j)
+            if self.did in j["members"]:
+                self.on_roster_for_us(m, j)
+            elif m["_sig_ok"]:
+                self.on_roster_without_us(m, j)
         else:
             log(f"resync_team_roster: no newer lead roster than {base}")
+
+    def on_roster_without_us(self, m, j):
+        """自分のチームのリーダーが、自分を載せないロースターを（自分の署名より後に）出した: 席を外された。
+        同意を取り下げて募集・応募に戻る"""
+        team = self.st.get("team")
+        if not team or team.get("ready") or team.get("lead") == self.did:
+            return
+        if m.get("from") != team.get("lead") or j.get("game_id") != team.get("game_id") or int(m.get("seq", 0)) <= int(team.get("roster_signed") or 0):
+            return
+        self.lose_team(f"lead's newer roster (seq {m['seq']}) for {team['game_id']} no longer lists us", withdraw=True)
+
+    def lose_team(self, why, withdraw):
+        """署名済みの席を失う/離れる共通処理: withdraw.v1（必要なら）、team を消す、席のために取り下げた応募先を復活、
+        直近の自分宛の席提示を返信対象に戻す"""
+        team = self.st.get("team")
+        if not team:
+            return
+        gid = team["game_id"]
+        if withdraw and self.key is not None:
+            j = {"type": "sonnet.withdraw.v1", "contest_id": self.p["contest_id"], "game_id": gid, "request_id": self.req_id("withdraw")}
+            try:
+                self.post(self.p["rooms"]["discovery"], self.compact(j), "withdraw")
+            except Exception as e:
+                attention(f"CRITICAL withdraw post failed for {gid}: {e!r}", key="withdraw-post"); return
+        attention(f"left team {gid}: {why}; back to recruiting/applying")
+        self.st["team"] = None
+        if self.application_for(gid):
+            self.drop_application(gid, why, note=False)
+        dropped = self.st.setdefault("dropped", [])
+        if gid not in dropped:
+            dropped.append(gid)
+        for g in self.st.pop("dropped_for_seat", []) or []:
+            if g != gid and g in dropped:
+                dropped.remove(g)
+                log(f"{g} removed from dropped (was dropped only because we took the {gid} seat)")
+        self.st["intro_at"] = 0
+        self.save()
+        try:
+            self.readdress_recent_offers()
+        except Exception as e:
+            log(f"readdress_recent_offers: {e!r}")
+
+    def readdress_recent_offers(self):
+        """discovery の /export から、直近 readdress_hours 以内に自分宛て（target_did か @suffix）に来た note を
+        返信対象（addressed）に戻す。席を失った直後に、まだ生きている席の提示へ答えるため"""
+        room = self.p["rooms"]["discovery"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=180)
+        except Exception as e:
+            log(f"readdress: {fm.err_kind(e)}"); return
+        cutoff = utc_now() - self.p.get("readdress_hours", 3) * 3600
+        picked = []
+        for ln in body.splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            if parse_iso(m.get("ts") or "1970-01-01T00:00:00Z") < cutoff or m.get("from") in (self.did, self.st.get("referee")) or m.get("from") in self.ignored():
+                continue
+            j = parse_json(m.get("text", ""))
+            if not (j and j.get("type") == "sonnet.note.v1"):
+                continue
+            if j.get("target_did") == self.did or self.mentions_us(j.get("text") or ""):
+                if verify_sig(room, m):
+                    m["_room"] = room; m["_sig_ok"] = True; m["_at"] = utc_now() - 30
+                    picked.append(m)
+        for m in picked[-12:]:
+            self.addressed.append(m)
+        log(f"readdress: {len(picked)} recent notes addressed to us re-queued for reply (kept {min(len(picked), 12)})")
 
     def check_stuck_roster(self):
         """署名したロースターが roster_ready にならないまま止まった場合の損切り。署名から roster_stuck_warn_h で ATTENTION、
@@ -978,20 +1053,7 @@ class Agent:
             attention(f"CRITICAL roster for {team['game_id']} signed {h:.1f}h ago and still not roster_ready; "
                       f"will withdraw at {limit}h unless it freezes (auto.withdraw_stuck={self.p['auto'].get('withdraw_stuck')})", key="stuck")
         if h >= limit and self.p["auto"].get("withdraw_stuck") and self.key is not None:
-            j = {"type": "sonnet.withdraw.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "request_id": self.req_id("withdraw")}
-            try:
-                self.post(self.p["rooms"]["discovery"], self.compact(j), "withdraw")
-            except Exception as e:
-                attention(f"CRITICAL withdraw post failed for {team['game_id']}: {e!r}", key="withdraw-post"); return
-            attention(f"withdrew consent for {team['game_id']} after {h:.1f}h without roster_ready; back to recruiting/applying")
-            gid = team["game_id"]
-            self.st["team"] = None
-            if self.application_for(gid):
-                self.drop_application(gid, "withdrew a stuck roster", note=False)
-            if gid not in self.st.setdefault("dropped", []):
-                self.st["dropped"].append(gid)
-            self.st["intro_at"] = 0
-            self.save()
+            self.lose_team(f"no roster_ready {h:.1f}h after signing", withdraw=True)
 
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
