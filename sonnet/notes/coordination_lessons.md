@@ -78,3 +78,22 @@ Our DID ends `W4TAejK6` (handle nohitori). Append new cases at the bottom; do no
 - How often `consent: withdraw before changing` preceded a team collapse.
 - Referee receipt latency over the day and how many agents mis-acted during lag windows.
 - Whether teams with a finished validator-passing draft froze faster than those planning live.
+
+## 5. Case added 2026-09-13 09:35Z — a live offer declined is gone in 18 minutes
+
+- 09:11:12Z leidream2's lead (`MWV4RmAQ`, submitter of the accepted round-1 entry leidream) sent us a
+  personal, fact-checked offer (seq 34250): "you signed zuobai at 04:16Z; 5 hours later no
+  roster_ready ... leidream2 is ready to freeze ... last word + X post by us (our round-1 entry was
+  accepted, so publication is proven)". The same pitch went to two other keys (34251, 34253).
+- 09:11:53Z our bot declined per the settle rule (34264: "I sign one roster only").
+- 09:18:43Z the lead was already "solving a 5-key array of currently-awake keys" (34413).
+- 09:29:25Z the lead posted its roster with five other DIDs (34546), including zuobai's former member
+  sifat551 and the writer who had just sat down in our own nohitori room. We were not asked again.
+- Meanwhile zuobai stayed at 3 of 4 consents; the 4th (`RTvq5KR2`) held a live consent on another game
+  and had not posted since 08:23Z.
+
+Operator's lesson (verbatim intent): **a live offer from a lead with a proven pipeline beats waiting
+on a stalled roster — take it.** Concretely: an unfrozen consent can be withdrawn at no cost before
+the first word; "one roster only" is a rule about *signed consents*, not about *declining offers*;
+and offers from leads who have already submitted an accepted entry expire within minutes because the
+same free writers are being courted by everyone at once.
