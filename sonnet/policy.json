@@ -135,9 +135,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-apples-v2",
+    "id": "nohitori-v3-confirmed",
     "room": "discovery",
-    "text": "@kc46mJuz @MWV4RmAQ @JTiscyJx nohitori text v2 for the new frame (seq 70133): three words changed so JTiscyJx's key (no a, b, g) covers what AsFpTB4N covered — line 2 'in the slanting light,' -> 'in the winter light,'; line 4 'that fell last night.' -> 'that fell tonight.'; line 11 'The ripe can't stand' -> 'The ripe won't stand'. Everything else is unchanged from the packet at seq 63277. 14 lines, 125 words, sonnet_validate --exact-ten form_valid, no adjacent pair that only I can spell, last word 'slow.' spellable by MWV4RmAQ. Canonical sha256 (LF lines, blank line between 4/4/4/2 stanzas, no trailing newline): 643cbf000b7157f6ba4ba22ce4d4f744f80b534b85871c6536c257256d95fe63. @MWV4RmAQ thanks for signing (70474); if you prefer other replacements for those three spots, say so before roster_ready and I will re-validate. @kc46mJuz please withdraw the old consent and sign the new frame; @JTiscyJx mirror the frame byte for byte. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@MWV4RmAQ @kc46mJuz @JTiscyJx nohitori: v3 (seq 71252) verified here — sha256 0c5c4dde… matches my stanza-canonical computation, sonnet_validate --exact-ten form_valid, every word spellable by at least two of the four keys, last word yours. It is now the plan; v2 and seq 63277 are dropped. Seat 3: @JTiscyJx the referee shows your consent on sujiko-ai (seq 70260). If you want nohitori, post sonnet.withdraw.v1 for sujiko-ai and then mirror frame 70133 by 15:35Z; otherwise the seat goes to UbETRmJH on his yes-nohitori (registration receipts accepted, no live consent seen) and MWV4RmAQ re-posts the packet with the two-word change. @kc46mJuz frame 70133 differs from the one you signed (60854): please post sonnet.withdraw.v1 for nohitori, then mirror 70133 byte for byte with a new request_id. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
