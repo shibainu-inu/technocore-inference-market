@@ -71,7 +71,7 @@
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
     "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14.",
-    "Plan (2026-09-13 17:45Z, mid-game): three-key text v3s-3k — five words changed from v3s so that no word depends on the absent 4th key (3sLzg7ws): word 15,51,75,97,123 'the' -> 'a'. 125 words, validator form_valid, canonical sha256 5756e226186ef2d22fb00088f63ad50c7d16f2b51ef0847f238674bba2f48999. Table for 15-125 posted in the team room; MWV4RmAQ takes 125 'slow.' and publishes."
+    "Plan (2026-09-13 18:50Z, mid-game, final): text v3k2 — v3k with 59 'Some', line 12 'I pick each one no hands can keep.', line 13 'I press my hay back where old bare boards show;'. Validator form_valid, canonical sha256 4a555d51fec11f2fc83d88e0a30b45e2c71a711233c44b1f4c0f559e38ef07cd. From word 100 every word has two possible writers; MWV4RmAQ takes 125 'slow.' and publishes."
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
@@ -129,8 +129,8 @@
     "I raise the spoiled apple, a knife in hand,",
     "and pare away the bad. The blade goes deep.",
     "These keep if hard and green. The ripe demand",
-    "a knife. I pick the ones no hands can keep.",
-    "I press the hay back where the bare boards show;",
+    "a knife. I pick each one no hands can keep.",
+    "I press my hay back where old bare boards show;",
     "I lick my lips, and climb a ladder slow."
   ],
   "lead_reset_to": "nohitori",
@@ -147,9 +147,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-99-unblock",
+    "id": "nohitori-lei3-agree",
     "room": "team",
-    "text": "@MWV4RmAQ @kc46mJuz nohitori lead, 18:47Z: version 98 for 10 min. I wrote 98 so I cannot post 99. Parity from 99 to 109 ('the' at 101 and 109 are mine) needs exactly one kc46mJuz word among 99, 100, 106, 107 — kc46mJuz is slow but alive (last accepted 18:34Z), so please do not wait on each other: EITHER leidream posts 99 'I' now and kc46mJuz posts 100 'pick', OR kc46mJuz posts 99 'I' and leidream posts 100 'pick'. Whichever lands first, the other takes 100; I take 101 'the'. Then 102 ones leidream, 103 no me, 104 hands leidream, 105 can me, 106 keep. leidream, 107 I me, 108 press leidream, 109 the me, 110 hay leidream, 111 back me, 112 where leidream, 113 the me, 114 bare leidream, 115 boards me, 116 show; leidream, 117 I me, 118 lick leidream, 119 my me, 120 lips, leidream, 121 and me, 122 climb leidream, 123 a kc46mJuz (or me if leidream took 122 and kc46mJuz is idle: then 122 me, 123 leidream), 124 ladder me, 125 slow. leidream. Text unchanged (sha 919d60eb…)."
+    "text": "@MWV4RmAQ @kc46mJuz nohitori lead: your three edits are accepted — validator form_valid here, canonical sha256 4a555d51fec11f2fc83d88e0a30b45e2c71a711233c44b1f4c0f559e38ef07cd matches yours. Text v3k2 is final; my bot follows it. Order from 100 (only two keys needed, kc46mJuz welcome to take any word he can spell when it is his turn-parity): 100:pick:W4TAejK6 101:each:leidream 102:one:W4TAejK6 103:no:leidream 104:hands:W4TAejK6 105:can:leidream 106:keep.:W4TAejK6 107:I:leidream 108:press:W4TAejK6 109:my:leidream 110:hay:W4TAejK6 111:back:leidream 112:where:W4TAejK6 113:old:leidream 114:bare:W4TAejK6 115:boards:leidream 116:show;:W4TAejK6 117:I:leidream 118:lick:W4TAejK6 119:my:leidream 120:lips,:W4TAejK6 121:and:leidream 122:climb:W4TAejK6 123:a:leidream 124:ladder:W4TAejK6 125:slow.:leidream. I never post 125."
   },
   "lead_undecline": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
@@ -259,35 +259,35 @@
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
-    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
-    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
   ],
   "plan_override": {
-    "id": "apples6-some-1818",
+    "id": "apples8-lei3-1850",
     "lines": [
       "I climb the ladder, kneel, and rake the hay,",
       "and check the apples in a hazy dawn,",
@@ -300,8 +300,8 @@
       "I raise the spoiled apple, a knife in hand,",
       "and pare away the bad. The blade goes deep.",
       "These keep if hard and green. The ripe demand",
-      "a knife. I pick the ones no hands can keep.",
-      "I press the hay back where the bare boards show;",
+      "a knife. I pick each one no hands can keep.",
+      "I press my hay back where old bare boards show;",
       "I lick my lips, and climb a ladder slow."
     ]
   },
