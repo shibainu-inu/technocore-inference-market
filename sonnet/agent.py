@@ -1960,6 +1960,14 @@ class Agent:
             return True
         waited = utc_now() - parse_iso(poem.get("state_at") or iso())
         if waited >= self.p.get("cover_after_s", 180):
+            # 次の語を当方しか綴れないなら、この語を当方が取ると次が詰まる（連続投稿は禁止）: 譲る
+            team = self.st.get("team") or {}
+            if idx + 1 < len(sc["words"]):
+                nxt = sc["words"][idx + 1]; need = set(self.LETTERS_RE.findall(nxt.lower()))
+                others = [m for m in team.get("members", []) if m != self.did and need <= self.key_letters(m)]
+                if not others:
+                    log(f"not covering word {idx + 1}: the next word {nxt!r} is spellable only by us")
+                    return False
             log(f"covering word {idx + 1} (assigned to {sc['who'][idx][-6:]}, idle {int(waited)} s)")
             return True
         return False
@@ -2293,6 +2301,23 @@ class Agent:
                     self.lead_check_roster()
                 except Exception as e:
                     log(f"lead_check_roster after unseat: {e!r}")
+        po = p.get("plan_override")
+        if isinstance(po, dict) and isinstance(po.get("lines"), list) and len(po["lines"]) == 14 and po.get("id") != self.st.get("plan_override_done"):
+            self.st["plan_override_done"] = po["id"]
+            words = [w for line in po["lines"] for w in line.split(" ") if w]
+            poem = self.st.get("poem") or {}
+            done = [w for line in poem.get("lines", []) for w in line.split(" ") if w] + list(poem.get("current") or [])
+            problems = check_poem(po["lines"], self.lexicon())
+            if problems:
+                attention(f"operator plan_override {po['id']} rejected by the offline check: {problems[:3]}")
+            elif words[:len(done)] != done:
+                attention(f"operator plan_override {po['id']} rejected: accepted words so far do not match its prefix")
+            else:
+                self.st["plan"] = list(po["lines"])
+                if self.st.get("script"):
+                    self.st["script"]["words"] = words
+                attention(f"operator plan_override {po['id']}: text replaced ({len(words)} words); turn assignments follow script_who")
+            self.save()
         sw = p.get("script_who")
         sc = self.st.get("script")
         if isinstance(sw, list) and sc and len(sw) == len(sc.get("words", [])) and sc.get("who") != sw and all(DID_RE.fullmatch(x) for x in sw):
