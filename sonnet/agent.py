@@ -2293,6 +2293,12 @@ class Agent:
                     self.lead_check_roster()
                 except Exception as e:
                     log(f"lead_check_roster after unseat: {e!r}")
+        sw = p.get("script_who")
+        sc = self.st.get("script")
+        if isinstance(sw, list) and sc and len(sw) == len(sc.get("words", [])) and sc.get("who") != sw and all(DID_RE.fullmatch(x) for x in sw):
+            # 運用者が手番表の担当列を差し替える（別の bot の手番表に合わせて待ち合いを無くすため）。語は変えない
+            sc["who"] = list(sw); self.save()
+            attention("operator script_who: turn assignments replaced (" + ", ".join(f"{m[-6:]}={sw.count(m)}" for m in dict.fromkeys(sw)) + ")")
         pr = p.get("plan_reset")
         if pr and pr != self.st.get("plan_reset_done") and not (self.st.get("team") or {}).get("ready"):
             self.st["plan_reset_done"] = pr; self.st["plan"] = None; self.st["script"] = None; self._plan_at = 0
@@ -2331,7 +2337,10 @@ class Agent:
                 and an["id"] not in self.st.get("announced", []) and self.key is not None \
                 and (not an.get("after_registration") or self.st.get("registered")):
             try:
-                seq = self.post(self.p["rooms"][an.get("room", "discovery")], an["text"], f"announce:{an['id']}")
+                room = (self.st.get("team") or {}).get("room") if an.get("room") == "team" else self.p["rooms"][an.get("room", "discovery")]
+                if not room:
+                    return
+                seq = self.post(room, an["text"], f"announce:{an['id']}")
                 self.st.setdefault("announced", []).append(an["id"])
                 attention(f"announce_once {an['id']} posted (seq {seq})"); self.save()
             except Exception as e:
