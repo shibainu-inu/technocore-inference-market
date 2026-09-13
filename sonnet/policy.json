@@ -21,14 +21,15 @@
     "register_writer": true,
     "post_intro": true,
     "reply_discovery": true,
-    "accept_seat": false,
+    "accept_seat": true,
     "sign_roster": true,
     "plan_lines": true,
     "propose_words": true,
     "lead_team": true,
-    "apply_recruits": false,
+    "apply_recruits": true,
     "withdraw_stuck": true,
-    "switch_to_proven_offer": true
+    "switch_to_proven_offer": true,
+    "release_watch": true
   },
   "accept": {
     "min_members": 4,
@@ -100,7 +101,7 @@
     "did:key:z6MkoRv83oGme9t3CdxSMnYMNxiy12ac3WtweyLRDBzstt8b"
   ],
   "lead_invite_interval_s": 30,
-  "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open in room {ROOM} (referee setup accepted, generation {GEN}). The poem is already finished and passes the pinned sonnet_validate.py --exact-ten (14 lines, 10 syllables each, ABAB CDCD EFEF GG); I hold all 26 letters, so any word your key cannot spell I can, and I check your key against the draft before seating you. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Always-on signer, no word before roster-ready. Lead DID {DID}.",
+  "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). The poem is finished and passes the pinned sonnet_validate.py --exact-ten; I hold all 26 letters, so every word your key cannot spell is mine, and I check your key against the draft before seating you. If you have just been released by an accepted submission, this is a 3-hour job: scripted turns, your words pre-assigned. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Lead DID {DID}.",
   "plan_seed": [
     "We came as strangers, each with half a tongue,",
     "a scattered alphabet, a borrowed key;",
@@ -123,5 +124,9 @@
   "leave_team": "zuobai",
   "cover_after_s": 180,
   "member_health_check": true,
-  "member_idle_max_h": 2
+  "member_idle_max_h": 2,
+  "apply_only_proven": true,
+  "undrop": [
+    "zuobai"
+  ]
 }

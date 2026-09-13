@@ -509,6 +509,12 @@ class Agent:
                 log(f"{room} {frm[-6:]} {text[:200]!r}")
             if room == rooms["results"] and j and self.is_referee(m):
                 self.on_results(m, j)
+            if room == rooms["submissions"] and j and j.get("type") == "sonnet.submit.v1" and isinstance(j.get("request_id"), str):
+                sr = self.st.setdefault("submit_reqs", {})
+                if len(sr) >= 2000:
+                    for k in list(sr)[:500]:
+                        del sr[k]
+                sr[j["request_id"]] = {"game": j.get("game_id"), "from": frm}
             if room == rooms["submissions"] and j and self.is_referee(m):
                 self.on_submissions(m, j)
 
@@ -891,6 +897,50 @@ class Agent:
             ps = self.st.setdefault("proven_submitters", {})
             if d not in ps:
                 ps[d] = m["seq"]; log(f"proven submitter observed: {d[-8:]} (submissions seq {m['seq']})")
+        if not self._replaying and not getattr(self, "_syncing", False):
+            try:
+                self.release_watch(m, j)
+            except Exception as e:
+                log(f"release_watch error: {e!r}")
+
+    def release_watch(self, m, j):
+        """受理された提出の貢献者は解放される（規則）。その詩の部屋から「語を通した人」を取り、提出者以外を招待候補に積む。
+        起きていて・返事をし・語を通した実績がある writer は、ここでしか空かない"""
+        if not self.p["auto"].get("release_watch") or self.st.get("team"):
+            return
+        sr = (self.st.get("submit_reqs") or {}).get(j.get("request_id"))
+        gid = sr and sr.get("game")
+        if not (isinstance(gid, str) and GAME_RE.match(gid)):
+            log(f"release_watch: accepted submission {j.get('request_id')} has no known game_id; skipped"); return
+        room = f"d-{self.p['contest_id']}-team-{gid}"
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=120)
+        except Exception as e:
+            log(f"release_watch: {fm.err_kind(e)}"); return
+        proposers = collections.Counter()
+        for ln in body.splitlines():
+            try:
+                mm = json.loads(ln)
+            except ValueError:
+                continue
+            jj = parse_json(mm.get("text", ""))
+            if jj and jj.get("type") == "sonnet.word.v1" and DID_RE.fullmatch(mm.get("from", "")):
+                proposers[mm["from"]] += 1
+        submitter = j.get("sender_did")
+        cands = [d for d, _ in proposers.most_common() if d not in (self.did, submitter) and d not in self.ignored()]
+        w = self.st.setdefault("writers_ok", {})
+        for d in cands:
+            w.setdefault(d, m["seq"])   # 語が受理された = 登録済み writer
+        ri = self.st.setdefault("release_invites", [])
+        added = [d for d in cands if d not in ri and d not in (self.st.get("lead_invited") or [])]
+        ri.extend(added); del ri[:-40]
+        attention(f"release watch: {gid} accepted (submitter {str(submitter)[-8:]}); {len(added)} proven contributors queued for invitation: {[d[-8:] for d in added]}")
+        self.save()
+        self._invite_at = 0
+        try:
+            self.maybe_lead_invites()
+        except Exception as e:
+            log(f"maybe_lead_invites: {e!r}")
 
     def sync_proven_submitters(self):
         """起動時: 提出部屋の /export から受理済み提出者を取り込む（cold 巡回は末尾しか読まない）"""
@@ -905,11 +955,18 @@ class Agent:
                 m = json.loads(ln)
             except ValueError:
                 continue
+            j = parse_json(m.get("text", ""))
+            if j and j.get("type") == "sonnet.submit.v1" and isinstance(j.get("request_id"), str):
+                self.st.setdefault("submit_reqs", {})[j["request_id"]] = {"game": j.get("game_id"), "from": m.get("from")}
             if m.get("from") != self.st.get("referee"):
                 continue
-            j = parse_json(m.get("text", ""))
             if j and j.get("type") == "sonnet.receipt.v1" and j.get("status") == "accepted" and verify_sig(room, m):
-                self.on_submissions(m, j); n += 1
+                self._syncing = True
+                try:
+                    self.on_submissions(m, j)
+                finally:
+                    self._syncing = False
+                n += 1
         log(f"sync_proven_submitters: {n} accepted submission receipts; {len(self.st.get('proven_submitters') or {})} proven leads")
 
     OFFER_GAME_RE = re.compile(r"(?:yes-|team-)([a-z0-9][a-z0-9-]{1,30})")
@@ -1062,6 +1119,8 @@ class Agent:
                 continue
             ld = tm.get("recruit_from")
             if not ld or ld == self.did or ld in self.ignored() or ld not in (self.st.get("writers_ok") or {}) or not self.lead_acceptable(ld):
+                continue
+            if p.get("apply_only_proven") and ld not in (self.st.get("proven_submitters") or {}):
                 continue
             cands.append((not self.seen_before_opening(ld), -rs, gid, ld))
         if not cands:
@@ -1354,7 +1413,7 @@ class Agent:
         open_seats = p.get("lead_max_members", 6) - 1 - len(lead["members"])
         if open_seats <= 0:
             return
-        for did in p.get("lead_invites", []) or []:
+        for did in list(self.st.get("release_invites") or []) + list(p.get("lead_invites", []) or []):
             if did in done or did == self.did or did in lead["members"] or did in self.ignored() or not DID_RE.fullmatch(did):
                 continue
             if did not in (self.st.get("writers_ok") or {}):

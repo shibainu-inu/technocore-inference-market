@@ -25,6 +25,7 @@ def fresh(auto=None):
     p = json.loads(json.dumps(POLICY))
     p["auto"] = {k: False for k in p["auto"]}
     p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
+    p["apply_only_proven"] = False     # 実績リーダー限定は test_apply_only_proven_leads で見る
     if auto: p["auto"].update(auto)
     agent.STATE_PATH = os.path.join(HERE, "_state_join.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_join.md")
@@ -658,6 +659,39 @@ class Join(unittest.TestCase):
         a.handle({"seq": 3, "ts": "t", "from": LEAD2, "_sig_ok": True, "_room": DISC, "text": json.dumps({"type": "sonnet.withdraw.v1", "contest_id": CID, "game_id": "floppy"})})
         self.assertNotIn(LEAD2, a.st["live_consent"]); self.assertEqual(a.member_health([LEAD2], "g"), [])
         a.p["member_health_check"] = False; a.st["last_seen"] = {}; self.assertEqual(a.member_health([LEAD2], "g"), [])
+
+    # ---- 解放された貢献者への招待（release watch）と実績リーダー限定の応募 ----
+    def test_release_watch_queues_and_invites_proven_contributors(self):
+        a = fresh({"lead_team": True, "release_watch": True}); rp = RecordingPost(); a.post = rp; a.key = object()
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "room_ready", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 1}
+        a.p["lead_invite_text"] = "@{TSUF} join {GAME}"
+        sub = {"type": "sonnet.submit.v1", "contest_id": CID, "game_id": "done1", "poem_room": TEAM + "done1", "room_generation": 1, "final_version": 118, "poem_sha256": "x", "x_post_ids": ["1"], "request_id": "sub-done1"}
+        a.handle({"seq": 800, "ts": "t", "from": LEAD, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(sub)})
+        self.assertEqual(a.st["submit_reqs"]["sub-done1"]["game"], "done1")
+        room_rows = [{"seq": 5, "ts": "t", "from": LEAD, "text": json.dumps({"type": "sonnet.word.v1", "word": "a"})},
+                     {"seq": 6, "ts": "t", "from": LEAD2, "text": json.dumps({"type": "sonnet.word.v1", "word": "b"})},
+                     {"seq": 7, "ts": "t", "from": OTHERS[0], "text": json.dumps({"type": "sonnet.word.v1", "word": "c"})},
+                     {"seq": 8, "ts": "t", "from": OTHERS[0], "text": json.dumps({"type": "sonnet.word.v1", "word": "d"})}]
+        old_get = agent.fm.http_get; agent.fm.http_get = lambda url, timeout=30: (200, "\n".join(json.dumps(r) for r in room_rows) + "\n")
+        try:
+            rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "sub-done1", "sender_did": LEAD, "eligibility": "pending"}
+            a.handle({"seq": 801, "ts": "t", "from": REF, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(rc_)})
+        finally:
+            agent.fm.http_get = old_get
+        self.assertEqual(a.st["release_invites"], [OTHERS[0], LEAD2])                       # 提出者 LEAD を除き、語数の多い順
+        self.assertIn(OTHERS[0], a.st["writers_ok"]); self.assertIn("release watch: done1 accepted", att())
+        self.assertEqual(rp.kinds(), ["lead-invite"]); self.assertEqual(json.loads(rp.calls[0][1])["target_did"], OTHERS[0])   # 直ちに 1 通
+        a._invite_at = 0; a.maybe_lead_invites(); self.assertEqual(len(rp.calls), 2); self.assertEqual(json.loads(rp.calls[1][1])["target_did"], LEAD2)
+        # チームがあるときは何もしない
+        b = fresh({"lead_team": True, "release_watch": True}); rpb = RecordingPost(); b.post = rpb; b.key = object()
+        b.st["team"] = {"game_id": "z", "room": TEAM + "z"}; b.st["submit_reqs"] = {"sub-done1": {"game": "done1", "from": LEAD}}
+        b.handle({"seq": 802, "ts": "t", "from": REF, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(rc_)}); self.assertEqual(rpb.calls, []); self.assertNotIn("release_invites", b.st)
+
+    def test_apply_only_proven_leads(self):
+        a, rp = self.ready({"apply_recruits": True}); a.p["apply_only_proven"] = True
+        a.maybe_apply_recruits(); self.assertEqual(rp.calls, [])                              # 実績なし → 応募しない
+        a.st.setdefault("proven_submitters", {})[LEAD] = 1; a._apply_at = 0; a.maybe_apply_recruits()
+        self.assertEqual(rp.kinds(), ["apply", "apply-json"])
 
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):

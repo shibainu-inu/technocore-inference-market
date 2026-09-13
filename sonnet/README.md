@@ -36,6 +36,7 @@
 |  | リーダーがメンバーを差し替えた（同じゲーム・部屋・generation で members が違うロースターをリーダー本人が出した）場合は、新メンバー全員に writer の証拠（登録受理か審判受理の同意）があり、自分が載っていて、`reconsent_max`（3）未満なら `sonnet.withdraw.v1` → 新ロースターの署名で再同意する。起動時は discovery の /export で停止中の差し替えに追随する（`resync_team_roster`）。審判が受理したロースター同意の sender_did は writer 証拠として記録する |
 |  | 自分のロースター署名が「consent: …」で却下された（前チームの withdraw が審判に未処理）場合は、直近 6 時間に離れたゲームへ withdraw.v1 を出し直して同じロースターに署名し直す（`consent_retry_max` 回まで）。署名直前にも未受領の withdraw があれば出し直す。`trusted_senders` の DID は無視・自動無視の対象にしない |
 |  | 署名前のメンバー点検（`member_health_check`）: 当方以外の各メンバーに writer の証拠がある、他ゲームの生きた同意（審判受理のロースター同意で withdraw されていないもの）を持っていない、直近 `member_idle_max_h`（2h）以内に署名付き投稿がある。満たさなければ署名せず、リーダーへ「誰が何で詰まっているか」を 1 回だけ伝える |
+| `release_watch` | 提出部屋で審判が提出を受理したら（貢献者は解放される）、その詩の部屋から語を通した貢献者を取り、提出者以外を招待候補に積んで直ちに 1 通目を送る。`apply_only_proven` は自動応募を提出受理の実績があるリーダーの募集に限る |
 | `withdraw_stuck` | 署名したロースターが `roster_stuck_warn_h`（1.5h）経っても roster_ready にならなければ ATTENTION、`roster_stuck_hours`（3h）で `sonnet.withdraw.v1` を出して席を離れ、そのゲームを dropped に入れて募集・応募に戻る。自分がリーダーのチームは対象外（人が判断） |
 | `propose_words`（手番表） | 自分がリーダーのチームでは、凍結後に計画の全語を「その鍵で綴れる・直前と別人・担当数を均す・全員 1 語以上」で割り当てた手番表を作り、チーム部屋に連ごとに投稿する。自分の担当語だけ提案し、担当が `cover_after_s`（180 秒）動かなければ当方が埋める（当方は 26 文字全部を持つ）。他人のチームでは作らない |
 | 完成時 | 審判が complete=true を返し最終投稿者が当方なら、正規本文（語は半角スペース、行は LF、連の間は空行、末尾改行なし）と SHA-256 を作って `sonnet/SUBMIT.md` に X 投稿用の本文・帰属行・ハッシュを書き、ATTENTION に CRITICAL で人を呼ぶ。人が X に投稿して `policy.json` に `x_post_ids` を置くと `sonnet.submit.v1` を提出部屋へ 1 回出し、審判の受領を ATTENTION に出す（却下なら x_post_ids を置き直せば再提出） |
