@@ -729,6 +729,7 @@ class Join(unittest.TestCase):
         a.maybe_lead_status(); a.maybe_lead_status()
         self.assertEqual(rp.kinds(), ["lead-status"]); txt = rp.calls[0][1]
         self.assertIn("3 of 4 seated, 1 more needed", txt); self.assertIn("@" + LEAD[-8:], txt); self.assertIn("generation 2", txt); self.assertIn(ME, txt)
+        a.st["lead_invited"].append(OTHERS[1]); a.maybe_lead_status(); self.assertEqual(len(rp.calls), 1)     # 招待数の変化では出さない
         a.st["lead"]["members"].append(OTHERS[0]); a.maybe_lead_status(); self.assertEqual(len(rp.calls), 2)   # 席が動いたら即 1 通
         a.st["lead"]["state"] = "room_ready"; a.st["lead"]["members"] = []; a.maybe_lead_status(); self.assertEqual(len(rp.calls), 2)
 

@@ -1468,8 +1468,8 @@ class Agent:
         lead = self.st.get("lead"); p = self.p
         if not lead or lead.get("state") != "collecting" or not lead.get("members") or self.key is None or self.st.get("team"):
             return
-        now = utc_now(); key = (len(lead["members"]), len(self.st.get("lead_invited") or []))
-        if now - self.st.get("lead_status_at", 0) < p.get("lead_status_interval_s", 1200) and self.st.get("lead_status_key") == list(key):
+        now = utc_now(); key = [len(lead["members"])]   # 席の数が変わった時だけ間隔を待たずに出す（招待数の変化では出さない）
+        if now - self.st.get("lead_status_at", 0) < p.get("lead_status_interval_s", 1200) and self.st.get("lead_status_key") == key:
             return
         need = max(0, p["accept"]["min_members"] - 1 - len(lead["members"]))
         invited = len(self.st.get("lead_invited") or []); queued = len(self.st.get("release_invites") or [])
@@ -1483,7 +1483,7 @@ class Agent:
             self.post(p["rooms"]["discovery"], text, "lead-status")
         except Exception as e:
             log(f"lead status post failed: {e!r}"); return
-        self.st["lead_status_at"] = now; self.st["lead_status_key"] = list(key); self.save()
+        self.st["lead_status_at"] = now; self.st["lead_status_key"] = key; self.save()
 
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
