@@ -861,7 +861,7 @@ class Agent:
         """results 部屋の審判投稿。実物の審判はチーム部屋の設定（poem_room / room_generation）を sonnet.setup.v1 として
         results に出す（チーム部屋には sonnet.room.v1 だけ）。設定を記録し、自分がリーダーのゲームなら room_ready に進め、
         署名済みのチームなら generation の変化を検出する"""
-        if j.get("type") != "sonnet.setup.v1" or j.get("contest_id", self.p["contest_id"]) != self.p["contest_id"]:
+        if j.get("type") not in ("sonnet.setup.v1", "sonnet.resetup.v1") or j.get("contest_id", self.p["contest_id"]) != self.p["contest_id"]:
             return
         gid, gen, room = j.get("game_id"), j.get("room_generation"), j.get("poem_room")
         if not (isinstance(gid, str) and GAME_RE.match(gid)) or type(gen) is not int:
@@ -873,7 +873,7 @@ class Agent:
             del setups[next(iter(setups))]
         setups[gid] = {"room": room, "generation": gen, "seq": m["seq"], "ts": m["ts"]}
         lead = self.st.get("lead")
-        if lead and lead.get("game_id") == gid and lead.get("state") in ("requested", "allocated"):
+        if lead and lead.get("game_id") == gid and (lead.get("state") in ("requested", "allocated") or lead.get("generation") != gen):
             self.lead_room_setup({"room_generation": gen, "poem_room": room})
         team = self.st.get("team")
         if team and team.get("game_id") == gid and team.get("generation") not in (None, gen):
@@ -1465,9 +1465,22 @@ class Agent:
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
         lead = self.st.get("lead")
-        if not lead or lead["state"] not in ("requested", "allocated"):
+        if not lead:
             return
-        lead.update({"state": "room_ready", "generation": r.get("room_generation"), "poem_room": r.get("poem_room") or f"d-{self.p['contest_id']}-team-{lead['game_id']}"})
+        gen = r.get("room_generation")
+        if lead["state"] in ("room_ready", "collecting", "collecting_signed"):
+            # 募集中に審判が部屋を作り直した（resetup）: generation を追随。正式ロースターを出していたら全員の再同意が要るので出し直す
+            if type(gen) is int and gen != lead.get("generation"):
+                old = lead.get("generation"); lead["generation"] = gen
+                attention(f"lead: referee re-set up {lead.get('poem_room')} generation {old} -> {gen} while recruiting; roster must quote generation {gen}", key="lead-regen")
+                if lead.get("canonical"):
+                    lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None
+                    attention("lead: canonical roster was already issued; it will be re-issued for the new generation and members must re-sign", key="lead-regen")
+                self.save()
+            return
+        if lead["state"] not in ("requested", "allocated"):
+            return
+        lead.update({"state": "room_ready", "generation": gen, "poem_room": r.get("poem_room") or f"d-{self.p['contest_id']}-team-{lead['game_id']}"})
         self.st["intro_at"] = 0   # すぐ募集
         attention(f"lead: team room {lead['poem_room']} set up by the referee (generation {lead['generation']}); recruiting")
         self.save()

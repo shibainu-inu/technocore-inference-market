@@ -693,6 +693,25 @@ class Join(unittest.TestCase):
         a.st.setdefault("proven_submitters", {})[LEAD] = 1; a._apply_at = 0; a.maybe_apply_recruits()
         self.assertEqual(rp.kinds(), ["apply", "apply-json"])
 
+    def test_resetup_while_recruiting_updates_generation_and_reissues_roster(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "room_ready", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 1}
+        m = setup_msg(700, "g", gen=2); j = json.loads(m["text"]); j["type"] = "sonnet.resetup.v1"; m["text"] = json.dumps(j)
+        a.handle(m)
+        self.assertEqual(a.st["lead"]["generation"], 2); self.assertEqual(a.st["lead"]["state"], "room_ready"); self.assertIn("generation 1 -> 2", att())
+        # 正式ロースター発行済みなら取り下げて出し直す
+        b = fresh({"lead_team": True}); rpb = RecordingPost(); b.post = rpb
+        b.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD, OTHERS[0], OTHERS[1]], "signed": {LEAD: 1}, "declined": [], "poem_room": TEAM + "g", "generation": 1, "canonical": [ME, LEAD, OTHERS[0], OTHERS[1]], "canonical_at": 0}
+        b.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD, OTHERS[0], OTHERS[1]], "lead": ME, "ready": False}
+        b.handle(m)
+        self.assertEqual(b.st["lead"]["generation"], 2); self.assertIsNone(b.st["lead"]["canonical"]); self.assertIsNone(b.st["team"]); self.assertIn("re-issued", att())
+        # チーム部屋の受領（room_generation 付き）経由でも同じ
+        c = fresh({"lead_team": True}); c.post = RecordingPost(); c.st["referee"] = REF
+        c.st["lead"] = {"game_id": "g", "request_id": "r", "state": "room_ready", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 1}
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "reason": "", "request_id": "resetup-g-2", "sender_did": REF, "poem_room": TEAM + "g", "room_generation": 2, "state_hash": "hh"}
+        c.on_team({"seq": 3, "from": REF, "_sig_ok": True, "ts": "t", "text": json.dumps(rc_)}, rc_)
+        self.assertEqual(c.st["lead"]["generation"], 2)
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
