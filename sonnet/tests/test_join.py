@@ -26,6 +26,8 @@ def fresh(auto=None):
     p["auto"] = {k: False for k in p["auto"]}
     p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
     p["apply_only_proven"] = False     # 実績リーダー限定は test_apply_only_proven_leads で見る
+    for k in ("lead_reissue_token", "lead_unseat", "undrop", "leave_team", "lead_reset_to", "readdress_token", "x_post_ids", "announce_once", "drop_agreed"):
+        p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
     if auto: p["auto"].update(auto)
     agent.STATE_PATH = os.path.join(HERE, "_state_join.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_join.md")
@@ -368,11 +370,14 @@ class Join(unittest.TestCase):
         a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp; a.key = object(); a.st["registered"] = {"seq": 1}
         a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD, LEAD2, OTHERS[0], OTHERS[1]], "signed": {LEAD: 1}, "declined": [], "poem_room": TEAM + "g", "generation": 2, "canonical": [ME, LEAD, LEAD2, OTHERS[0], OTHERS[1]], "canonical_at": 0}
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 2, "members": [ME, LEAD, LEAD2, OTHERS[0], OTHERS[1]], "lead": ME, "ready": False}
+        a.st["lead"]["roster_request_id"] = "roster-old"
         p = json.loads(json.dumps(a.p)); p["lead_unseat"] = [LEAD2]
         a.apply_operator_switches(p)
         self.assertEqual(a.st["lead"]["members"], [LEAD, OTHERS[0], OTHERS[1]]); self.assertIn(LEAD2, a.st["lead"]["declined"])
-        self.assertEqual(rp.kinds(), ["lead-canonical", "roster"]); self.assertEqual(json.loads(rp.calls[1][1])["members"], [ME, LEAD, OTHERS[0], OTHERS[1]])
-        a.apply_operator_switches(p); self.assertEqual(len(rp.calls), 2)   # 既に外れていれば何もしない
+        self.assertEqual(rp.kinds(), ["withdraw", "lead-canonical", "roster"]); self.assertEqual(json.loads(rp.calls[2][1])["members"], [ME, LEAD, OTHERS[0], OTHERS[1]])   # 出し直す前に自分の同意を取り下げる
+        a.apply_operator_switches(p); self.assertEqual(len(rp.calls), 3)   # 既に外れていれば何もしない
+        p["lead_reissue_token"] = "t1"; a.apply_operator_switches(p); a.apply_operator_switches(p)
+        self.assertEqual(rp.kinds()[3:], ["withdraw", "lead-canonical", "roster"])
 
     def test_operator_leave_team(self):
         a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None

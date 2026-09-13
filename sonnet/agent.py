@@ -1563,6 +1563,13 @@ class Agent:
             members = [self.did] + lead["members"]
         roster = {"type": "sonnet.roster.v1", "contest_id": p["contest_id"], "game_id": lead["game_id"], "poem_room": lead["poem_room"],
                   "room_generation": lead["generation"], "members": members, "request_id": self.req_id("roster")}
+        if lead.get("roster_request_id"):
+            # 以前の版に当方の同意が残っていると新しい版は consent: withdraw before changing で却下される: 先に取り下げる
+            wd = {"type": "sonnet.withdraw.v1", "contest_id": p["contest_id"], "game_id": lead["game_id"], "request_id": self.req_id("withdraw")}
+            try:
+                self.post(p["rooms"]["discovery"], self.compact(wd), "withdraw")
+            except Exception as e:
+                attention(f"lead: withdraw before re-issue failed: {e!r}", key="lead-post"); return
         try:
             self.post(p["rooms"]["discovery"], "CANONICAL MEMBERS " + lead["game_id"] + " (mirror byte for byte in sonnet.roster.v1, poem_room "
                       + lead["poem_room"] + ", room_generation " + str(lead["generation"]) + "): " + " ".join(members), "lead-canonical", allow_dids=set(members))
@@ -2169,6 +2176,14 @@ class Agent:
         except Exception as e:
             log(f"maybe_submit error: {e!r}")
         lead = self.st.get("lead")
+        rt = p.get("lead_reissue_token")
+        if rt and lead and lead.get("canonical") and self.st.get("lead_reissue_done") != rt:
+            self.st["lead_reissue_done"] = rt; lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None
+            attention("operator lead_reissue: withdrawing our consent and re-issuing the canonical roster"); self.save()
+            try:
+                self.lead_check_roster()
+            except Exception as e:
+                log(f"lead_check_roster after reissue: {e!r}")
         for did in p.get("lead_unseat", []) or []:
             if lead and did in lead.get("members", []):
                 lead["members"].remove(did); lead.setdefault("declined", []).append(did)

@@ -131,7 +131,5 @@
     "zuobai"
   ],
   "lead_status_interval_s": 1200,
-  "lead_unseat": [
-    "did:key:z6Mkt3ir45GPWydq3dYUaKDdSycfpzRYeTDkJdV6MkgUU1jddiD"
-  ]
+  "lead_reissue_token": "2026-09-13T13:10Z"
 }
