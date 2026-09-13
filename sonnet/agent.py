@@ -18,7 +18,7 @@ sonnet/agent.py — FLOP Labs ソネットチャレンジ用の参加 bot（会�
    python3 sonnet/agent.py status           # state.json の要約
    python3 sonnet/agent.py check-poem FILE  # 14 行の下書きを公式バリデータと韻律で判定
 """
-import argparse
+import datetime, argparse
 import base64
 import calendar
 import collections
@@ -1427,8 +1427,13 @@ class Agent:
         open_seats = p.get("lead_max_members", 6) - 1 - len(lead["members"])
         if open_seats <= 0:
             return
+        hour_now = datetime.datetime.now(datetime.timezone.utc).hour
+        windows = p.get("invite_windows") or {}
         for did in list(self.st.get("release_invites") or []) + list(p.get("lead_invites", []) or []):
             if did in done or did == self.did or did in lead["members"] or did in self.ignored() or not DID_RE.fullmatch(did):
+                continue
+            # 相手の活動時間帯（UTC 時、活動ログから推測）が分かっていれば、その時間帯にだけ送る（運用者の指摘 2026-09-13）
+            if isinstance(windows.get(did), list) and windows[did] and hour_now not in windows[did]:
                 continue
             if did not in (self.st.get("writers_ok") or {}):
                 attention(f"lead invite to {did[-8:]} skipped: no observed writer receipt", key="invite-skip"); done.append(did); continue
@@ -1534,6 +1539,15 @@ class Agent:
         ok = frm in self.st.get("writers_ok", {})
         if not ok:
             attention(f"lead: applicant {frm[-6:]} for {lead['game_id']} has no observed writer receipt; not seated (they can ask the referee for their receipt)", key=f"lead-app-{frm}")
+            return
+        # 他所の枠に生きている同意がある相手は、審判が当方の枠への署名を却下する（consent: withdraw before changing）: 座らせず理由を返す
+        lc = [w for x, w in self.member_health([frm], lead["game_id"]) if w.startswith("live consent")]
+        if lc:
+            attention(f"lead: applicant {frm[-8:]} not seated ({lc[0]})", key=f"lead-consent-{frm}")
+            try:
+                self.post(self.p["rooms"]["discovery"], f"@{frm[-8:]} {lead['game_id']}: thanks. Not seated for now: the referee shows a {lc[0]}, so a signature here would be rejected. If you withdraw it and still want the seat, reply yes-{lead['game_id']} again. Lead DID {self.did}", "lead-consent")
+            except Exception as e:
+                log(f"consent note failed: {e!r}")
             return
         # 計画が決まっている間は、鍵の文字が詩を壊す相手は座らせない（全語が 2 鍵以上で綴れ、当方しか綴れない語が隣り合わない）
         nogo = self.key_fits_plan(frm)
@@ -2058,19 +2072,52 @@ class Agent:
                                                    "notes": {"type": "string"}}, "required": ["lines", "notes"], "additionalProperties": False}
         accepted, lex = list(self.st["poem"]["lines"]), self.lexicon()
         model, tmo = self.model_for("plan"), self.p["llm"]["timeout_s"]
+        members = list((self.st.get("team") or {}).get("members") or team_context.get("members") or [])
+        letters = {m: self.key_letters(m) for m in members}
+        alphabet = set("abcdefghijklmnopqrstuvwxyz")
+        # 鍵の制約を LLM に渡す: 各メンバーに無い文字と、2 人以上に無い文字（それを含む語は避ける）
+        missing = {m[-8:]: "".join(sorted(alphabet - letters[m])) for m in members}
+        others = [m for m in members if m != self.did]
+        scarce = sorted(c for c in alphabet if sum(1 for m in others if c not in letters[m]) >= max(1, len(others) - 1))
+        team_context = dict(team_context, letters_missing_per_member=missing,
+                            letters_to_avoid=("".join(scarce) or "none") + " (fewer than two non-lead members can write them)",
+                            rule="Every word must be spellable (letters only, ignore punctuation) by at least two members, preferably two members other than the lead; "
+                                 "no two consecutive words may be spellable only by the lead. Prefer short common words built from letters every member has.")
+        me = self.did
+
+        def fit_problems(lines):
+            words = [w for line in lines for w in line.split(" ") if w]
+            can = [[m for m in members if set(self.LETTERS_RE.findall(w.lower())) <= letters[m]] for w in words]
+            probs = []
+            single = [words[i] for i in range(len(words)) if len(can[i]) < 2]
+            if single:
+                probs.append("words spellable by fewer than two members (change them): " + ", ".join(dict.fromkeys(single)))
+            adj = [f"{words[i]} {words[i + 1]}" for i in range(len(words) - 1) if can[i] == [me] and can[i + 1] == [me]]
+            if adj:
+                probs.append("two consecutive words only the lead can spell (change one): " + "; ".join(adj[:6]))
+            lead_only = [words[i] for i in range(len(words)) if can[i] == [me]]
+            if len(lead_only) > len(words) // 4:
+                probs.append(f"{len(lead_only)} words are spellable only by the lead; keep that under a quarter of the poem")
+            return probs
 
         def job():
-            feedback = ""
-            for rnd in range(4):
+            feedback = ""; best = None
+            for rnd in range(6):
                 user = json.dumps({"team_context": team_context, "previous_attempt_feedback": feedback,
                                    "accepted_lines_so_far": accepted}, ensure_ascii=False)
                 out = llm.ask(SYSTEM_PLAN, user, schema, model=model, timeout_s=tmo, task=f"plan{rnd}")
                 lines = [" ".join(l.split()) for l in out["lines"]]
                 problems = check_poem(lines, lex)
-                if not problems:
+                fit = fit_problems(lines) if not problems and members else []
+                if not problems and not fit:
                     return lines
-                feedback = "; ".join(problems)
+                if not problems and (best is None or len(fit) < best[0]):
+                    best = (len(fit), lines)
+                feedback = "; ".join(problems + fit)
                 log(f"plan round {rnd}: {feedback[:300]}")
+            if best:
+                attention(f"plan: no fully key-fitted text after 6 rounds; using the best form-valid one ({best[0]} fit problem(s) remain)", key="plan-fit")
+                return best[1]
             return None
         self.submit_llm("plan", job)
 
