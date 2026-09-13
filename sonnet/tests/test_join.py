@@ -26,7 +26,8 @@ def fresh(auto=None):
     p["auto"] = {k: False for k in p["auto"]}
     p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
     p["apply_only_proven"] = False     # 実績リーダー限定は test_apply_only_proven_leads で見る
-    for k in ("lead_reissue_token", "lead_unseat", "undrop", "leave_team", "lead_reset_to", "readdress_token", "x_post_ids", "announce_once", "drop_agreed"):
+    for k in ("lead_reissue_token", "lead_unseat", "lead_seat", "lead_undecline", "lead_mark_signed", "undrop", "leave_team", "lead_reset_to", "readdress_token",
+              "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
     if auto: p["auto"].update(auto)
     agent.STATE_PATH = os.path.join(HERE, "_state_join.json")

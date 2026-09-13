@@ -2325,6 +2325,26 @@ class Agent:
             # 運用者が手番表の担当列を差し替える（別の bot の手番表に合わせて待ち合いを無くすため）。語は変えない
             sc["who"] = list(sw); self.save()
             attention("operator script_who: turn assignments replaced (" + ", ".join(f"{m[-6:]}={sw.count(m)}" for m in dict.fromkeys(sw)) + ")")
+        ng = p.get("lead_next_game")
+        if isinstance(ng, str) and ng and ng != self.st.get("lead_next_game_done"):
+            # 提出済みのゲームを閉じて次のゲームを請求する: 今のゲームの状態を退避し、lead/team/poem/plan/手番表を初期化。
+            # 完成済み枠への当方の同意は念のため取り下げる（審判が「consent: missing」で却下しても害は無い）
+            self.st["lead_next_game_done"] = ng
+            done = self.st.setdefault("done_games", [])
+            done.append({"at": iso(), "lead": self.st.get("lead"), "team": self.st.get("team"), "poem": self.st.get("poem"),
+                         "plan": self.st.get("plan"), "script": self.st.get("script"), "submission_ready": self.st.get("submission_ready")})
+            old_gid = ((self.st.get("team") or {}).get("game_id")) or ((self.st.get("lead") or {}).get("game_id"))
+            if old_gid:
+                try:
+                    self.post(p["rooms"]["discovery"], self.compact({"type": "sonnet.withdraw.v1", "contest_id": p["contest_id"], "game_id": old_gid, "request_id": self.req_id("withdraw")}), "withdraw")
+                except Exception as e:
+                    log(f"withdraw after completion failed: {e!r}")
+            self.st["lead"] = None; self.st["team"] = None; self.st["plan"] = None; self.st["script"] = None; self.st["pending_word"] = None
+            self.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": None, "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": None}
+            self.st["submission_ready"] = None; self.st["lead_attempts"] = 0; self.st["lead_block_until"] = 0; self.st["intro_at"] = 0
+            self.st["lead_invited"] = []; self.st["release_invites"] = []; self.st["lead_status_key"] = None
+            attention(f"operator lead_next_game {ng}: game {old_gid} archived; requesting a new team room for {p.get('lead_game_id')}")
+            self.save()
         pr = p.get("plan_reset")
         if pr and pr != self.st.get("plan_reset_done") and not (self.st.get("team") or {}).get("ready"):
             self.st["plan_reset_done"] = pr; self.st["plan"] = None; self.st["script"] = None; self._plan_at = 0
