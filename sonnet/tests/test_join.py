@@ -345,6 +345,26 @@ class Join(unittest.TestCase):
         self.assertEqual(a.st["dropped"], ["a", "c"]); self.assertEqual(calls, [1])       # 同じ token では 1 回だけ
         p["readdress_token"] = "t2"; a.apply_operator_switches(p); self.assertEqual(calls, [1, 1])
 
+    def test_withdraw_is_resent_until_receipted(self):
+        a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:28:00Z")
+        a.lose_team("test", withdraw=True)
+        pw = a.st["pending_withdraw"]; self.assertEqual((pw["game_id"], pw["n"]), ("g", 1)); rid1 = pw["request_id"]
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:33:00Z"); a.check_pending_withdraw(); self.assertEqual(len(rp.calls), 1)   # 5 分: まだ
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:39:00Z"); a.check_pending_withdraw()
+        self.assertEqual(rp.kinds(), ["withdraw", "withdraw"]); self.assertNotEqual(a.st["pending_withdraw"]["request_id"], rid1); self.assertEqual(a.st["pending_withdraw"]["n"], 2)
+        # 審判の受領（一括 receipts 形式でも可）で消える
+        rc_ = {"type": "sonnet.receipts.v1", "receipts": [{"request_id": a.st["pending_withdraw"]["request_id"], "status": "accepted"}]}
+        a.handle({"seq": 9, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertIsNone(a.st["pending_withdraw"])
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T08:30:00Z"); a.check_pending_withdraw(); self.assertEqual(len(rp.calls), 2)
+
+    def test_withdraw_resend_gives_up_after_max(self):
+        a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
+        a.st["pending_withdraw"] = {"game_id": "g", "request_id": "w1", "at": "2026-09-13T06:00:00Z", "n": 3}
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:00:00Z"); a.check_pending_withdraw()
+        self.assertEqual(rp.calls, []); self.assertTrue(a.st["pending_withdraw"]["gave_up"]); self.assertIn("may still count as live", att())
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

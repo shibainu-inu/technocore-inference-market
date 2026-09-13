@@ -569,6 +569,8 @@ class Agent:
                 lead.setdefault("signed", {})[frm] = m["seq"]
                 log(f"lead: member {frm[-6:]} posted roster.v1 (seq {m['seq']})")
         if self.is_referee(m):
+            if j:
+                self.note_withdraw_receipt(j)
             # 審判がロースター同意を受理した DID は writer 登録済み（未登録は roster: writer required で却下される）
             if j and j.get("status") == "accepted" and "roster_ready" in j and isinstance(j.get("sender_did"), str) and DID_RE.fullmatch(j["sender_did"]):
                 w = self.st.setdefault("writers_ok", {})
@@ -989,6 +991,7 @@ class Agent:
                 self.post(self.p["rooms"]["discovery"], self.compact(j), "withdraw")
             except Exception as e:
                 attention(f"CRITICAL withdraw post failed for {gid}: {e!r}", key="withdraw-post"); return
+            self.st["pending_withdraw"] = {"game_id": gid, "request_id": j["request_id"], "at": iso(), "n": 1}
         attention(f"left team {gid}: {why}; back to recruiting/applying")
         self.st["team"] = None
         if self.application_for(gid):
@@ -1034,6 +1037,37 @@ class Agent:
         for m in picked[-12:]:
             self.addressed.append(m)
         log(f"readdress: {len(picked)} recent notes addressed to us re-queued for reply (kept {min(len(picked), 12)})")
+
+    def check_pending_withdraw(self):
+        """withdraw.v1 に審判の受領が来ない間は同意が生きている扱いになり、次の署名が却下される。
+        withdraw_receipt_timeout_s 待って未受領なら新しい request_id で出し直す（withdraw_max_resend 回まで）"""
+        pw = self.st.get("pending_withdraw")
+        if not pw or self.key is None or pw.get("gave_up"):
+            return
+        age = utc_now() - parse_iso(pw["at"])
+        if age < self.p.get("withdraw_receipt_timeout_s", 600):
+            return
+        if pw["n"] >= self.p.get("withdraw_max_resend", 3):
+            pw["gave_up"] = True
+            attention(f"CRITICAL withdraw for {pw['game_id']} still has no referee receipt after {pw['n']} attempts; our consent may still count as live", key="withdraw-stuck")
+            self.save(); return
+        j = {"type": "sonnet.withdraw.v1", "contest_id": self.p["contest_id"], "game_id": pw["game_id"], "request_id": self.req_id("withdraw")}
+        try:
+            self.post(self.p["rooms"]["discovery"], self.compact(j), "withdraw")
+        except Exception as e:
+            attention(f"withdraw re-send failed for {pw['game_id']}: {e!r}", key="withdraw-post"); return
+        pw.update({"request_id": j["request_id"], "at": iso(), "n": pw["n"] + 1})
+        attention(f"withdraw for {pw['game_id']} had no referee receipt for {int(age // 60)} min; re-sent (attempt {pw['n']})", key="withdraw-resend")
+        self.save()
+
+    def note_withdraw_receipt(self, j):
+        pw = self.st.get("pending_withdraw")
+        if not pw:
+            return
+        ids = {j.get("request_id")} | {r.get("request_id") for r in (j.get("receipts") or []) if isinstance(r, dict)}
+        if pw["request_id"] in ids:
+            log(f"withdraw for {pw['game_id']} receipted ({j.get('status')})")
+            self.st["pending_withdraw"] = None; self.save()
 
     def check_stuck_roster(self):
         """署名したロースターが roster_ready にならないまま止まった場合の損切り。署名から roster_stuck_warn_h で ATTENTION、
@@ -1806,6 +1840,10 @@ class Agent:
                 self.recheck_pending_roster()
             except Exception as e:
                 log(f"recheck_pending_roster error: {e!r}")
+            try:
+                self.check_pending_withdraw()
+            except Exception as e:
+                log(f"check_pending_withdraw error: {e!r}")
         if getattr(self, "_resync_room", False) and self.st.get("team"):
             self._resync_room = False
             self.replay_room(self.st["team"]["room"])
