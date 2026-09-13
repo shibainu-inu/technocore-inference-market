@@ -744,6 +744,14 @@ class Agent:
             gid = p.get("lead_game_id") or f"nohitori{int(now) % 1000}"
             if not GAME_RE.match(gid):
                 attention(f"lead_game_id {gid!r} is not a valid game_id", key="lead-gid"); return
+            su = (self.st.get("setups") or {}).get(gid)
+            if su:
+                # 審判が既にこのゲームの部屋を設定済み（以前の要求）: 再要求せず、そのまま募集に入る
+                self.st["lead"] = {"game_id": gid, "request_id": f"reuse-{gid}", "state": "allocated", "at": iso(), "members": [], "signed": {}, "declined": []}
+                self.lead_room_setup({"room_generation": su["generation"], "poem_room": su["room"]})
+                self.start_reader(su["room"])
+                attention(f"lead mode: reusing the referee-set room {su['room']} (generation {su['generation']}) for {gid}")
+                return
             rid = self.req_id("room")
             self.post(p["rooms"]["discovery"], self.compact({"type": "sonnet.team-request.v1", "contest_id": p["contest_id"], "game_id": gid, "request_id": rid}), "team-request")
             self.st["lead"] = {"game_id": gid, "request_id": rid, "state": "requested", "at": iso(), "members": [], "signed": {}, "declined": []}
@@ -1840,8 +1848,8 @@ class Agent:
         target = p.get("lead_reset_to")
         lead = self.st.get("lead")
         setup = (self.st.get("setups") or {}).get(target) if target else None
-        if target and setup and lead and lead.get("game_id") != target and self.st.get("lead_reset_done") != target:
-            self.st["lead_reset_done"] = target
+        if target and setup and lead and (lead.get("game_id") != target or lead.get("state") == "requested") and self.st.get("lead_reset_done") != f"{target}:{lead.get('request_id')}":
+            self.st["lead_reset_done"] = f"{target}:{lead.get('request_id')}"
             old = lead.get("game_id")
             lead.update({"game_id": target, "poem_room": setup["room"], "generation": setup["generation"],
                          "state": "collecting" if lead.get("members") else "room_ready", "request_id": f"reset-{target}", "canonical": None})

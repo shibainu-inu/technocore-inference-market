@@ -346,6 +346,15 @@ class Join(unittest.TestCase):
             agent.fm.http_get, agent.verify_sig = old_get, old_vs
         self.assertEqual(sorted(m["seq"] for m in a.addressed), [1, 6]); self.assertTrue(all(m.get("_sig_ok") and "_at" in m for m in a.addressed))
 
+    def test_lead_mode_reuses_existing_referee_room(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp
+        a.handle(setup_msg(361, POLICY["lead_game_id"]))
+        a.st["lead"] = None; a.opening = 0
+        a.maybe_lead()
+        self.assertEqual([k for _, _, k in rp.calls if k == "team-request"], [])
+        self.assertEqual((a.st["lead"]["game_id"], a.st["lead"]["state"], a.st["lead"]["generation"]), (POLICY["lead_game_id"], "room_ready", 1))
+        self.assertIn("reusing the referee-set room", att())
+
     def test_operator_leave_team(self):
         a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
         p = json.loads(json.dumps(a.p)); p["leave_team"] = "g"
