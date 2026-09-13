@@ -350,6 +350,7 @@ class Join(unittest.TestCase):
         agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:28:00Z")
         a.lose_team("test", withdraw=True)
         pw = a.st["pending_withdraw"]; self.assertEqual((pw["game_id"], pw["n"]), ("g", 1)); rid1 = pw["request_id"]
+        pw["at"] = "2026-09-13T07:28:00Z"   # iso() は実時刻なので試験時刻に合わせる
         agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:33:00Z"); a.check_pending_withdraw(); self.assertEqual(len(rp.calls), 1)   # 5 分: まだ
         agent.utc_now = lambda: agent.parse_iso("2026-09-13T07:39:00Z"); a.check_pending_withdraw()
         self.assertEqual(rp.kinds(), ["withdraw", "withdraw"]); self.assertNotEqual(a.st["pending_withdraw"]["request_id"], rid1); self.assertEqual(a.st["pending_withdraw"]["n"], 2)
