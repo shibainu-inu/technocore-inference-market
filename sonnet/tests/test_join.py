@@ -34,7 +34,8 @@ def fresh(auto=None):
     p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
     p["apply_only_proven"] = False     # 実績リーダー限定は test_apply_only_proven_leads で見る
     for k in ("lead_reissue_token", "lead_unseat", "lead_seat", "lead_undecline", "lead_mark_signed", "undrop", "leave_team", "lead_reset_to", "readdress_token",
-              "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application"):
+              "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application",
+              "invite_windows", "invite_records"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
     if not p.get("plan_seed"):
         p["plan_seed"] = TEST_PLAN          # 本番 policy の plan_seed が空でも試験は固定の合格文で回す
