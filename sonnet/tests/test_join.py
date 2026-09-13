@@ -245,6 +245,23 @@ class Join(unittest.TestCase):
             self.assertEqual(rp.calls, [], name); self.assertEqual(a.st["team"]["members"], [LEAD, OTHERS[0], OTHERS[1], ME], name)
             if needle: self.assertIn(needle, att(), name)
 
+    def test_pending_roster_is_reconsented_once_evidence_arrives(self):
+        a, rp = self.signed_team()
+        a.on_roster_for_us({"seq": 20, "from": LEAD, "ts": "t", "_sig_ok": True}, self.changed())   # LEAD2 の証拠なし → 保留
+        self.assertEqual(rp.calls, []); self.assertEqual(a.st["team"]["pending_roster"]["m"]["seq"], 20)
+        a.recheck_pending_roster(); self.assertEqual(rp.calls, [])                                    # まだ証拠なし
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "roster-l2", "sender_did": LEAD2, "roster_ready": False}
+        a.handle({"seq": 25, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})   # 審判が LEAD2 の同意を受理
+        a.recheck_pending_roster()
+        self.assertEqual(rp.kinds(), ["withdraw", "roster"]); self.assertIsNone(a.st["team"]["pending_roster"])
+        self.assertEqual(a.st["team"]["members"], [LEAD, LEAD2, OTHERS[1], ME])
+
+    def test_roster_with_ignored_member_is_refused_and_not_kept_pending(self):
+        a, rp = self.signed_team(); a.p["ignore_senders"].append(LEAD2); a.st["writers_ok"][LEAD2] = 3
+        a.on_roster_for_us({"seq": 20, "from": LEAD, "ts": "t", "_sig_ok": True}, self.changed())
+        self.assertEqual(rp.calls, []); self.assertIn("includes an ignored DID", att()); self.assertIsNone(a.st["team"].get("pending_roster"))
+        a.recheck_pending_roster(); self.assertEqual(rp.calls, [])
+
     def test_referee_roster_receipt_marks_writer(self):
         a = fresh()
         rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "roster-x", "sender_did": LEAD2, "roster_ready": False, "state_hash": "h"}

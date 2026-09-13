@@ -884,9 +884,16 @@ class Agent:
         acc = self.p["accept"]
         if not (acc["min_members"] <= n <= acc["max_members"] and len(set(members)) == n and all(DID_RE.fullmatch(d) for d in members)) or self.did not in members:
             attention(f"CRITICAL lead's changed roster seq {m['seq']} for {gid} is malformed or drops us; not signing", key="roster-bad"); return
+        shunned = [d for d in members if d != self.did and d in self.ignored()]
+        if shunned:
+            attention(f"CRITICAL lead's changed roster seq {m['seq']} for {gid} includes an ignored DID ({', '.join(d[-8:] for d in shunned)}); not signing (remove it from ignore_senders to allow)", key="roster-shunned")
+            team["pending_roster"] = None; return
         unknown = [d for d in members if d not in (self.did, team["lead"]) and d not in (self.st.get("writers_ok") or {})]
         if unknown:
+            # 証拠が後から届いたら periodic の recheck_pending_roster で再評価する
+            team["pending_roster"] = {"m": {k: m[k] for k in ("seq", "ts", "from", "_sig_ok") if k in m}, "j": j}
             attention(f"lead's changed roster seq {m['seq']} for {gid} has members without observed writer evidence ({', '.join(d[-8:] for d in unknown)}); not signing yet", key="roster-unknown"); return
+        team["pending_roster"] = None
         if team.get("reconsents", 0) >= self.p.get("reconsent_max", 3):
             attention(f"CRITICAL lead of {gid} changed the roster again (seq {m['seq']}); reconsent_max reached, not signing", key="roster-bad"); return
         if not (self.p["auto"]["sign_roster"] and self.key is not None):
@@ -905,6 +912,18 @@ class Agent:
                      "reconsents": team.get("reconsents", 0) + 1})
         attention(f"re-consented to the lead's changed roster for {gid} (seq {m['seq']}): withdrew and re-signed; members {old} -> {[d[-8:] for d in members]}")
         self.save()
+
+    def recheck_pending_roster(self):
+        """writer の証拠が無くて保留したリーダーの差し替えロースターを、証拠が揃った時点で再評価する（60 秒ごと）"""
+        team = self.st.get("team")
+        pend = team and team.get("pending_roster")
+        if not pend or team.get("ready"):
+            return
+        w = self.st.get("writers_ok") or {}
+        if all(d in w or d in (self.did, team["lead"]) for d in pend["j"]["members"]):
+            log(f"pending roster seq {pend['m'].get('seq')} for {team['game_id']}: writer evidence now complete; re-evaluating")
+            team["pending_roster"] = None
+            self.reconsent(pend["m"], pend["j"], team)
 
     def resync_team_roster(self):
         """起動時: 署名済みで未凍結のチームについて discovery の /export を読み、審判のロースター受領（writer の証拠）を
@@ -1703,6 +1722,12 @@ class Agent:
             self.check_stuck_roster()
         except Exception as e:
             log(f"check_stuck_roster error: {e!r}")
+        if now - getattr(self, "_pend_at", 0) > 60:
+            self._pend_at = now
+            try:
+                self.recheck_pending_roster()
+            except Exception as e:
+                log(f"recheck_pending_roster error: {e!r}")
         if getattr(self, "_resync_room", False) and self.st.get("team"):
             self._resync_room = False
             self.replay_room(self.st["team"]["room"])
