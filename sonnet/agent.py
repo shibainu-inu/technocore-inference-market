@@ -1155,6 +1155,38 @@ class Agent:
         if h >= limit and self.p["auto"].get("withdraw_stuck") and self.key is not None:
             self.lose_team(f"no roster_ready {h:.1f}h after signing", withdraw=True)
 
+    def maybe_lead_invites(self):
+        """lead mode の個別招待: 方針の lead_invites に並ぶ DID へ、1 件ずつ sonnet.note.v1（target_did 付き）を 1 回だけ送る。
+        条件: 部屋が設定済み（room_ready/collecting）、相手は writer 受理を観測済みで無視対象でなく、まだ席がない。30 秒に 1 件"""
+        lead = self.st.get("lead"); p = self.p
+        if not lead or lead.get("state") not in ("room_ready", "collecting") or self.key is None or self.st.get("team"):
+            return
+        if utc_now() - getattr(self, "_invite_at", 0) < p.get("lead_invite_interval_s", 30):
+            return
+        done = self.st.setdefault("lead_invited", [])
+        open_seats = p.get("lead_max_members", 6) - 1 - len(lead["members"])
+        if open_seats <= 0:
+            return
+        for did in p.get("lead_invites", []) or []:
+            if did in done or did == self.did or did in lead["members"] or did in self.ignored() or not DID_RE.fullmatch(did):
+                continue
+            if did not in (self.st.get("writers_ok") or {}):
+                attention(f"lead invite to {did[-8:]} skipped: no observed writer receipt", key="invite-skip"); done.append(did); continue
+            text = (p.get("lead_invite_text") or "").replace("{GAME}", lead["game_id"]).replace("{DID}", self.did) \
+                .replace("{ROOM}", lead.get("poem_room") or "").replace("{GEN}", str(lead.get("generation"))) \
+                .replace("{OPEN}", str(open_seats)).replace("{TSUF}", did[-8:])
+            if not text:
+                return
+            j = {"type": "sonnet.note.v1", "contest_id": p["contest_id"], "game_id": lead["game_id"], "target_did": did,
+                 "request_id": self.req_id("invite"), "text": text}
+            try:
+                self.post(p["rooms"]["discovery"], self.compact(j), "lead-invite", allow_dids={did})
+            except Exception as e:
+                attention(f"lead invite to {did[-8:]} failed: {e!r}", key="invite-post"); return
+            done.append(did); self._invite_at = utc_now()
+            attention(f"lead: invited {did[-8:]} to {lead['game_id']} ({open_seats} seats open)")
+            self.save(); return
+
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
         lead = self.st.get("lead")
@@ -1893,6 +1925,10 @@ class Agent:
         except Exception as e:
             log(f"maybe_lead error: {e!r}")
         try:
+            self.maybe_lead_invites()
+        except Exception as e:
+            log(f"maybe_lead_invites error: {e!r}")
+        try:
             self.maybe_apply_recruits()
         except Exception as e:
             log(f"maybe_apply_recruits error: {e!r}")
@@ -1921,6 +1957,14 @@ class Agent:
                 and now - getattr(self, "_plan_at", 0) > 600:
             self._plan_at = now
             team = self.st["team"]
+            seed = self.p.get("plan_seed")
+            if isinstance(seed, list) and len(seed) == 14 and all(isinstance(x, str) for x in seed):
+                problems = check_poem(seed, self.lexicon())
+                if not problems:
+                    attention(f"plan: using the operator's plan_seed (validated offline) for {team['game_id']}")
+                    self.apply_plan_result(list(seed))
+                    return
+                attention(f"plan_seed rejected by the offline check ({problems[:3]}); falling back to the LLM plan", key="plan-seed")
             ctx = [f"{x['from'][-6:]}: {clip(x['text'], 400)}" for x in list(self.recent[team["room"]])[-60:]]
             self.make_plan({"members": team["members"], "team_room_messages": ctx})
         if now - getattr(self, "_save_at", 0) > 60:

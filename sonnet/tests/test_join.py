@@ -418,6 +418,34 @@ class Join(unittest.TestCase):
             a.note_broadcaster({"from": LEAD, "text": "same text every time"})
         self.assertEqual(a.st.get("auto_ignored"), [LEAD]); self.assertNotIn(LEAD, a.ignored())   # 増えない・無視されない
 
+    # ---- lead mode の個別招待と plan_seed ----
+    def test_lead_invites_once_per_writer(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "room_ready", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 1}
+        a.p["lead_invites"] = [LEAD, LEAD2, OTHERS[0]]; a.p["lead_invite_text"] = "@{TSUF} join {GAME} room {ROOM} gen {GEN} open {OPEN} lead {DID}"
+        a.st.setdefault("writers_ok", {}).update({LEAD: 1, OTHERS[0]: 2}); a.p["ignore_senders"].append(OTHERS[0])
+        a._invite_at = 0; a.maybe_lead_invites()
+        self.assertEqual(rp.kinds(), ["lead-invite"]); j = json.loads(rp.calls[0][1])
+        self.assertEqual((j["type"], j["target_did"], j["game_id"]), ("sonnet.note.v1", LEAD, "g")); self.assertIn("gen 1 open 5", j["text"]); self.assertIn(ME, j["text"])
+        a.maybe_lead_invites(); self.assertEqual(len(rp.calls), 1)            # 30 秒の間隔
+        a._invite_at = 0; a.maybe_lead_invites(); self.assertEqual(len(rp.calls), 1)   # LEAD2 は証拠なし、OTHERS[0] は無視対象 → 送らない
+        self.assertIn("no observed writer receipt", att()); self.assertEqual(sorted(a.st["lead_invited"]), sorted([LEAD, LEAD2]))
+        a._invite_at = 0; a.st["team"] = {"game_id": "x"}; a.maybe_lead_invites(); self.assertEqual(len(rp.calls), 1)   # 席が決まれば送らない
+
+    def test_plan_seed_is_used_when_it_validates(self):
+        a = fresh({"plan_lines": True}); rp = RecordingPost(); a.post = rp
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME] + OTHERS, "lead": LEAD, "ready": True}
+        a.opening = 0; a._plan_at = 0
+        seed = POLICY["plan_seed"]; a.p["plan_seed"] = seed
+        agent.check_poem = lambda lines, lex: []          # 韻律の合否は check_poem 側の試験に任せる
+        a.lexicon = lambda: {}
+        a.periodic()
+        self.assertEqual(a.st["plan"], seed); self.assertIn("plan_seed", att())
+        bad = fresh({"plan_lines": True}); bad.post = RecordingPost(); bad.st["team"] = dict(a.st["team"]); bad.opening = 0; bad._plan_at = 0
+        bad.p["plan_seed"] = ["x"] * 14; agent.check_poem = lambda lines, lex: ["line 1 has 1 syllables, need exactly 10"]; bad.lexicon = lambda: {}
+        bad.make_plan = lambda ctx: None; bad.periodic()
+        self.assertIsNone(bad.st["plan"]); self.assertIn("plan_seed rejected", att())
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
