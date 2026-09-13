@@ -712,6 +712,16 @@ class Join(unittest.TestCase):
         c.on_team({"seq": 3, "from": REF, "_sig_ok": True, "ts": "t", "text": json.dumps(rc_)}, rc_)
         self.assertEqual(c.st["lead"]["generation"], 2)
 
+    def test_lead_unseats_member_with_live_consent_before_issuing(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp; a.key = object(); a.st["registered"] = {"seq": 1}
+        a.p["member_health_check"] = True
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD, LEAD2, OTHERS[0]], "signed": {}, "declined": [], "poem_room": TEAM + "g", "generation": 2}
+        healthy(a, LEAD, LEAD2, OTHERS[0], OTHERS[1]); a.st["live_consent"] = {LEAD2: {"game": "floppy", "seq": 1, "ts": "t"}}
+        a.lead_check_roster()
+        self.assertEqual(rp.calls, []); self.assertEqual(a.st["lead"]["members"], [LEAD, OTHERS[0]]); self.assertIn(LEAD2, a.st["lead"]["declined"]); self.assertIn("unseated", att())
+        a.st["lead"]["members"].append(OTHERS[1]); a.lead_check_roster()
+        self.assertEqual(rp.kinds(), ["lead-canonical", "roster"]); self.assertEqual(json.loads(rp.calls[1][1])["room_generation"], 2)
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

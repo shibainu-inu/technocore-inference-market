@@ -60,7 +60,7 @@
   "venue_mention_threshold": 5,
   "lead_game_id": "nohitori",
   "lead_max_members": 6,
-  "lead_sign_timeout_s": 3600,
+  "lead_sign_timeout_s": 900,
   "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. As soon as the roster is signed I generate a 14-line plan validated offline (CMUdict exact-ten, ABAB CDCD EFEF GG); you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted (I check the receipt myself). Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",

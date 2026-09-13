@@ -1525,6 +1525,17 @@ class Agent:
                 lead["canonical"] = None; self.st["team"] = None
                 self.save()
             return
+        # 正式ロースターを出す直前にメンバー点検: 他所の同意が生きている／writer 証拠が無い相手は席を外して再募集
+        # （沈黙は着席時点では問わない: 座った直後なので活動している）
+        bad = [(d, why) for d, why in self.member_health(lead["members"], lead["game_id"]) if not why.startswith("silent") and why != "never seen posting"]
+        if bad:
+            for d, why in bad:
+                lead["members"].remove(d); lead.setdefault("declined", []).append(d)
+                attention(f"lead: unseated {d[-8:]} before issuing the roster ({why})", key="lead-unseat")
+            self.st["intro_at"] = 0; self.save()
+            if len([self.did] + lead["members"]) < p["accept"]["min_members"]:
+                return
+            members = [self.did] + lead["members"]
         roster = {"type": "sonnet.roster.v1", "contest_id": p["contest_id"], "game_id": lead["game_id"], "poem_room": lead["poem_room"],
                   "room_generation": lead["generation"], "members": members, "request_id": self.req_id("roster")}
         try:
