@@ -1076,7 +1076,7 @@ class Agent:
             st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=120)
         except Exception as e:
             log(f"sync_setups: {fm.err_kind(e)}"); return
-        n = 0
+        n = 0; latest = {}
         for ln in body.splitlines():
             try:
                 m = json.loads(ln)
@@ -1085,8 +1085,10 @@ class Agent:
             if m.get("from") != self.st.get("referee"):
                 continue
             j = parse_json(m.get("text", ""))
-            if not (j and j.get("type") in ("sonnet.setup.v1", "sonnet.resetup.v1")):
+            if not (j and j.get("type") in ("sonnet.setup.v1", "sonnet.resetup.v1") and isinstance(j.get("game_id"), str)):
                 continue
+            latest[j["game_id"]] = (m, j)   # ゲームごとに最後の設定だけを使う（setup → resetup の順に流すと generation が往復する）
+        for gid, (m, j) in latest.items():
             m["_sig_ok"] = verify_sig(room, m)
             if m["_sig_ok"]:
                 self.on_results(m, j); n += 1
@@ -2501,6 +2503,10 @@ class Agent:
         self.start_cold_reader([r for k, r in self.p["rooms"].items() if k not in self.HOT])
         if self.st.get("referee"):
             self.sync_setups()
+        try:
+            self.apply_operator_switches(self.p)   # 起動前に置かれたスイッチも適用する
+        except Exception as e:
+            log(f"apply_operator_switches at start: {e!r}")
             try:
                 self.sync_proven_submitters()
             except Exception as e:
