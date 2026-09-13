@@ -137,7 +137,7 @@
   "switch_min_stall_s": 1800,
   "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
   "leave_team": "zuobai",
-  "cover_after_s": 90,
+  "cover_after_s": 45,
   "member_health_check": true,
   "member_idle_max_h": 2,
   "apply_only_proven": true,
