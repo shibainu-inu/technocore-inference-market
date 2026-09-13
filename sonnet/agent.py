@@ -18,7 +18,19 @@ sonnet/agent.py — FLOP Labs ソネットチャレンジ用の参加 bot（会�
    python3 sonnet/agent.py status           # state.json の要約
    python3 sonnet/agent.py check-poem FILE  # 14 行の下書きを公式バリデータと韻律で判定
 """
-import argparse, base64, calendar, collections, hashlib, json, os, queue, re, socket, sys, threading, time
+import argparse
+import base64
+import calendar
+import collections
+import hashlib
+import json
+import os
+import queue
+import re
+import socket
+import sys
+import threading
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -34,11 +46,14 @@ socket.getaddrinfo = _gai_v4_first
 
 import base58
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+import flopmarket as fm  # load_key / http_get / err_kind を流用
 import technocore_did as tc
-import flopmarket as fm            # load_key / http_get / err_kind を流用
+
 sys.path.insert(0, os.path.join(HERE, 'pkg'))
-import prosody, llm
-import sonnet_validate as sv   # 公式バリデータ（同梱コピー）
+import llm
+import prosody
+import sonnet_validate as sv  # 公式バリデータ（同梱コピー）
 
 BASE = "https://technocore.chat"
 POLICY_PATH = os.path.join(HERE, "policy.json")
