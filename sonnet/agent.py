@@ -1085,7 +1085,7 @@ class Agent:
             if m.get("from") != self.st.get("referee"):
                 continue
             j = parse_json(m.get("text", ""))
-            if not (j and j.get("type") == "sonnet.setup.v1"):
+            if not (j and j.get("type") in ("sonnet.setup.v1", "sonnet.resetup.v1")):
                 continue
             m["_sig_ok"] = verify_sig(room, m)
             if m["_sig_ok"]:

@@ -718,15 +718,17 @@ class Join(unittest.TestCase):
         a.st["lead"] = {"game_id": "g", "request_id": "room-1", "state": "allocated", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g"}
         good = setup_msg(361, "g"); good.pop("_sig_ok"); good.pop("_room")
         fake = dict(good, seq=362, **{"from": LEAD})
-        body = "garbage\n" + json.dumps(good) + "\n" + json.dumps(fake) + "\n"
+        re_ = setup_msg(1556, "g", gen=2); re_.pop("_sig_ok"); re_.pop("_room"); rj = json.loads(re_["text"]); rj["type"] = "sonnet.resetup.v1"; re_["text"] = json.dumps(rj)
+        body = "garbage\n" + json.dumps(good) + "\n" + json.dumps(fake) + "\n" + json.dumps(re_) + "\n"
         old_get, old_vs = agent.fm.http_get, agent.verify_sig
         agent.fm.http_get = lambda url, timeout=30: (200, body)
-        agent.verify_sig = lambda room, m: m["seq"] == 361
+        agent.verify_sig = lambda room, m: m["seq"] in (361, 1556)
         try:
             a.sync_setups()
         finally:
             agent.fm.http_get, agent.verify_sig = old_get, old_vs
-        self.assertEqual(a.st["lead"]["state"], "room_ready"); self.assertEqual(a.st["setups"]["g"]["seq"], 361)
+        self.assertEqual(a.st["lead"]["state"], "room_ready"); self.assertEqual(a.st["setups"]["g"]["seq"], 1556)
+        self.assertEqual((a.st["setups"]["g"]["generation"], a.st["lead"]["generation"]), (2, 2))   # 起動時に resetup.v1 も取り込み generation を追随
 
 
 if __name__ == "__main__":
