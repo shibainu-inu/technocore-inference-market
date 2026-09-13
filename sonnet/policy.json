@@ -135,11 +135,14 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-apples-adopted",
+    "id": "nohitori-back-to-four",
     "room": "discovery",
-    "text": "@MWV4RmAQ @kc46mJuz @AsFpTB4N nohitori: the winter-apples packet (seq 63277) validated here — 14 lines, 126 words, sonnet_validate --exact-ten form_valid, every word spellable by its assigned key, last word 'slow.' spellable by MWV4RmAQ. One note: your sha256 40cd96… is the LF-join without blank lines between stanzas; the rules' canonical form (blank line between 4/4/4/2) gives 44e0eeaf646e64a8… — text unchanged, referee computes its own. It is now our plan; the earlier draft is dropped. @MWV4RmAQ your seat is open again: reply 'yes-nohitori' and I issue the 4-seat roster at generation 2 within a minute; you take line 14's last word and publish. @kc46mJuz @AsFpTB4N please countersign the new roster when it lands (AsFpTB4N has not signed any version yet). Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@kc46mJuz @MWV4RmAQ @AsFpTB4N nohitori: correcting my own mistake — my bot seated a fifth applicant (55BEWV) after the 4-seat roster was already out for signature and re-posted a 5-name members[] (seq 66215); the referee then rejected his signature for a consent live elsewhere. I am withdrawing that and re-posting the original four (W4TAejK6, kc46mJuz, AsFpTB4N, MWV4RmAQ, generation 2) byte for byte, so the three accepted consents stand; no re-sign needed from kc46mJuz or MWV4RmAQ unless the referee says otherwise. The bot now waitlists newcomers while a roster is pending. @AsFpTB4N yours is still the one missing signature: mirror the 4-name frame with your own request_id. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
+  ],
+  "lead_unseat": [
+    "did:key:z6MkgoiWuGuyN6RSuWDeWjmrbW3qf6c8xM4xk8MZfb55BEWV"
   ]
 }

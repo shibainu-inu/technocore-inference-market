@@ -1524,12 +1524,40 @@ class Agent:
         if not ok:
             attention(f"lead: applicant {frm[-6:]} for {lead['game_id']} has no observed writer receipt; not seated (they can ask the referee for their receipt)", key=f"lead-app-{frm}")
             return
+        # 正式ロースターが署名待ちの間は席を増やさない（members[] が変わると集まった同意が全部無効になる）。待機列に載せて、席が空いたら先着で座らせる
+        if lead.get("canonical") and len(lead["members"]) + 1 >= self.p["accept"]["min_members"]:
+            wl = lead.setdefault("waitlist", [])
+            if frm not in wl:
+                wl.append(frm); self.save()
+                attention(f"lead: {frm[-8:]} applied while the {lead['game_id']} roster is out for signature; waitlisted (#{len(wl)}), not seated", key=f"lead-wait-{frm}")
+                try:
+                    self.post(self.p["rooms"]["discovery"], f"@{frm[-8:]} {lead['game_id']}: thanks — the roster is already out for signature with the seats full, so I am not changing members[] now. You are #{len(wl)} on the waitlist; if a seat re-opens you are seated first and I post a fresh roster. Lead DID {self.did}", "lead-waitlist")
+                except Exception as e:
+                    log(f"waitlist note failed: {e!r}")
+            return
         lead["members"].append(frm); lead["state"] = "collecting"
         attention(f"lead: seated {frm[-6:]} in {lead['game_id']} ({len(lead['members']) + 1} of {cap + 1})")
         m["_at"] = utc_now(); m["_lead_seated"] = True
         self.addressed.append(m)   # 受諾の返信は通常の返信経路（LLM 下書き + ゲート）で出す
         self.save()
         self.lead_check_roster()
+
+    def seat_from_waitlist(self):
+        """空いた席に待機列の先頭から座らせる（writer 証跡があり、他所の同意が生きていない相手だけ）"""
+        lead = self.st["lead"]; cap = self.p.get("lead_max_members", 6) - 1
+        for d in list(lead.get("waitlist", []) or []):
+            lead["waitlist"].remove(d)
+            if d in lead["members"] or d in lead.get("declined", []) or len(lead["members"]) >= cap:
+                continue
+            if d not in self.st.get("writers_ok", {}):
+                continue
+            bad = [w for x, w in self.member_health([d], lead["game_id"]) if not w.startswith("silent") and w != "never seen posting"]
+            if bad:
+                attention(f"lead: waitlisted {d[-8:]} skipped ({bad[0]})", key=f"lead-wait-skip-{d}"); continue
+            lead["members"].append(d); lead["state"] = "collecting"
+            attention(f"lead: seated {d[-8:]} from the waitlist in {lead['game_id']} ({len(lead['members']) + 1} of {cap + 1})")
+            if len(lead["members"]) + 1 >= self.p["accept"]["min_members"]:
+                break
 
     def lead_check_roster(self):
         """4 人以上そろったら正式メンバー一覧と自分の roster.v1 を出す。全員の署名を待ち、遅い人は席を空けて出し直す"""
@@ -1543,7 +1571,8 @@ class Agent:
                 for d in missing:
                     lead["members"].remove(d); lead.setdefault("declined", []).append(d)
                 attention(f"lead: {len(missing)} member(s) did not sign within the window; seats re-opened, roster will be re-issued", key="lead-timeout")
-                lead["canonical"] = None; self.st["team"] = None; self.st["intro_at"] = 0
+                lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None; self.st["intro_at"] = 0
+                self.seat_from_waitlist()
                 self.save(); return
             if lead["canonical"] == members:
                 return
