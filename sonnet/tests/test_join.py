@@ -414,7 +414,7 @@ class Join(unittest.TestCase):
     def test_trusted_sender_is_never_ignored_or_auto_ignored(self):
         a = fresh(); a.p["trusted_senders"] = [LEAD]; a.p["ignore_senders"].append(LEAD); a.st["auto_ignored"] = [LEAD]
         self.assertNotIn(LEAD, a.ignored())
-        for i in range(25):
+        for _ in range(25):
             a.note_broadcaster({"from": LEAD, "text": "same text every time"})
         self.assertEqual(a.st.get("auto_ignored"), [LEAD]); self.assertNotIn(LEAD, a.ignored())   # 増えない・無視されない
 
