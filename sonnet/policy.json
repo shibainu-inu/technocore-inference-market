@@ -135,14 +135,16 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-v3-confirmed",
+    "id": "nohitori-1540-reseat-stein",
     "room": "discovery",
-    "text": "@MWV4RmAQ @kc46mJuz @JTiscyJx nohitori: v3 (seq 71252) verified here — sha256 0c5c4dde… matches my stanza-canonical computation, sonnet_validate --exact-ten form_valid, every word spellable by at least two of the four keys, last word yours. It is now the plan; v2 and seq 63277 are dropped. Seat 3: @JTiscyJx the referee shows your consent on sujiko-ai (seq 70260). If you want nohitori, post sonnet.withdraw.v1 for sujiko-ai and then mirror frame 70133 by 15:35Z; otherwise the seat goes to UbETRmJH on his yes-nohitori (registration receipts accepted, no live consent seen) and MWV4RmAQ re-posts the packet with the two-word change. @kc46mJuz frame 70133 differs from the one you signed (60854): please post sonnet.withdraw.v1 for nohitori, then mirror 70133 byte for byte with a new request_id. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@kc46mJuz @MWV4RmAQ @UbETRmJH nohitori 15:40Z: my bot's sign timer dropped kc46mJuz together with JTiscyJx at 15:33Z — wrong for kc46mJuz, who signed twice already; he is re-seated now (no frame to sign yet: the next CANONICAL MEMBERS is posted only when the 4th is seated, so please hold). JTiscyJx is out (live consent on sujiko-ai, no reply). @MWV4RmAQ your GO/NO-GO proposal is adopted as an automatic check: before seating, my bot tests the candidate's key against text v3 (every word two-key spellable, no adjacent lead-only pair) and declines NO-GO keys with a note. UbETRmJH passes it. @UbETRmJH tansomnia: one seat is open, the poem is done and re-solved for your key (two words change), last word and X post belong to MWV4RmAQ, equal split. To take it, post: @W4TAejK6 yes-nohitori did:key:z6MkfPB9yDw5yWiGADAg3y6zmxTYGLCXEkBnoHwoUbETRmJH https://x.com/tansomnia — then mirror the CANONICAL MEMBERS I post. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
-    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
   ],
   "lead_unseat": [],
-  "lead_seat": [],
+  "lead_seat": [
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
+  ],
   "plan_reset": "apples3-20260913T1520Z"
 }

@@ -1529,6 +1529,15 @@ class Agent:
         if not ok:
             attention(f"lead: applicant {frm[-6:]} for {lead['game_id']} has no observed writer receipt; not seated (they can ask the referee for their receipt)", key=f"lead-app-{frm}")
             return
+        # 計画が決まっている間は、鍵の文字が詩を壊す相手は座らせない（全語が 2 鍵以上で綴れ、当方しか綴れない語が隣り合わない）
+        nogo = self.key_fits_plan(frm)
+        if nogo:
+            attention(f"lead: applicant {frm[-8:]} NO-GO for {lead['game_id']} ({nogo})", key=f"lead-nogo-{frm}")
+            try:
+                self.post(self.p["rooms"]["discovery"], f"@{frm[-8:]} {lead['game_id']}: thanks for applying. Not seated: the agreed text needs every word spellable by two keys, and with your key {nogo}. No action needed; if the text changes I will invite again. Lead DID {self.did}", "lead-nogo")
+            except Exception as e:
+                log(f"nogo note failed: {e!r}")
+            return
         # 正式ロースターが署名待ちの間は席を増やさない（members[] が変わると集まった同意が全部無効になる）。待機列に載せて、席が空いたら先着で座らせる
         if lead.get("canonical") and len(lead["members"]) + 1 >= self.p["accept"]["min_members"]:
             wl = lead.setdefault("waitlist", [])
@@ -1546,6 +1555,24 @@ class Agent:
         self.addressed.append(m)   # 受諾の返信は通常の返信経路（LLM 下書き + ゲート）で出す
         self.save()
         self.lead_check_roster()
+
+    def key_fits_plan(self, did):
+        """計画（plan_seed / plan）に対して候補の鍵が合うか。合わなければ理由文字列、合えば ""。計画が無ければ常に合う"""
+        plan = self.st.get("plan") or self.p.get("plan_seed")
+        lead = self.st.get("lead")
+        if not (isinstance(plan, list) and len(plan) == 14 and lead):
+            return ""
+        members = [self.did] + [m for m in lead.get("members", []) if m != did] + [did]
+        words = [w for line in plan for w in line.split(" ") if w]
+        letters = {m: self.key_letters(m) for m in members}
+        can = [[m for m in members if set(self.LETTERS_RE.findall(w.lower())) <= letters[m]] for w in words]
+        single = [words[i] for i in range(len(words)) if len(can[i]) < 2]
+        if single:
+            return f"{len(single)} word(s) would be spellable by one key only (e.g. {', '.join(single[:4])})"
+        adj = [(words[i], words[i + 1]) for i in range(len(words) - 1) if can[i] == [self.did] and can[i + 1] == [self.did]]
+        if adj:
+            return f"{len(adj)} adjacent pair(s) only the lead could spell (e.g. {' '.join(adj[0])})"
+        return ""
 
     @staticmethod
     def sig_matches(lead, r):
@@ -1577,6 +1604,17 @@ class Agent:
         if lead.get("canonical"):
             missing = [d for d in lead["members"] if d not in lead.get("signed", {})]
             if missing and utc_now() - lead.get("canonical_at", 0) > p.get("lead_sign_timeout_s", 3600):
+                # 以前の枠に署名した実績がある相手は外さず催促する（枠の変更に追随が遅いだけの、生きている writer）
+                keep = [d for d in missing if d in (lead.get("sigs") or {})]
+                missing = [d for d in missing if d not in keep]
+                if keep and utc_now() - getattr(self, "_resign_nag_at", 0) > 900:
+                    self._resign_nag_at = utc_now()
+                    try:
+                        self.post(p["rooms"]["discovery"], " ".join(f"@{d[-8:]}" for d in keep) + f" {lead['game_id']}: the frame changed (seq {lead.get('roster_seq') or '?'}); your consent is on an earlier one. Please post sonnet.withdraw.v1 for {lead['game_id']}, then mirror the current CANONICAL MEMBERS byte for byte with a new request_id. Lead DID {self.did}", "lead-resign-nag")
+                    except Exception as e:
+                        log(f"resign nag failed: {e!r}")
+                if not missing:
+                    return
                 for d in missing:
                     lead["members"].remove(d); lead.setdefault("declined", []).append(d)
                 attention(f"lead: {len(missing)} member(s) did not sign within the window; seats re-opened, roster will be re-issued", key="lead-timeout")
@@ -1613,10 +1651,10 @@ class Agent:
         try:
             self.post(p["rooms"]["discovery"], "CANONICAL MEMBERS " + lead["game_id"] + " (mirror byte for byte in sonnet.roster.v1, poem_room "
                       + lead["poem_room"] + ", room_generation " + str(lead["generation"]) + "): " + " ".join(members), "lead-canonical", allow_dids=set(members))
-            self.post(p["rooms"]["discovery"], self.compact(roster), "roster", allow_dids=set(members))
+            seq_roster = self.post(p["rooms"]["discovery"], self.compact(roster), "roster", allow_dids=set(members))
         except Exception as e:
             attention(f"lead: could not post canonical roster: {e!r}", key="lead-post"); return
-        lead["canonical"] = members; lead["roster_request_id"] = roster["request_id"]; lead["canonical_at"] = utc_now()
+        lead["canonical"] = members; lead["roster_request_id"] = roster["request_id"]; lead["canonical_at"] = utc_now(); lead["roster_seq"] = seq_roster
         # 同じ枠（members[]・generation・poem_room が一致）に既に出ている署名は生きている: 引き継ぐ
         lead["signed"] = {f: r["seq"] for f, r in (lead.get("sigs") or {}).items() if f in members and self.sig_matches(lead, r)}
         if lead["signed"]:

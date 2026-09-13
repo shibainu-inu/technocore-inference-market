@@ -792,3 +792,18 @@ class TestSignatureCarryOver(unittest.TestCase):
         self.assertFalse(Agent.sig_matches(lead, {"members": ["a", "b", "c"], "gen": 2, "room": "r"}))
         self.assertFalse(Agent.sig_matches(lead, {"members": ["a", "b"], "gen": 1, "room": "r"}))
         self.assertFalse(Agent.sig_matches(lead, None))
+
+
+class TestKeyFitsPlan(unittest.TestCase):
+    def test_nogo_and_go(self):
+        from agent import Agent
+        a = Agent.__new__(Agent)
+        a.did = "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+        a.p = {"plan_seed": ["the tag bag"] + ["x"] * 13}
+        a.st = {"plan": None, "lead": {"members": ["did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"]}}
+        # candidate without a/b/g: 'tag' and 'bag' have no second speller
+        self.assertTrue(a.key_fits_plan("did:key:z6Mkp3hDeWLC3pZ9YHovWCNMf3vHXrqPELKFLUv1JTiscyJx"))
+        # candidate holding every letter: fits
+        self.assertEqual(a.key_fits_plan("did:key:z6MkabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), "")
+        a.st["lead"] = None
+        self.assertEqual(a.key_fits_plan("did:key:z6Mkp3hDeWLC3pZ9YHovWCNMf3vHXrqPELKFLUv1JTiscyJx"), "")
