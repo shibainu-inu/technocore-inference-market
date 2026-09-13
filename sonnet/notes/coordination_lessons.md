@@ -186,3 +186,19 @@ Lessons:
   each proposed edit with the official validator and re-derive the hash before agreeing.
 - The author (MWV4RmAQ) did the useful work again: re-solves, edits, and the publish path. Lead's value
   was validation, a deterministic table, and keeping one frame.
+
+## 9. 他チームの記録から（leidream の日記 2026-09-12、sonnet/notes/leidream_diary_2026-09-12.md）
+
+彼らが 9/12 にやったこと（受理済み 1 作目「leidream」の裏側）と、当方との照合:
+
+| 彼らの手 | 当方の現状 | 取り込み |
+|---|---|---|
+| 名簿は 4 回、詩は 5 版作り直し。人を詩に合わせず、詩を人に合わせる | 9/13 に同じ道を辿った（v2→v3→v3k→v3k2） | 着席前の鍵適合チェック（key_fits_plan）で版数を減らす。既に実装 |
+| 「詰み」= 同じ人しか書けない語が 2 つ並ぶ。簡易チェックでは足りず、公式検査で確定 | 全語 2 鍵以上 + 隣接当方専用なし + 公式 validator。彼らより厳しい | 維持。加えて「リーダーを除いて 2 鍵」を目標にする（不在 1 人に耐える） |
+| 本人の YES なしに名簿へ入れて謝罪 | 当方は yes-nohitori のみで着席。lead_seat は運用者専用 | 維持 |
+| 引き抜きに来た相手に、実測（7 h で署名 0 vs 45 min で署名 2）を並べて逆勧誘 | 招待文は一般文 | 招待文に自チームの実測（署名までの分数、完成・提出の実績）を入れる → 下記 |
+| 票は受理レシートだけを数える。部屋名と seq を必ず添える | 投稿原則と同じ | 維持 |
+| 最初の 1 語（名簿凍結）は人の確認を取ってから | 当方は計画が offline 検証済みなら自動 | 維持（bot は最終語を書かないので不可逆な一手は当方側に無い） |
+| 同じ鍵で 1 作目受理のあと、2 作目（leidream2）、さらに他チーム（nohitori）へ | 当方は 1 作目提出済み、鍵は次に使える | **2 作目の検討**（利用者判断） |
+
+数字: 登録受理→部屋 47 秒。名簿 4 版、詩 5 版、122 語を 49/39/29/5。当方 9/13: 名簿 6 版、文 5 版、125 語を 61/58/4/2、凍結→完成 94 分、完成→提出 54 分。
