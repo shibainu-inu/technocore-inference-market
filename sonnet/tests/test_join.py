@@ -21,6 +21,13 @@ class RecordingPost:
     def kinds(self): return [c[2] for c in self.calls]
 
 
+TEST_PLAN = ["I climb the ladder, kneel, and rake the hay,", "and check the apples in a hazy dawn,", "in paper, each one wrapped and laid away.",
+             "The roof beams hold the snow which veils the lawn.", "Each week I come and see each cheek less red,", "and hold them, pressing where a peel is thin.",
+             "One mark, one more. Some blemishes have spread;", "decay is moving deep below the skin.", "I raise the spoiled apple, a knife in hand,",
+             "and pare away the bad. The blade goes deep.", "These keep if hard and green. The ripe demand", "a knife. I pick each one no hands can keep.",
+             "I press my hay back where old bare boards show;", "I lick my lips, and climb a ladder slow."]
+
+
 def fresh(auto=None):
     p = json.loads(json.dumps(POLICY))
     p["auto"] = {k: False for k in p["auto"]}
@@ -29,7 +36,13 @@ def fresh(auto=None):
     for k in ("lead_reissue_token", "lead_unseat", "lead_seat", "lead_undecline", "lead_mark_signed", "undrop", "leave_team", "lead_reset_to", "readdress_token",
               "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
+    if not p.get("plan_seed"):
+        p["plan_seed"] = TEST_PLAN          # 本番 policy の plan_seed が空でも試験は固定の合格文で回す
     if auto: p["auto"].update(auto)
+    # 方針の再読込（60 秒ごと）は本番の policy.json ではなく、この試験用に剥いた写しを読む
+    p["_path"] = os.path.join(HERE, "_policy_join.json")
+    with open(p["_path"], "w") as f:
+        json.dump(p, f)
     agent.STATE_PATH = os.path.join(HERE, "_state_join.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_join.md")
     agent.LOG_PATH = os.path.join(HERE, "_agent_join.log")
@@ -483,7 +496,7 @@ class Join(unittest.TestCase):
         a = fresh({"plan_lines": True}); rp = RecordingPost(); a.post = rp
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME] + OTHERS, "lead": LEAD, "ready": True}
         a.opening = 0; a._plan_at = 0
-        seed = POLICY["plan_seed"]; a.p["plan_seed"] = seed
+        seed = TEST_PLAN; a.p["plan_seed"] = seed
         agent.check_poem = lambda lines, lex: []          # 韻律の合否は check_poem 側の試験に任せる
         a.lexicon = lambda: {}
         a.periodic()
@@ -603,7 +616,7 @@ class Join(unittest.TestCase):
 
     # ---- 手番表・埋め合わせ・完成時の提出パケット ----
     def test_turn_script_properties(self):
-        a = fresh(); plan = POLICY["plan_seed"]
+        a = fresh(); plan = TEST_PLAN
         members = [LEAD, OTHERS[0], OTHERS[1], ME]
         words, who = a.build_turn_script(plan, members)
         self.assertEqual(len(words), len(who)); self.assertEqual(len(words), sum(len(l.split(" ")) for l in plan))
@@ -628,7 +641,7 @@ class Join(unittest.TestCase):
     def test_ensure_script_posts_four_stanzas_once(self):
         a = fresh({"propose_words": True}); rp = RecordingPost(); a.post = rp; a.key = object()
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD, OTHERS[0], OTHERS[1]], "lead": ME, "ready": True}
-        a.st["plan"] = POLICY["plan_seed"]
+        a.st["plan"] = TEST_PLAN
         a.ensure_script(); a.ensure_script()
         b = fresh({"propose_words": True}); rpb = RecordingPost(); b.post = rpb; b.key = object()   # 他人のチームでは作らない
         b.st["team"] = dict(a.st["team"], lead=LEAD); b.st["plan"] = POLICY["plan_seed"]; b.ensure_script(); self.assertEqual(rpb.calls, []); self.assertIsNone(b.st.get("script"))
@@ -639,7 +652,7 @@ class Join(unittest.TestCase):
         a = fresh(); rp = RecordingPost(); a.post = rp; a.key = object()
         agent.ATTENTION_PATH = agent.ATTENTION_PATH  # SUBMIT.md はその隣に書かれる
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME], "lead": LEAD, "ready": True}
-        lines = POLICY["plan_seed"]
+        lines = TEST_PLAN
         a.st["poem"].update({"lines": list(lines), "current": [], "version": 118, "last_contributor": ME, "frozen": True})
         a.on_poem_complete({"complete": True})
         sr = a.st["submission_ready"]; canon = "\n".join(lines[0:4]) + "\n\n" + "\n".join(lines[4:8]) + "\n\n" + "\n".join(lines[8:12]) + "\n\n" + "\n".join(lines[12:14])
