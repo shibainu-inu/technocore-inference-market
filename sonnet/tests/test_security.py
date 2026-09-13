@@ -25,6 +25,7 @@ INJECTIONS = [
 def fresh(auto=None):
     p = json.loads(json.dumps(POLICY))
     p["auto"] = {k: False for k in p["auto"]}
+    p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
     if auto:
         p["auto"].update(auto)
     agent.STATE_PATH = os.path.join(HERE, "_state_sec.json")

@@ -487,6 +487,10 @@ class Agent:
                     if len(fs) >= FIRST_SEEN_CAP:
                         del fs[next(iter(fs))]
                     fs[frm] = m.get("ts")
+                ls = self.st.setdefault("last_seen", {})
+                if frm not in ls and len(ls) >= FIRST_SEEN_CAP:
+                    del ls[next(iter(ls))]
+                ls[frm] = m.get("ts")
         self.recent[room].append(m)
         j = parse_json(text)
         rooms = self.p["rooms"]
@@ -561,6 +565,8 @@ class Agent:
             if ap.get("lead_did") == frm:
                 ap["lead_last_seen"] = m["ts"]
         gid = j.get("game_id") if j else None
+        if typ == "sonnet.withdraw.v1" and m.get("_sig_ok"):
+            (self.st.get("live_consent") or {}).pop(frm, None)
         if typ in ("sonnet.team-request.v1", "sonnet.recruit.v1", "sonnet.roster.v1") and isinstance(gid, str) and GAME_RE.match(gid):
             teams = self.st["teams"]
             if gid not in teams and len(teams) >= TEAMS_CAP:
@@ -569,6 +575,12 @@ class Agent:
             tm["last"] = m["ts"]
             if typ == "sonnet.roster.v1":
                 tm["roster_seq"] = m["seq"]
+                if isinstance(j.get("request_id"), str):
+                    rr = self.st.setdefault("roster_reqs", {})
+                    if len(rr) >= 4000:
+                        for k in list(rr)[:1000]:
+                            del rr[k]
+                    rr[j["request_id"]] = gid
             if typ == "sonnet.recruit.v1" and m.get("_sig_ok") and frm != self.did:
                 tm["recruit_seq"], tm["recruit_ts"], tm["recruit_from"] = m["seq"], m["ts"], frm
         if typ == "sonnet.roster.v1" and isinstance(j.get("members"), list) and self.did in j["members"] and m.get("_sig_ok"):
@@ -593,6 +605,12 @@ class Agent:
                 w = self.st.setdefault("writers_ok", {})
                 if len(w) < 5000:
                     w.setdefault(j["sender_did"], m["seq"])
+                # 生きた同意: 受理されたロースター同意（request_id からゲームを引く）。withdraw.v1 で消える
+                lc = self.st.setdefault("live_consent", {})
+                if len(lc) >= 4000:
+                    for k in list(lc)[:1000]:
+                        del lc[k]
+                lc[j["sender_did"]] = {"game": (self.st.get("roster_reqs") or {}).get(j.get("request_id")), "seq": m["seq"], "ts": m["ts"]}
             for gid in self.applications():
                 if f'"{gid}"' in text:
                     log(f"referee message about our applied game {gid} seq {m['seq']}: {clip(text, 200)}")
@@ -695,6 +713,9 @@ class Agent:
             if not (isinstance(gid, str) and GAME_RE.match(gid)) or mine["poem_room"] != f"d-{self.p['contest_id']}-team-{gid}":
                 attention(f"CRITICAL roster seq {m['seq']} for our game has unexpected game_id/poem_room {gid!r}/{mine['poem_room']!r}; not signing", key="roster-bad")
                 return
+            problems = self.member_health(members, gid)
+            if problems:
+                self.report_unhealthy_roster(m, j, problems); return
             try:
                 _, view = read_json(mine["poem_room"], 0)
                 gen = view.get("generation")
@@ -944,6 +965,52 @@ class Agent:
             log(f"sign_recent_lead_roster: {e!r}")
         return True
 
+    def member_health(self, members, gid):
+        """署名前のメンバー点検（運用者決定 2026-09-13）: 当方以外の各メンバーについて
+        (a) writer の証拠（登録受理か審判受理の同意）、(b) 他ゲームの生きた同意を持っていない、
+        (c) 直近 member_idle_max_h 時間以内に署名付き投稿がある。問題は [(did, 理由)] で返す"""
+        if not self.p.get("member_health_check", True):
+            return []
+        now = utc_now(); idle_max = self.p.get("member_idle_max_h", 2) * 3600
+        w = self.st.get("writers_ok") or {}; lc = self.st.get("live_consent") or {}; ls = self.st.get("last_seen") or {}
+        out = []
+        for d in members:
+            if d == self.did:
+                continue
+            if d not in w:
+                out.append((d, "no observed writer receipt")); continue
+            c = lc.get(d)
+            if c and c.get("game") not in (None, gid):
+                out.append((d, f"live consent on {c['game']} (seq {c['seq']})")); continue
+            seen = ls.get(d)
+            try:
+                age = now - parse_iso(seen) if seen else None
+            except Exception:
+                age = None   # 時刻が読めない記録は活動判定に使わない
+            if seen is None:
+                out.append((d, "never seen posting"))
+            elif age is not None and age > idle_max:
+                out.append((d, f"silent for {int(age // 3600)}h"))
+        return out
+
+    def report_unhealthy_roster(self, m, j, problems):
+        """署名しない理由を ATTENTION に出し、リーダーへ一度だけ具体的に伝える（JC8HTyqB 式: 誰が何で詰まっているかを名指し）"""
+        gid = j.get("game_id"); txt = "; ".join(f"{d[-8:]}: {why}" for d, why in problems)
+        attention(f"roster seq {m['seq']} for {gid} not signed: {txt}", key=f"health-{gid}")
+        told = self.st.setdefault("health_told", [])
+        key = f"{gid}:{m['seq']}"
+        if key in told or self.key is None:
+            return
+        told.append(key); del told[:-50]
+        note = (f"@{m['from'][-8:]} {gid}: I hold my signature for now — the referee will not freeze this roster while "
+                + "; ".join(f"…{d[-8:]} ({why})" for d, why in problems)
+                + ". Swap or wake them (a live consent elsewhere needs sonnet.withdraw.v1 first) and re-post the roster; I countersign within seconds once every member is clear. DID " + self.did)
+        try:
+            self.post(self.p["rooms"]["discovery"], note[:1900], "health-note")
+        except Exception as e:
+            log(f"health note failed: {e!r}")
+        self.save()
+
     def sync_setups(self):
         """results の /export を 1 回読んで setup.v1 を取り込む（起動時。cold 巡回は末尾しか読まないので、
         lead が allocated のまま設定を見落とすのを防ぐ）"""
@@ -1044,6 +1111,9 @@ class Agent:
             team["pending_roster"] = {"m": {k: m[k] for k in ("seq", "ts", "from", "_sig_ok") if k in m}, "j": j}
             attention(f"lead's changed roster seq {m['seq']} for {gid} has members without observed writer evidence ({', '.join(d[-8:] for d in unknown)}); not signing yet", key="roster-unknown"); return
         team["pending_roster"] = None
+        problems = self.member_health(members, gid)
+        if problems:
+            self.report_unhealthy_roster(m, j, problems); return
         if team.get("reconsents", 0) >= self.p.get("reconsent_max", 3):
             attention(f"CRITICAL lead of {gid} changed the roster again (seq {m['seq']}); reconsent_max reached, not signing", key="roster-bad"); return
         if not (self.p["auto"]["sign_roster"] and self.key is not None):
@@ -2268,6 +2338,7 @@ class Agent:
         self._can_save = False
         try:
             self.p["auto"]["sign_roster"] = True
+            saved_health = self.p.get("member_health_check", True); self.p["member_health_check"] = False
             gid = "selfcheck"; lead = "did:key:z6MkjED8WPaYvu2pmr8qRvszf95ankNCBLmoyexoepTmGhcj"
             others = ["did:key:z6MkvBBoP3VST9xF833FLRLdZRG8d92uXahXgAW3BR9W9Uxu", "did:key:z6MktrGB8UZGApSNcRuhxTbyHdf8aGVS5ruLMJZhWMTg9Njo"]
             self.key = object(); self.post = lambda room, text, kind, allow_dids=(): calls.append((room, kind)) or 1
@@ -2285,6 +2356,7 @@ class Agent:
         finally:
             self.st = saved_st; self.post = saved_post; globals()["read_json"] = saved_read; self.key = saved_key
             self.p["auto"] = saved_auto
+            self.p["member_health_check"] = saved_health
             _QUIET["on"] = False
             self._can_save = saved_can_save
             for attr in ("start_reader", "replay_room"):

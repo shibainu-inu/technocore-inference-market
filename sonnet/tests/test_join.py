@@ -24,6 +24,7 @@ class RecordingPost:
 def fresh(auto=None):
     p = json.loads(json.dumps(POLICY))
     p["auto"] = {k: False for k in p["auto"]}
+    p["member_health_check"] = False   # 署名前のメンバー点検は test_join の専用試験で見る
     if auto: p["auto"].update(auto)
     agent.STATE_PATH = os.path.join(HERE, "_state_join.json")
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_join.md")
@@ -52,9 +53,16 @@ def recruit_msg(seq, gid, frm, ts="2026-09-13T00:21:39Z", sig=True):
     return {"seq": seq, "ts": ts, "from": frm, "_sig_ok": sig, "_room": DISC, "text": json.dumps(j)}
 
 
+def healthy(a, *dids):
+    """メンバー点検を通す状態にする: writer 受理済み・直近に発言・他所の同意なし"""
+    for d in dids:
+        a.st.setdefault("writers_ok", {})[d] = 1; a.st.setdefault("last_seen", {})[d] = agent.iso()
+    return a
+
+
 def roster_agent_like(tc):
     """署名条件を満たした bot（応募済み・登録済み・鍵あり・部屋 generation 1）"""
-    a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp
+    a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp; healthy(a, LEAD, LEAD2, *OTHERS)
     a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": agent.iso(), "manual": True}}; a.st["agreed"] = a.st["applications"]["g"]
     agent.read_json = lambda room, wait: ([], {"generation": 1})
     a.withdraw_others = lambda gid: None
@@ -215,7 +223,7 @@ class Join(unittest.TestCase):
 
     # ---- リーダーによるメンバー差し替えへの再同意 ----
     def signed_team(self):
-        a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp
+        a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp; healthy(a, LEAD, *OTHERS)   # LEAD2 は「証拠が後から届く新人」
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, OTHERS[0], OTHERS[1], ME], "lead": LEAD,
                         "roster_signed": 7, "ready": False, "signed_generation": 1, "signed_at": "2026-09-13T00:00:00Z", "stuck_warned": True}
         a.st.setdefault("writers_ok", {}).update({OTHERS[0]: 1, OTHERS[1]: 2})
@@ -508,7 +516,7 @@ class Join(unittest.TestCase):
         a.handle({"seq": 700, "ts": "t", "from": REF, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(rc_)})
 
     def stalled_team_agent(self):
-        a = fresh({"switch_to_proven_offer": True, "sign_roster": True}); rp = RecordingPost(); a.post = rp
+        a = fresh({"switch_to_proven_offer": True, "sign_roster": True}); rp = RecordingPost(); a.post = rp; healthy(a, LEAD, LEAD2, *OTHERS)
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, OTHERS[0], OTHERS[1], ME], "lead": LEAD,
                         "roster_signed": 7, "ready": False, "signed_at": "2026-09-13T08:00:00Z"}
         a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": "t"}}; a.st["agreed"] = a.st["applications"]["g"]
@@ -621,6 +629,35 @@ class Join(unittest.TestCase):
         # 最終投稿者が他人なら人は呼ばない
         b = fresh(); b.st["team"] = dict(a.st["team"]); b.st["poem"].update({"lines": list(lines), "version": 118, "last_contributor": LEAD, "frozen": True})
         b.on_poem_complete({"complete": True}); self.assertNotIn("submission_ready", b.st); self.assertIn("not us", att())
+
+    # ---- 署名前のメンバー点検 ----
+    def test_member_health_blocks_and_tells_the_lead(self):
+        a, rp = roster_agent_like(self); a.p["member_health_check"] = True
+        ro = {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1, "members": [LEAD, OTHERS[0], OTHERS[1], ME]}
+        a.st["last_seen"][OTHERS[0]] = "2026-09-12T20:00:00Z"                              # 沈黙（試験時刻 01:00Z の 5 時間前）
+        a.st["live_consent"] = {OTHERS[1]: {"game": "floppy", "seq": 1, "ts": "t"}}           # 他所の同意
+        a.on_roster_for_us({"seq": 5, "from": LEAD, "ts": "t", "_sig_ok": True}, ro)
+        self.assertEqual(rp.kinds(), ["health-note"]); self.assertIsNone(a.st["team"])
+        note = rp.calls[0][1]; self.assertIn("silent for", note); self.assertIn("live consent on floppy", note); self.assertIn(ME, note)
+        self.assertIn("not signed", att())
+        a.on_roster_for_us({"seq": 5, "from": LEAD, "ts": "t", "_sig_ok": True}, ro); self.assertEqual(len(rp.calls), 1)   # 同じ seq には 1 回だけ
+        # 直ったら署名する
+        a.st["last_seen"][OTHERS[0]] = agent.iso(); a.st["live_consent"] = {}
+        a.on_roster_for_us({"seq": 6, "from": LEAD, "ts": "t", "_sig_ok": True}, ro)
+        self.assertEqual(rp.kinds(), ["health-note", "roster"]); self.assertEqual(a.st["team"]["game_id"], "g")
+
+    def test_live_consent_tracking_from_receipts_and_withdraws(self):
+        a = fresh(); a.p["member_health_check"] = True
+        ro = {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "floppy", "poem_room": TEAM + "floppy", "room_generation": 1, "members": [LEAD, LEAD2, ME, OTHERS[0]], "request_id": "r-l2"}
+        a.handle({"seq": 1, "ts": "t", "from": LEAD2, "_sig_ok": True, "_room": DISC, "text": json.dumps(ro)})
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "r-l2", "sender_did": LEAD2, "roster_ready": False}
+        a.handle({"seq": 2, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertEqual(a.st["live_consent"][LEAD2]["game"], "floppy")
+        self.assertEqual([d for d, _ in a.member_health([LEAD2], "g")], [LEAD2])            # 他ゲーム → 問題
+        self.assertEqual(a.member_health([LEAD2], "floppy"), [])                            # 同じゲームなら問題なし
+        a.handle({"seq": 3, "ts": "t", "from": LEAD2, "_sig_ok": True, "_room": DISC, "text": json.dumps({"type": "sonnet.withdraw.v1", "contest_id": CID, "game_id": "floppy"})})
+        self.assertNotIn(LEAD2, a.st["live_consent"]); self.assertEqual(a.member_health([LEAD2], "g"), [])
+        a.p["member_health_check"] = False; a.st["last_seen"] = {}; self.assertEqual(a.member_health([LEAD2], "g"), [])
 
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
