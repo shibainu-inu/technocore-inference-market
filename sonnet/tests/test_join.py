@@ -203,6 +203,73 @@ class Join(unittest.TestCase):
         a.post = boom; agent.utc_now = lambda: agent.parse_iso("2026-09-13T05:00:00Z"); a.check_stuck_roster()
         self.assertIsNotNone(a.st["team"]); self.assertIn("withdraw post failed", att())
 
+    # ---- リーダーによるメンバー差し替えへの再同意 ----
+    def signed_team(self):
+        a = fresh({"sign_roster": True}); rp = RecordingPost(); a.post = rp
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, OTHERS[0], OTHERS[1], ME], "lead": LEAD,
+                        "roster_signed": 7, "ready": False, "signed_generation": 1, "signed_at": "2026-09-13T00:00:00Z", "stuck_warned": True}
+        a.st.setdefault("writers_ok", {}).update({OTHERS[0]: 1, OTHERS[1]: 2})
+        return a, rp
+
+    def changed(self, **over):
+        j = {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1,
+             "members": [LEAD, LEAD2, OTHERS[1], ME]}
+        j.update(over); return j
+
+    def test_reconsent_to_leads_changed_roster(self):
+        a, rp = self.signed_team()
+        a.st["writers_ok"][LEAD2] = 3
+        a.on_roster_for_us({"seq": 20, "from": LEAD, "ts": "t", "_sig_ok": True}, self.changed())
+        self.assertEqual(rp.kinds(), ["withdraw", "roster"])
+        wd, ro = json.loads(rp.calls[0][1]), json.loads(rp.calls[1][1])
+        self.assertEqual((wd["type"], wd["game_id"]), ("sonnet.withdraw.v1", "g")); self.assertEqual(ro["members"], [LEAD, LEAD2, OTHERS[1], ME])
+        t = a.st["team"]; self.assertEqual(t["members"], [LEAD, LEAD2, OTHERS[1], ME]); self.assertEqual(t["reconsents"], 1)
+        self.assertEqual(t["source_seq"], 20); self.assertFalse(t["stuck_warned"]); self.assertNotEqual(t["signed_at"], "2026-09-13T00:00:00Z")
+        self.assertIn("re-consented", att())
+        # 他メンバーの写し（同内容）には何もしない
+        a.on_roster_for_us({"seq": 21, "from": LEAD2, "ts": "t", "_sig_ok": True}, self.changed()); self.assertEqual(len(rp.calls), 2)
+
+    def test_reconsent_refusals(self):
+        cases = {
+            "member without writer evidence": (lambda a: None, self.changed(), "without observed writer evidence"),
+            "not from lead": (lambda a: a.st["writers_ok"].update({LEAD2: 3}), self.changed(), None),
+            "drops us": (lambda a: a.st["writers_ok"].update({LEAD2: 3}), self.changed(members=[LEAD, LEAD2, OTHERS[0], OTHERS[1]]), "drops us"),
+            "too many reconsents": (lambda a: (a.st["writers_ok"].update({LEAD2: 3}), a.st["team"].update({"reconsents": 3})), self.changed(), "reconsent_max"),
+            "after ready": (lambda a: (a.st["writers_ok"].update({LEAD2: 3}), a.st["team"].update({"ready": True})), self.changed(), "after roster_ready"),
+            "other generation": (lambda a: a.st["writers_ok"].update({LEAD2: 3}), self.changed(room_generation=2), "another room/generation"),
+        }
+        for name, (mut, j, needle) in cases.items():
+            a, rp = self.signed_team(); mut(a)
+            frm = OTHERS[1] if name == "not from lead" else LEAD
+            a.on_roster_for_us({"seq": 20, "from": frm, "ts": "t", "_sig_ok": True}, j)
+            self.assertEqual(rp.calls, [], name); self.assertEqual(a.st["team"]["members"], [LEAD, OTHERS[0], OTHERS[1], ME], name)
+            if needle: self.assertIn(needle, att(), name)
+
+    def test_referee_roster_receipt_marks_writer(self):
+        a = fresh()
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "roster-x", "sender_did": LEAD2, "roster_ready": False, "state_hash": "h"}
+        a.handle({"seq": 5, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertIn(LEAD2, a.st["writers_ok"])
+        rc_["status"] = "rejected"; rc_["sender_did"] = OTHERS[0]
+        a.handle({"seq": 6, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertNotIn(OTHERS[0], a.st["writers_ok"])
+
+    def test_resync_team_roster_reconsents_from_export(self):
+        a, rp = self.signed_team()
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "roster-l2", "sender_did": LEAD2, "roster_ready": False}
+        rows = [{"seq": 30, "ts": "t", "from": REF, "text": json.dumps(rc_)},
+                {"seq": 31, "ts": "t", "from": LEAD, "text": json.dumps(self.changed(members=[LEAD, LEAD2, ME, OTHERS[1]]))},   # 古い差し替え
+                {"seq": 32, "ts": "t", "from": LEAD, "text": json.dumps(self.changed())}]                                      # 最新
+        body = "\n".join(json.dumps(r) for r in rows) + "\n"
+        old_get, old_vs = agent.fm.http_get, agent.verify_sig
+        agent.fm.http_get = lambda url, timeout=30: (200, body); agent.verify_sig = lambda room, m: True
+        try:
+            a.resync_team_roster()
+        finally:
+            agent.fm.http_get, agent.verify_sig = old_get, old_vs
+        self.assertEqual(rp.kinds(), ["withdraw", "roster"]); self.assertEqual(a.st["team"]["members"], [LEAD, LEAD2, OTHERS[1], ME])
+        self.assertEqual(a.st["team"]["source_seq"], 32); self.assertIn(LEAD2, a.st["writers_ok"])
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

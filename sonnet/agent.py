@@ -566,6 +566,11 @@ class Agent:
                 lead.setdefault("signed", {})[frm] = m["seq"]
                 log(f"lead: member {frm[-6:]} posted roster.v1 (seq {m['seq']})")
         if self.is_referee(m):
+            # 審判がロースター同意を受理した DID は writer 登録済み（未登録は roster: writer required で却下される）
+            if j and j.get("status") == "accepted" and "roster_ready" in j and isinstance(j.get("sender_did"), str) and DID_RE.fullmatch(j["sender_did"]):
+                w = self.st.setdefault("writers_ok", {})
+                if len(w) < 5000:
+                    w.setdefault(j["sender_did"], m["seq"])
             for gid in self.applications():
                 if f'"{gid}"' in text:
                     log(f"referee message about our applied game {gid} seq {m['seq']}: {clip(text, 200)}")
@@ -621,10 +626,11 @@ class Agent:
             gen = j.get("room_generation")
             if j.get("game_id") != team.get("game_id") or team.get("lead") == self.did:
                 return
-            if list(members) != list(team.get("members") or []) or j.get("poem_room") != team.get("room") \
-                    or type(gen) is not int or gen != team.get("generation"):
-                attention(f"roster seq {m['seq']} for our game {team.get('game_id')} differs from our signed roster (members/room/generation); not signing", key="roster-bad")
+            if j.get("poem_room") != team.get("room") or type(gen) is not int or gen != team.get("generation"):
+                attention(f"roster seq {m['seq']} for our game {team.get('game_id')} names another room/generation; not signing", key="roster-bad")
                 return
+            if list(members) != list(team.get("members") or []):
+                self.reconsent(m, j, team); return
             if team.get("signed_generation") == gen or not (signer_ok and self.p["auto"]["sign_roster"] and self.key is not None):
                 return
             mine = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
@@ -864,6 +870,76 @@ class Agent:
         except Exception as e:
             attention(f"application to {gid} failed: {e!r}", key="apply-post"); return
         self.add_application(gid, lead_did, source="recruit")
+
+    def reconsent(self, m, j, team):
+        """リーダーがメンバーを差し替えた（規則: 変更後のロースターは全員の新しい同意が要る）。条件を満たせば
+        sonnet.withdraw.v1 を出してから新ロースターを写して署名し直す。条件: 署名者がチームのリーダー本人、凍結前、
+        自分が載っている、4〜8 人で重複なし、新メンバー全員に writer の証拠（登録受理か審判受理の同意）がある、
+        回数が reconsent_max 未満。満たさなければ ATTENTION に出して署名しない"""
+        members = j["members"]; n = len(members); gid = team["game_id"]
+        if team.get("ready"):
+            attention(f"roster seq {m['seq']} changes members of {gid} after roster_ready; ignored", key="roster-bad"); return
+        if m["from"] != team.get("lead") or m.get("_sig_ok") is not True or m["from"] in self.ignored():
+            attention(f"roster seq {m['seq']} for {gid} with different members is not from our lead; not signing", key="roster-bad"); return
+        acc = self.p["accept"]
+        if not (acc["min_members"] <= n <= acc["max_members"] and len(set(members)) == n and all(DID_RE.fullmatch(d) for d in members)) or self.did not in members:
+            attention(f"CRITICAL lead's changed roster seq {m['seq']} for {gid} is malformed or drops us; not signing", key="roster-bad"); return
+        unknown = [d for d in members if d not in (self.did, team["lead"]) and d not in (self.st.get("writers_ok") or {})]
+        if unknown:
+            attention(f"lead's changed roster seq {m['seq']} for {gid} has members without observed writer evidence ({', '.join(d[-8:] for d in unknown)}); not signing yet", key="roster-unknown"); return
+        if team.get("reconsents", 0) >= self.p.get("reconsent_max", 3):
+            attention(f"CRITICAL lead of {gid} changed the roster again (seq {m['seq']}); reconsent_max reached, not signing", key="roster-bad"); return
+        if not (self.p["auto"]["sign_roster"] and self.key is not None):
+            attention(f"lead's changed roster seq {m['seq']} for {gid} needs withdraw + re-sign; sign_roster/key off", key="roster-bad"); return
+        wd = {"type": "sonnet.withdraw.v1", "contest_id": self.p["contest_id"], "game_id": gid, "request_id": self.req_id("withdraw")}
+        mine = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": gid, "poem_room": team["room"],
+                "room_generation": j["room_generation"], "members": list(members), "request_id": self.req_id("roster")}
+        try:
+            self.post(self.p["rooms"]["discovery"], self.compact(wd), "withdraw")
+            seq = self.post(self.p["rooms"]["discovery"], self.compact(mine), "roster", allow_dids=set(members))
+        except Exception as e:
+            attention(f"CRITICAL re-consent post failed for {gid}: {e!r}", key="roster-post"); return
+        old = [d[-8:] for d in team.get("members") or []]
+        team.update({"members": list(members), "roster_signed": seq, "source_seq": m["seq"], "roster_request_id": mine["request_id"],
+                     "signed_generation": j["room_generation"], "signed_at": iso(), "stuck_warned": False,
+                     "reconsents": team.get("reconsents", 0) + 1})
+        attention(f"re-consented to the lead's changed roster for {gid} (seq {m['seq']}): withdrew and re-signed; members {old} -> {[d[-8:] for d in members]}")
+        self.save()
+
+    def resync_team_roster(self):
+        """起動時: 署名済みで未凍結のチームについて discovery の /export を読み、審判のロースター受領（writer の証拠）を
+        取り込んだうえで、リーダーが自分の署名より後に出した最新ロースターを on_roster_for_us に流す（停止中の差し替えに追随）"""
+        team = self.st.get("team")
+        if not team or team.get("ready") or team.get("lead") == self.did:
+            return
+        room = self.p["rooms"]["discovery"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=180)
+        except Exception as e:
+            log(f"resync_team_roster: {fm.err_kind(e)}"); return
+        latest = None; base = int(team.get("roster_signed") or 0)
+        for ln in body.splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            j = parse_json(m.get("text", ""))
+            if not j:
+                continue
+            if m.get("from") == self.st.get("referee") and j.get("status") == "accepted" and "roster_ready" in j \
+                    and isinstance(j.get("sender_did"), str) and DID_RE.fullmatch(j["sender_did"]):
+                if verify_sig(room, m):
+                    self.st.setdefault("writers_ok", {}).setdefault(j["sender_did"], m["seq"])
+            if m.get("from") == team.get("lead") and j.get("type") == "sonnet.roster.v1" and j.get("game_id") == team["game_id"] \
+                    and int(m.get("seq", 0)) > base and isinstance(j.get("members"), list) and self.did in j["members"]:
+                latest = (m, j)
+        if latest:
+            m, j = latest
+            m["_room"] = room; m["_sig_ok"] = verify_sig(room, m)
+            log(f"resync_team_roster: lead roster seq {m['seq']} newer than our signature {base}; re-evaluating")
+            self.on_roster_for_us(m, j)
+        else:
+            log(f"resync_team_roster: no newer lead roster than {base}")
 
     def check_stuck_roster(self):
         """署名したロースターが roster_ready にならないまま止まった場合の損切り。署名から roster_stuck_warn_h で ATTENTION、
@@ -1698,6 +1774,10 @@ class Agent:
         if self.st.get("team"):
             self.replay_room(self.st["team"]["room"])
             self.start_reader(self.st["team"]["room"])
+            try:
+                self.resync_team_roster()
+            except Exception as e:
+                log(f"resync_team_roster error: {e!r}")
         lead = self.st.get("lead")
         if lead and lead.get("poem_room") and not self.st.get("team"):
             self.start_reader(lead["poem_room"])

@@ -83,5 +83,6 @@
   "recruit_fresh_hours": 3,
   "application_text": "yes-{GAME}. Writer seat application from DID {DID} (all 26 letters on the key, prefix included). Registered sonnet-2 writer: referee receipt mb-sonnet-2-registration seq {RECEIPT_SEQ}. Pre-S evidence {EVIDENCE}. Publication account {X}. Always-on signer with every word checked against the frozen CMUdict. I sign exactly one sonnet.roster.v1, mirrored byte for byte from your canonical roster against the referee's room generation, and I place no word before roster-ready.",
   "roster_stuck_warn_h": 1.5,
-  "roster_stuck_hours": 3
+  "roster_stuck_hours": 3,
+  "reconsent_max": 3
 }
