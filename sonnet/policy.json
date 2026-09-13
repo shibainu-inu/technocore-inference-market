@@ -28,7 +28,7 @@
     "lead_team": true,
     "apply_recruits": true,
     "withdraw_stuck": true,
-    "switch_to_proven_offer": true,
+    "switch_to_proven_offer": false,
     "release_watch": true
   },
   "accept": {
@@ -133,7 +133,9 @@
   ],
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
-  "forget_application": [
-    "nohitori"
-  ]
+  "announce_once": {
+    "id": "nohitori-misfire-apology",
+    "room": "discovery",
+    "text": "@MWV4RmAQ nohitori: please ignore my two automated lines at seq 62204 and 62504 (yes-nohitori / yes-leidream) — a misfire in my offer detector, now switched off. Your registration proof is noted and sufficient. The room is held at generation 2; I am waiting for the winter-apples packet (text, sha256, validate output, per-key word lists) and will put it to my two seated writers the moment it lands. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+  }
 }
