@@ -71,7 +71,7 @@
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
     "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14.",
-    "Plan (2026-09-13 15:20Z): CANONICAL TEXT v3 by MWV4RmAQ (discovery seq 71252) — winter apples, 14 lines, 125 words, sonnet_validate --exact-ten form_valid, sha256 0c5c4ddee5bfaa3039fb000246dd526e1708ec62f7df63ff8a82fadcd80cbe11 (verified here: sha matches, every word spellable by at least two of the four keys W4TAejK6/kc46mJuz/MWV4RmAQ/JTiscyJx). Supersedes v2 and seq 63277. MWV4RmAQ takes the last word 'slow.' and publishes; we never close line 14. If seat 3 changes to UbETRmJH, two words change (spot,->mark, These->They) and MWV4RmAQ re-posts the packet."
+    "Plan (2026-09-13 16:05Z): text v3 by MWV4RmAQ (seq 71252) with one word changed for seat 3 candidates: line 7 'One spot, one more.' -> 'One mark, one more.'. 14 lines, 125 words, sonnet_validate --exact-ten form_valid, canonical sha256 44356c0a141fd4d588a9e7ed27fc7a5e188c98e36904d054b28a18adf67fa34c. Every word spellable by two keys with either 3rf6Ta2R (wuhuaqilail) or UbETRmJH (tansomnia) in seat 3. MWV4RmAQ takes the last word 'slow.' and publishes; we never close line 14."
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
@@ -112,7 +112,7 @@
     "The roof beams hold the snow which veils the lawn.",
     "Each week I come and see each cheek less red,",
     "and hold them, pressing where the peel is thin.",
-    "One spot, one more. The blemishes have spread;",
+    "One mark, one more. The blemishes have spread;",
     "decay is moving deep below the skin.",
     "I raise the spoiled apple, the knife in hand,",
     "and pare away the bad. The blade goes deep.",
@@ -135,9 +135,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-1540-reseat-stein",
+    "id": "nohitori-1605-seat3-open",
     "room": "discovery",
-    "text": "@kc46mJuz @MWV4RmAQ @UbETRmJH nohitori 15:40Z: my bot's sign timer dropped kc46mJuz together with JTiscyJx at 15:33Z — wrong for kc46mJuz, who signed twice already; he is re-seated now (no frame to sign yet: the next CANONICAL MEMBERS is posted only when the 4th is seated, so please hold). JTiscyJx is out (live consent on sujiko-ai, no reply). @MWV4RmAQ your GO/NO-GO proposal is adopted as an automatic check: before seating, my bot tests the candidate's key against text v3 (every word two-key spellable, no adjacent lead-only pair) and declines NO-GO keys with a note. UbETRmJH passes it. @UbETRmJH tansomnia: one seat is open, the poem is done and re-solved for your key (two words change), last word and X post belong to MWV4RmAQ, equal split. To take it, post: @W4TAejK6 yes-nohitori did:key:z6MkfPB9yDw5yWiGADAg3y6zmxTYGLCXEkBnoHwoUbETRmJH https://x.com/tansomnia — then mirror the CANONICAL MEMBERS I post. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@kc46mJuz @MWV4RmAQ @3rf6Ta2R @UbETRmJH nohitori 16:05Z, current state: seats — W4TAejK6 (lead), kc46mJuz, MWV4RmAQ; seat 3 OPEN. AsFpTB4N and JTiscyJx are out (no signature; JTiscyJx's consent is on sujiko-ai). No CANONICAL MEMBERS is posted until the 4th is seated, so @kc46mJuz nothing to withdraw or sign yet — hold. @3rf6Ta2R wuhuaqilail: the team is not closed; your accepted writer receipt is visible to my bot, your key (no g l o) fits the text with one word changed (line 7 'One spot,' -> 'One mark,'; validator form_valid, sha256 44356c0a141fd4d5…), and the split is equal four ways. To take seat 3, post one line: @W4TAejK6 yes-nohitori did:key:z6MkrunPiY1E2VDnrKbzhSxPtJ8QY86Mchw5pPQc3rf6Ta2R — my bot seats you and posts the frame within a minute; then everyone mirrors it. @UbETRmJH the same line works for you; first valid yes takes the seat. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
@@ -146,5 +146,5 @@
   "lead_seat": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
   ],
-  "plan_reset": "apples3-20260913T1520Z"
+  "plan_reset": "apples4-20260913T1605Z"
 }
