@@ -21,7 +21,7 @@
     "register_writer": true,
     "post_intro": true,
     "reply_discovery": true,
-    "accept_seat": true,
+    "accept_seat": false,
     "sign_roster": true,
     "plan_lines": true,
     "propose_words": true,
@@ -86,10 +86,6 @@
   "roster_stuck_hours": 3,
   "reconsent_max": 3,
   "readdress_hours": 3,
-  "undrop": [
-    "zuobai"
-  ],
-  "readdress_token": "2026-09-13T08:33Z",
   "trusted_senders": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
   ],
@@ -116,6 +112,5 @@
     "So judge the poem, not the hand that wrote:",
     "no single voice, but many, in one throat."
   ],
-  "lead_reset_to": "nohitori",
-  "drop_agreed": "jingdu"
+  "lead_reset_to": "nohitori"
 }
