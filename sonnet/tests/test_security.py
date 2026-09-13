@@ -31,8 +31,11 @@ def fresh(auto=None):
     agent.ATTENTION_PATH = os.path.join(HERE, "_attention_sec.md")
     agent.LOG_PATH = os.path.join(HERE, "_agent_sec.log")
     agent.INBOX_DIR = os.path.join(HERE, "_inbox_sec")
-    if os.path.exists(agent.STATE_PATH):
-        os.remove(agent.STATE_PATH)
+    for f in (agent.STATE_PATH, agent.ATTENTION_PATH, agent.LOG_PATH):
+        if os.path.exists(f):
+            os.remove(f)
+    agent._ATT_COUNT.clear()
+    open(agent.ATTENTION_PATH, "w").close()
     a = agent.Agent(p)
     a.save = lambda: None
     a.sync_llm = True

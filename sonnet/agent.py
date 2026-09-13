@@ -177,6 +177,7 @@ class Agent:
         self.sync_llm = False                  # テスト用: ジョブを即時実行
         self._word_job = None                  # 進行中の語ジョブの (version, line_no)
         self._replaying = False
+        self._resync_room = False
         self.lex = None
 
     # ----- 状態 -----
@@ -520,7 +521,7 @@ class Agent:
             w = self.st.setdefault("writers_ok", {})
             if len(w) < 5000:
                 w[j["participant_did"]] = m["seq"]
-        if self.did in t:
+        if j and (j.get("participant_did") == self.did or j.get("sender_did") == self.did):
             r = self.parse_receipt(j, t)
             if self.receipt_positive(r, t) and (j or {}).get("role", "writer") == "writer":
                 self.st["registered"] = {"seq": m["seq"], "text": clip(t, 1000)}
@@ -609,13 +610,34 @@ class Agent:
             and m["from"] not in self.ignored()
         lead_ok = bool(agreed) and (bool(agreed.get("manual")) or self.lead_acceptable(agreed["lead_did"]))  # 運用者の手動合意はリーダー条件を満たしたとみなす
         log(f"ROSTER for us seq={m['seq']} game={j.get('game_id')} n={n} ok={ok} agreed={same_game} signer_ok={signer_ok} lead_ok={lead_ok}")
-        if self.st.get("team"):
-            return  # 既に 1 つ署名済み（seq の取れ方に依らず二重署名しない）
+        team = self.st.get("team")
+        if team:
+            # 既に 1 つ署名済み。例外は「部屋再設定後の再同意依頼」: 同じゲーム・同じメンバー・部屋の現 generation で、
+            # その generation にまだ署名していない場合だけ同じロースターを署名し直す（メンバーや部屋が違えば署名しない）
+            gen = j.get("room_generation")
+            if j.get("game_id") != team.get("game_id") or team.get("lead") == self.did:
+                return
+            if list(members) != list(team.get("members") or []) or j.get("poem_room") != team.get("room") \
+                    or type(gen) is not int or gen != team.get("generation"):
+                attention(f"roster seq {m['seq']} for our game {team.get('game_id')} differs from our signed roster (members/room/generation); not signing", key="roster-bad")
+                return
+            if team.get("signed_generation") == gen or not (signer_ok and self.p["auto"]["sign_roster"] and self.key is not None):
+                return
+            mine = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
+                    "room_generation": gen, "members": list(members), "request_id": self.req_id("roster")}
+            try:
+                self.post(self.p["rooms"]["discovery"], self.compact(mine), "roster", allow_dids=set(members))
+            except Exception as e:
+                attention(f"CRITICAL re-sign post failed for game {team['game_id']}: {e!r}", key="roster-post"); return
+            team["signed_generation"] = gen; team["roster_request_id"] = mine["request_id"]
+            attention(f"re-signed the same roster for game {team['game_id']} at room generation {gen} (re-consent request seq {m['seq']})", key="resign")
+            self.save()
+            return
         if ok and same_game and signer_ok and lead_ok and self.p["auto"]["sign_roster"] and self.st.get("registered"):
             mine = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": j["game_id"],
                     "poem_room": j.get("poem_room"), "room_generation": j.get("room_generation"),
                     "members": members, "request_id": self.req_id("roster")}
-            if not isinstance(mine["room_generation"], int):
+            if type(mine["room_generation"]) is not int or j.get("contest_id", self.p["contest_id"]) != self.p["contest_id"]:
                 attention(f"CRITICAL roster seq {m['seq']} for our game {j.get('game_id')} has no integer room_generation; not signing", key="roster-bad"); return
             gid = j.get("game_id")
             if not (isinstance(gid, str) and GAME_RE.match(gid)) or mine["poem_room"] != f"d-{self.p['contest_id']}-team-{gid}":
@@ -635,7 +657,7 @@ class Agent:
                 attention(f"CRITICAL roster post failed for game {j['game_id']}: {e!r}", key="roster-post"); return
             self.st["team"] = {"game_id": j["game_id"], "room": mine["poem_room"], "generation": gen,
                                "members": members, "lead": agreed["lead_did"], "roster_signed": seq, "source_seq": m["seq"],
-                               "ready": False, "roster_request_id": mine["request_id"]}
+                               "ready": False, "roster_request_id": mine["request_id"], "signed_generation": gen}
             attention(f"signed roster for game {j['game_id']} ({n} members), team room {mine['poem_room']}")
             self.withdraw_others(j["game_id"])
             lead = self.st.get("lead")
@@ -841,7 +863,7 @@ class Agent:
         accepted = self.receipt_positive(r)
         rid = r.get("request_id")
         pend = self.st.get("pending_word")
-        mine = bool(pend and rid == pend["request_id"])
+        mine = bool(pend and rid == pend["request_id"] and (r.get("sender_did") in (None, self.did)))
         if mine:
             log(f"our proposal {pend['word']!r} -> {r.get('status')} {r.get('reason', '')}")
             self.st["pending_word"] = None
@@ -867,14 +889,40 @@ class Agent:
             # 部屋設定の受領: 版 0、初期 state_hash
             poem.update({"version": 0, "state_hash": r.get("state_hash"), "syllables": 0, "lines": [], "current": [],
                          "last_contributor": None, "frozen": False, "desync": False})
-            if self.st.get("team") and isinstance(r.get("room_generation"), int):
-                self.st["team"]["generation"] = r["room_generation"]
+            team = self.st.get("team")
+            if team and type(r.get("room_generation")) is int:
+                if team.get("generation") not in (None, r["room_generation"]):
+                    old_gen = team["generation"]; team["generation"] = r["room_generation"]; team["ready"] = False
+                    if team.get("lead") == self.did:
+                        # 自分がリーダー: canonical ロースターの再発行は人が判断する
+                        attention(f"CRITICAL our team room was re-bound from generation {old_gen} to {r['room_generation']} after the canonical roster; members must re-sign (manual)", key="resign")
+                    else:
+                        # 署名後に部屋が再設定された: 同じメンバーで新しい generation に対して署名し直す（審判の案内どおり）。
+                        # 再生中（起動時）は投稿しない。その場合はリーダーの再同意依頼（on_roster_for_us）で署名し直す
+                        attention(f"CRITICAL team room re-bound from generation {old_gen} to {r['room_generation']} after we signed; re-signing the same roster", key="resign")
+                        roster = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
+                                  "room_generation": r["room_generation"], "members": team["members"], "request_id": self.req_id("roster")}
+                        if self.key is not None and not self._replaying:
+                            try:
+                                self.post(self.p["rooms"]["discovery"], self.compact(roster), "roster", allow_dids=set(team["members"]))
+                                team["roster_request_id"] = roster["request_id"]; team["signed_generation"] = r["room_generation"]
+                            except Exception as e:
+                                attention(f"CRITICAL re-sign post failed: {e!r}", key="resign-post")
+                else:
+                    team["generation"] = r["room_generation"]
             log(f"team room set up: generation {r.get('room_generation')} state {str(r.get('state_hash'))[:8]}")
         if "version" in r:
             try:
-                poem["version"] = int(r["version"])
+                new_v = int(r["version"])
             except (TypeError, ValueError):
-                pass
+                return
+            if new_v <= poem["version"]:
+                log(f"duplicate/old receipt version {new_v} (have {poem['version']}); ignored"); return
+            if new_v != poem["version"] + 1 and not self._replaying:
+                poem["desync"] = True
+                attention(f"receipt version jumped {poem['version']} -> {new_v}; resyncing from /export", key="desync")
+                self._resync_room = True
+            poem["version"] = new_v
             poem["state_hash"] = r.get("state_hash") or poem.get("state_hash")
             if isinstance(r.get("syllables"), int):
                 poem["syllables"] = r["syllables"]
@@ -963,15 +1011,19 @@ class Agent:
 
     def propose(self, word):
         poem, team = self.st["poem"], self.st["team"]
+        attempts = poem.setdefault("attempts", {})
+        n = attempts.get(str(poem["version"]), 0) + 1
+        rid = f"w{poem['version']}-{str(poem['state_hash'])[:8]}-{self.did[-6:]}" + (f"-{n}" if n > 1 else "")
         j = {"type": "sonnet.word.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"],
              "room_generation": team["generation"], "version": poem["version"],
-             "previous_state_hash": poem["state_hash"], "word": word,
-             "request_id": f"w{poem['version']}-{str(poem['state_hash'])[:8]}-{self.did[-6:]}"}
+             "previous_state_hash": poem["state_hash"], "word": word, "request_id": rid}
         try:
             self.post(team["room"], self.compact(j), "word")
         except Exception as e:
             attention(f"word post failed: {e!r}", key="word-post"); return
-        self.st["pending_word"] = {"request_id": j["request_id"], "word": word, "at": iso()}
+        attempts[str(poem["version"])] = n
+        self.st.setdefault("proposals", {}).setdefault(f"{self.did}|{rid}", {"word": word, "from": self.did, "seq": None})
+        self.st["pending_word"] = {"request_id": rid, "word": word, "at": iso()}
 
     def apply_word_result(self, out, version, line_no, cur, remaining):
         poem = self.st["poem"]
@@ -1198,6 +1250,10 @@ class Agent:
                 raise ValueError("did/key_path changed (not applied)")
             if not isinstance(p.get("auto"), dict) or not set(self.p["auto"]) <= set(p["auto"]):
                 raise ValueError("auto keys removed")
+            if any(not isinstance(v, bool) for v in p["auto"].values()):
+                raise ValueError("auto values must be true/false")
+            if not isinstance(p.get("rooms"), dict) or set(p["rooms"]) != set(self.p["rooms"]):
+                raise ValueError("rooms missing or changed")
         except (OSError, ValueError) as e:
             attention(f"policy reload failed, keeping the previous policy: {e}", key="policy"); return
         self._policy_mtime = mt
@@ -1422,6 +1478,9 @@ class Agent:
             self.maybe_lead()
         except Exception as e:
             log(f"maybe_lead error: {e!r}")
+        if getattr(self, "_resync_room", False) and self.st.get("team"):
+            self._resync_room = False
+            self.replay_room(self.st["team"]["room"])
         if self.st.get("team") and now - getattr(self, "_propose_at", 0) > 60:
             self._propose_at = now
             try: self.maybe_propose()

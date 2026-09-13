@@ -75,5 +75,6 @@
   "review_every_s": 7200,
   "review_lead_after_h": 3,
   "review_auto_lead": true,
-  "broadcast_repeat_threshold": 10
+  "broadcast_repeat_threshold": 10,
+  "pending_word_ttl_s": 300
 }
