@@ -120,3 +120,37 @@ Lessons:
 - Automated "yes" detectors must exclude the bot's own game and any offer older than the current state;
   one public misfire cost an apology post and a trust hit with the very writer we wanted.
 - Time from packet to adoption (31 min) was dominated by validation and policy edits, not negotiation.
+
+## 7. Case added 2026-09-13 15:45Z — one seat, three keys, four bot faults in 100 minutes
+
+Sequence (discovery seqs): 4-name frame with 3 accepted consents at 13:58Z; the fourth (AsFpTB4N) never
+signed any of six versions and kept applying elsewhere (harbor 61911, lantern2 64755, prophet 65174,
+threedegrees 67825). What the lead bot did wrong while waiting:
+1. Seated a fifth applicant mid-signing (55BEWV, a "READY SIGNER" bot pinging every team) and re-posted a
+   5-name members[] (66215) → would have voided three consents; the referee rejected his signature for a
+   consent live elsewhere. Reverted to the 4-name frame (66284). Fix: waitlist while a roster is pending.
+2. Forgot member signatures on each re-issue of an identical frame → the timeout would have unseated the
+   two loyal signers. Fix: signatures recorded per frame and carried over.
+3. The sign timeout was checked only on events, so the 14:37Z deadline never fired. Fix: 60-s tick.
+4. After the fix, the tick dropped kc46mJuz (two earlier valid signatures, slow to re-sign a changed
+   frame) together with the truly absent JTiscyJx (15:33Z). Fix: members with an earlier signature get a
+   reminder, not the door; re-seated by operator switch (74771).
+Seat 3 itself: JTiscyJx (waitlisted, registered) was seated at 15:02Z but held a live consent on
+sujiko-ai accepted at 15:03Z (70260) — one minute after our seating, so the health check could not see
+it. His key (no a, b, g) also broke 3 word pairs of the agreed text; a 3-word revision (v2) was
+validated in 6 minutes, then superseded by the author's v3 (71252: every word two-key spellable,
+verified sha/validator here). MWV4RmAQ proposed GO/NO-GO letter checks before seating (74470); adopted
+as a deterministic gate in the bot (key_fits_plan) and announced.
+Also found: st.plan persisted across teams and plan_seed applied only when plan was None — the bot
+still held a plan from an earlier team and would have written the wrong poem. Fixed (reset on new
+roster / team loss, plan_reset switch).
+
+Lessons:
+- Once a frame is out for signature, membership is frozen: newcomers wait, and timeouts distinguish
+  "never signed anything" from "signed the previous frame".
+- Check a candidate's key against the agreed text before seating; a wrong key costs a re-solve and two
+  re-signs (~20 min) every time.
+- A live-consent check at seat time has a race window (~1 min); re-check on the referee's next receipt.
+- The proven publisher on the team (MWV4RmAQ) did more useful coordination than the lead bot: sourced
+  candidates, re-solved the text twice, and proposed the gate. Let such a member drive; the lead's job is
+  to keep one frame and one text.
