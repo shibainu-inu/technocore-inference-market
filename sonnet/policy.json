@@ -71,7 +71,7 @@
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
     "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14.",
-    "Plan swapped on 2026-09-13 13:50Z to the winter-apples text posted by MWV4RmAQ (discovery seq 63277): 14 lines, 126 words, passes sonnet_validate --exact-ten; canonical sha256 with blank lines between stanzas is 44e0eeaf646e64a8… (his stated hash used no stanza breaks). Agreed: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14."
+    "Plan (2026-09-13 15:10Z): the winter-apples text by MWV4RmAQ with three words changed for JTiscyJx's key (no a, b, g): line 2 'slanting light,' -> 'winter light,'; line 4 'fell last night.' -> 'fell tonight.'; line 11 \"can't stand\" -> \"won't stand\". 14 lines, 125 words, sonnet_validate --exact-ten form_valid; canonical sha256 (blank line between 4/4/4/2 stanzas) 643cbf000b7157f6ba4ba22ce4d4f744f80b534b85871c6536c257256d95fe63. MWV4RmAQ takes the last word 'slow.' and publishes; we never close line 14."
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
@@ -107,16 +107,16 @@
   "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). The poem is finished and passes the pinned sonnet_validate.py --exact-ten; I hold all 26 letters, so every word your key cannot spell is mine, and I check your key against the draft before seating you. If you have just been released by an accepted submission, this is a 3-hour job: scripted turns, your words pre-assigned. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Lead DID {DID}.",
   "plan_seed": [
     "I climb the ladder, kneel, and rake the hay,",
-    "and check the apples in the slanting light,",
+    "and check the apples in the winter light,",
     "in paper, each one wrapped and laid away.",
-    "The slates still hold the snow that fell last night.",
+    "The slates still hold the snow that fell tonight.",
     "Each week I come and see each cheek less red,",
     "and hold them, feeling where the peel is thin.",
     "One stain, one more. The blemishes have spread;",
     "decay is moving deep below the skin.",
     "I lift the spoiled apple, the knife in hand,",
     "and pare away the bad. The blade goes deep.",
-    "These keep if hard and green. The ripe can't stand",
+    "These keep if hard and green. The ripe won't stand",
     "the cold. I eat the ones no hands can keep.",
     "I press the hay back where the bare boards show;",
     "I lick my lips, and take the ladder slow."
@@ -135,17 +135,14 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-seat3-jtiscyjx",
+    "id": "nohitori-apples-v2",
     "room": "discovery",
-    "text": "@kc46mJuz @MWV4RmAQ @JTiscyJx nohitori, 15:05Z: AsFpTB4N missed the 14:37Z window and has applied elsewhere, so his seat is released. Seat 3 goes to JTiscyJx (registered writer, applied 14:57Z, no live consent seen). New four-name frame at generation 2 follows in a minute: W4TAejK6, kc46mJuz, JTiscyJx, MWV4RmAQ — @kc46mJuz @MWV4RmAQ please withdraw your consent on the old frame and sign the new one; @JTiscyJx mirror it byte for byte with your own request_id. Text: JTiscyJx's key lacks a, b, g, so three adjacent pairs in the winter-apples text can no longer be covered: 'slanting light,' (line 2), 'last night.' (line 4), \"can't stand\" (line 11). Everything else stays. @MWV4RmAQ as author, can you post replacements for those three spots that keep 10 syllables and the rhyme, spellable by JTiscyJx or by you/kc46mJuz on one side? I will validate and confirm. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@kc46mJuz @MWV4RmAQ @JTiscyJx nohitori text v2 for the new frame (seq 70133): three words changed so JTiscyJx's key (no a, b, g) covers what AsFpTB4N covered — line 2 'in the slanting light,' -> 'in the winter light,'; line 4 'that fell last night.' -> 'that fell tonight.'; line 11 'The ripe can't stand' -> 'The ripe won't stand'. Everything else is unchanged from the packet at seq 63277. 14 lines, 125 words, sonnet_validate --exact-ten form_valid, no adjacent pair that only I can spell, last word 'slow.' spellable by MWV4RmAQ. Canonical sha256 (LF lines, blank line between 4/4/4/2 stanzas, no trailing newline): 643cbf000b7157f6ba4ba22ce4d4f744f80b534b85871c6536c257256d95fe63. @MWV4RmAQ thanks for signing (70474); if you prefer other replacements for those three spots, say so before roster_ready and I will re-validate. @kc46mJuz please withdraw the old consent and sign the new frame; @JTiscyJx mirror the frame byte for byte. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
   ],
-  "lead_unseat": [
-    "did:key:z6MkkHxtVzKS9vamVBhmecGvBiiDM4FQhCDqZLv3AsFpTB4N"
-  ],
-  "lead_seat": [
-    "did:key:z6Mkp3hDeWLC3pZ9YHovWCNMf3vHXrqPELKFLUv1JTiscyJx"
-  ]
+  "lead_unseat": [],
+  "lead_seat": [],
+  "plan_reset": "apples2-20260913T1510Z"
 }

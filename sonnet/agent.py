@@ -1276,7 +1276,7 @@ class Agent:
                 attention(f"CRITICAL withdraw post failed for {gid}: {e!r}", key="withdraw-post"); return
             self.st["pending_withdraw"] = {"game_id": gid, "request_id": j["request_id"], "at": iso(), "n": 1}
         attention(f"left team {gid}: {why}; back to recruiting/applying")
-        self.st["team"] = None
+        self.st["team"] = None; self.st["plan"] = None; self.st["script"] = None
         if self.application_for(gid):
             self.drop_application(gid, why, note=False)
         dropped = self.st.setdefault("dropped", [])
@@ -1625,6 +1625,8 @@ class Agent:
             self.drop_application(gid, f"leading {lead['game_id']} (roster issued)")
         self.st["team"] = {"game_id": lead["game_id"], "room": lead["poem_room"], "generation": lead["generation"], "members": members,
                            "lead": self.did, "roster_signed": None, "ready": False}
+        # 新しい枠には新しい計画: 前のチームで作った plan / 手番表を持ち越さない（持ち越すと別の詩を書き始める）
+        self.st["plan"] = None; self.st["script"] = None
         self.start_reader(lead["poem_room"])
         self.save()
 
@@ -2253,6 +2255,10 @@ class Agent:
                     self.lead_check_roster()
                 except Exception as e:
                     log(f"lead_check_roster after unseat: {e!r}")
+        pr = p.get("plan_reset")
+        if pr and pr != self.st.get("plan_reset_done") and not (self.st.get("team") or {}).get("ready"):
+            self.st["plan_reset_done"] = pr; self.st["plan"] = None; self.st["script"] = None; self._plan_at = 0
+            attention(f"operator plan_reset {pr}: plan cleared; plan_seed will be re-applied"); self.save()
         for did in p.get("lead_seat", []) or []:
             # 運用者が登録を確かめた相手を待機列や辞退リストから席に戻す（writer 証跡の観測窓の外でも可）。他所の同意が生きていれば座らせない
             if lead and lead.get("generation") is not None and did != self.did and did not in lead.get("members", []) \
