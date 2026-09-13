@@ -853,7 +853,16 @@ class Agent:
             self.on_room_rebound(gen)
 
     def on_submissions(self, m, j):
-        """提出部屋の審判受領: status accepted の sender_did は「提出まで通した実績のあるリーダー」（proven_submitters）"""
+        """提出部屋の審判受領: status accepted の sender_did は「提出まで通した実績のあるリーダー」（proven_submitters）。
+        当方の提出への受領は ATTENTION に出す"""
+        sub = self.st.get("submitted")
+        if sub and j.get("type") == "sonnet.receipt.v1" and j.get("request_id") == sub.get("request_id"):
+            sub["status"] = j.get("status"); sub["reason"] = j.get("reason"); sub["entry_id"] = j.get("entry_id")
+            attention(f"CRITICAL submission receipt: {j.get('status')} {j.get('reason', '')} entry {j.get('entry_id', '')} (seq {m['seq']})"
+                      + ("" if j.get("status") == "accepted" else " — fix the transport field and set x_post_ids again with a new value"))
+            if j.get("status") != "accepted":
+                self.st["submitted"] = None
+            self.save()
         if j.get("type") != "sonnet.receipt.v1" or j.get("status") != "accepted":
             return
         d = j.get("sender_did")
@@ -1461,6 +1470,7 @@ class Agent:
                          "last_contributor": None, "frozen": False, "desync": False})
             if self.st.get("team"):
                 self.st["team"]["ready"] = True
+            poem["state_at"] = iso()
             attention(f"roster ready (referee): writing may start from state {str(r.get('state_hash'))[:8]}")
             self.save()
             if not self._replaying:
@@ -1489,7 +1499,7 @@ class Agent:
                 poem["desync"] = True
                 attention(f"receipt version jumped {poem['version']} -> {new_v}; resyncing from /export", key="desync")
                 self._resync_room = True
-            poem["version"] = new_v
+            poem["version"] = new_v; poem["state_at"] = iso()
             poem["state_hash"] = r.get("state_hash") or poem.get("state_hash")
             if isinstance(r.get("syllables"), int):
                 poem["syllables"] = r["syllables"]
@@ -1502,7 +1512,7 @@ class Agent:
                 attention(f"accepted word for request {rid} not seen as a proposal; line text is now best-effort (syllable count from receipts stays exact)", key="desync")
             if r.get("complete"):
                 poem["frozen"] = True
-                attention("poem complete (referee says complete=true). If we were the last contributor, X publication + sonnet.submit.v1 are needed by hand.")
+                self.on_poem_complete(r)
         self.save()
         if not self._replaying:
             self.maybe_propose()
@@ -1568,6 +1578,9 @@ class Agent:
             return
         cur = poem["current"]
         remaining = 10 - (total % 10)
+        self.ensure_script()
+        if not self.our_turn_or_cover(line_no, cur):
+            return
         word = self.word_from_plan(line_no, cur, remaining)
         if word:
             return self.propose(word)
@@ -1615,6 +1628,119 @@ class Agent:
         if line_no == 14 and self.p.get("never_close_line_14") and syl == remaining:
             log(f"word {word!r} would close line 14; policy forbids"); return False
         return True
+
+    LETTERS_RE = re.compile(r"[a-z]")
+
+    def key_letters(self, did):
+        return set(self.LETTERS_RE.findall(did.lower()))
+
+    def build_turn_script(self, plan, members):
+        """語ごとの担当（提案であり強制ではない。審判は直前の投稿者以外の最初の有効な語を受理する）。
+        条件: その鍵で綴れる、直前と別人、担当数を均す、次の語が当方しか綴れないなら当方を空ける、全員 1 語以上"""
+        words = [w for line in plan for w in line.split(" ") if w]
+        letters = {m: self.key_letters(m) for m in members}
+        can = [[m for m in members if set(self.LETTERS_RE.findall(w.lower())) <= letters[m]] for w in words]
+        counts = {m: 0 for m in members}; script = []; prev = None
+        for i in range(len(words)):
+            cands = [m for m in can[i] if m != prev] or [m for m in members if m != prev]
+            nxt = can[i + 1] if i + 1 < len(words) else members
+            if len(nxt) == 1 and nxt[0] in cands and len(cands) > 1:
+                cands = [m for m in cands if m != nxt[0]]
+            m = min(cands, key=lambda x: (counts[x], members.index(x)))
+            script.append(m); counts[m] += 1; prev = m
+        for m in members:
+            if counts[m] == 0:
+                for i in range(len(words)):
+                    if m in can[i] and (i == 0 or script[i - 1] != m) and (i + 1 >= len(words) or script[i + 1] != m) and counts[script[i]] > 1:
+                        counts[script[i]] -= 1; script[i] = m; counts[m] = 1; break
+        return words, script
+
+    def ensure_script(self):
+        """凍結後、計画があれば手番表を 1 回作り、チーム部屋に連（4/4/4/2）ごとに投稿する"""
+        team, plan = self.st.get("team"), self.st.get("plan")
+        if not team or not team.get("ready") or not plan or self.st.get("script") or team.get("lead") != self.did:
+            return   # 手番表はリーダーの道具。他人のチームでは相手の進め方に従う
+        words, who = self.build_turn_script(plan, team["members"])
+        self.st["script"] = {"words": words, "who": who}
+        self.save()
+        counts = collections.Counter(who)
+        log("turn script: " + ", ".join(f"{m[-6:]}={counts[m]}" for m in team["members"]))
+        if self.key is None:
+            return
+        idx = 0; stanzas = [plan[0:4], plan[4:8], plan[8:12], plan[12:14]]
+        for si, st_lines in enumerate(stanzas, 1):
+            parts = []
+            for line in st_lines:
+                ws = line.split(" ")
+                parts.append(" ".join(f"{w}[{who[idx + k][-6:]}]" for k, w in enumerate(ws)))
+                idx += len(ws)
+            head = ("TURN SCRIPT (suggestion, not a rule: the referee takes the first valid word from any non-previous member; "
+                    "I cover any word that waits more than " + str(self.p.get("cover_after_s", 180)) + " s). ") if si == 1 else ""
+            try:
+                self.post(team["room"], f"{head}Stanza {si}: " + " / ".join(parts), "script")
+            except Exception as e:
+                attention(f"script post failed: {e!r}", key="script-post"); return
+
+    def our_turn_or_cover(self, line_no, cur):
+        """手番表があれば、次の語の担当が当方のときだけ提案する。担当が cover_after_s 以上動かなければ当方が埋める"""
+        sc = self.st.get("script")
+        if not sc:
+            return True
+        poem = self.st["poem"]
+        idx = sum(len(l.split(" ")) for l in poem["lines"]) + len(cur)
+        if idx >= len(sc["who"]) or sc["who"][idx] == self.did:
+            return True
+        waited = utc_now() - parse_iso(poem.get("state_at") or iso())
+        if waited >= self.p.get("cover_after_s", 180):
+            log(f"covering word {idx + 1} (assigned to {sc['who'][idx][-6:]}, idle {int(waited)} s)")
+            return True
+        return False
+
+    def canonical_text(self, lines):
+        st = [lines[0:4], lines[4:8], lines[8:12], lines[12:14]]
+        return "\n\n".join("\n".join(x) for x in st)
+
+    def on_poem_complete(self, r):
+        """審判が complete=true を返した。最終投稿者が当方なら、X 投稿用の本文と提出パケットの下書きを用意して人を呼ぶ"""
+        poem, team = self.st["poem"], self.st.get("team") or {}
+        lines = list(poem["lines"]) + ([" ".join(poem["current"])] if poem["current"] else [])
+        if poem.get("last_contributor") != self.did:
+            attention(f"poem complete; final contributor is {str(poem.get('last_contributor'))[-8:]} (not us). Publication and submission are theirs."); return
+        canon = self.canonical_text(lines) if len(lines) == 14 else None
+        sha = hashlib.sha256(canon.encode("utf-8")).hexdigest() if canon else None
+        self.st["submission_ready"] = {"game_id": team.get("game_id"), "poem_room": team.get("room"), "room_generation": team.get("generation"),
+                                       "final_version": poem["version"], "poem_sha256": sha, "canonical": canon, "lines": lines,
+                                       "desync": bool(poem.get("desync")), "at": iso()}
+        path = os.path.join(os.path.dirname(ATTENTION_PATH), "SUBMIT.md")
+        try:
+            with open(path, "w") as f:
+                f.write(f"# X post for {team.get('game_id')} — final contributor is us\n\n")
+                f.write("Post from https://x.com/0xnohitori (the registered account). Poem text exactly as below, reading order; a thread split only between whole lines is allowed.\n\n")
+                f.write((canon or "(line text unknown — desync; rebuild from the team room export)") + "\n\n")
+                f.write(f"Attribution (outside the poem): contest_id sonnet-2, game_id {team.get('game_id')}, final contributor DID {self.did}\n\n")
+                f.write(f"poem_sha256 (canonical): {sha}\nfinal_version: {poem['version']}\nline-text desync flag: {poem.get('desync')}\n\n")
+                f.write("Then put the post IDs in policy.json as \"x_post_ids\": [\"<id>\"] — the bot posts sonnet.submit.v1 within a minute.\n")
+        except OSError as e:
+            log(f"SUBMIT.md write failed: {e!r}")
+        attention(f"CRITICAL POEM COMPLETE and WE are the final contributor: publish on X now, then set x_post_ids in policy.json (see sonnet/SUBMIT.md; sha {str(sha)[:12]}, version {poem['version']})")
+
+    def maybe_submit(self, p):
+        """運用者が x_post_ids を置いたら sonnet.submit.v1 を提出部屋へ 1 回出す"""
+        ids = p.get("x_post_ids"); sr = self.st.get("submission_ready")
+        if not ids or not sr or not sr.get("poem_sha256") or self.st.get("submitted") or self.key is None:
+            return
+        if not isinstance(ids, list) or not all(isinstance(x, str) and x.isdigit() for x in ids):
+            attention("x_post_ids must be a list of numeric post-id strings", key="submit-ids"); return
+        j = {"type": "sonnet.submit.v1", "contest_id": p["contest_id"], "game_id": sr["game_id"], "poem_room": sr["poem_room"],
+             "room_generation": sr["room_generation"], "final_version": sr["final_version"], "poem_sha256": sr["poem_sha256"],
+             "x_post_ids": list(ids), "request_id": self.req_id("submit")}
+        try:
+            seq = self.post(p["rooms"]["submissions"], self.compact(j), "submit")
+        except Exception as e:
+            attention(f"CRITICAL submit post failed: {e!r}", key="submit-post"); return
+        self.st["submitted"] = {"request_id": j["request_id"], "seq": seq, "at": iso(), "x_post_ids": list(ids)}
+        attention(f"submitted sonnet.submit.v1 for {sr['game_id']} (seq {seq}, request {j['request_id']}); waiting for the referee receipt")
+        self.save()
 
     def word_from_plan(self, line_no, cur, remaining):
         plan = self.st.get("plan")
@@ -1860,6 +1986,10 @@ class Agent:
         if lv and team and team.get("game_id") == lv and self.st.get("leave_team_done") != lv:
             self.st["leave_team_done"] = lv; self.save()
             self.lose_team(f"operator leave_team ({lv})", withdraw=True, readdress=False)
+        try:
+            self.maybe_submit(p)
+        except Exception as e:
+            log(f"maybe_submit error: {e!r}")
         tok = p.get("readdress_token")
         if tok and tok != self.st.get("readdress_token_done"):
             self.st["readdress_token_done"] = tok; self.save()

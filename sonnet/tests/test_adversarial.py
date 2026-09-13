@@ -452,7 +452,7 @@ class Adversarial(unittest.TestCase):
 
     def test_line_14_at_139_never_proposes(self):
         plan = ["x"] * 13 + ["And every fair from fair sometime declines"]
-        a, rp = self.proposer(139, "And every fair from fair sometime".split(), plan)
+        a, rp = self.proposer(139, "And every fair from fair sometime".split(), plan); a.p["never_close_line_14"] = True
         self.llm_out = {"word": "day", "alternatives": ["I", "a", "the"], "reason": ""}
         a.maybe_propose()
         while not a.q.empty():

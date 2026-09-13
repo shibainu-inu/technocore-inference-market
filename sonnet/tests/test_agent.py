@@ -91,7 +91,7 @@ class T(unittest.TestCase):
         self.assertTrue(a.st["poem"]["frozen"]); self.assertTrue(a.st["poem"]["desync"])   # 提案未観測の語 → desync 印
 
     def test_valid_word_rules(self):
-        a = fresh()
+        a = fresh(); a.p["never_close_line_14"] = True   # この試験は「閉じない」方針の挙動を見る（運用は 2026-09-13 に false）
         self.assertTrue(a.valid_word("The", 1, 10))
         self.assertFalse(a.valid_word("xyzzy", 1, 10))          # 辞書外
         self.assertFalse(a.valid_word("extraordinary", 1, 3))   # 音節超過

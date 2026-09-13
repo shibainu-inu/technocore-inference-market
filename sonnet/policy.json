@@ -36,7 +36,7 @@
     "require_lead_seen_before_opening": false,
     "lead_min_age_s": 600
   },
-  "never_close_line_14": true,
+  "never_close_line_14": false,
   "intro_repeat_hours": 3,
   "llm": {
     "model": "opus",
@@ -120,5 +120,6 @@
   "lead_reset_to": "nohitori",
   "switch_min_stall_s": 1800,
   "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
-  "leave_team": "zuobai"
+  "leave_team": "zuobai",
+  "cover_after_s": 180
 }

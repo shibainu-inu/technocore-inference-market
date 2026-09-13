@@ -563,6 +563,65 @@ class Join(unittest.TestCase):
         self.assertEqual(rp.kinds(), ["disc-reply"]); self.assertTrue(rp.calls[0][1].startswith("yes-h.")); self.assertNotIn("withdrawn", rp.calls[0][1])
         self.assertEqual(a.application_for("h")["source"], "proven-offer")
 
+    # ---- 手番表・埋め合わせ・完成時の提出パケット ----
+    def test_turn_script_properties(self):
+        a = fresh(); plan = POLICY["plan_seed"]
+        members = [LEAD, OTHERS[0], OTHERS[1], ME]
+        words, who = a.build_turn_script(plan, members)
+        self.assertEqual(len(words), len(who)); self.assertEqual(len(words), sum(len(l.split(" ")) for l in plan))
+        for i, (w, m) in enumerate(zip(words, who, strict=False)):
+            self.assertTrue(set(agent.Agent.LETTERS_RE.findall(w.lower())) <= a.key_letters(m), f"{w} not spellable by {m[-6:]}")
+            if i: self.assertNotEqual(m, who[i - 1], f"consecutive at {i}")
+        self.assertTrue(all(m in who for m in members))
+        counts = __import__("collections").Counter(who); self.assertLess(max(counts.values()), len(words))   # 一人が全部ではない
+
+    def test_our_turn_or_cover(self):
+        a = fresh({"propose_words": True}); a.key = object()
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME], "lead": LEAD, "ready": True}
+        a.st["plan"] = ["a b", "c d"] + ["x"] * 12
+        a.st["script"] = {"words": ["a", "b", "c", "d"] + ["x"] * 12, "who": [LEAD, ME, LEAD, ME] + [LEAD] * 12}
+        a.st["poem"].update({"lines": [], "current": [], "state_at": agent.iso()})
+        self.assertFalse(a.our_turn_or_cover(1, []))              # 語 1 は LEAD の担当
+        a.st["poem"]["current"] = ["a"]; self.assertTrue(a.our_turn_or_cover(1, ["a"]))   # 語 2 は当方
+        a.st["poem"]["current"] = ["a", "b"]; self.assertFalse(a.our_turn_or_cover(1, ["a", "b"]))
+        a.st["poem"]["state_at"] = "2026-09-13T00:00:00Z"; self.assertTrue(a.our_turn_or_cover(1, ["a", "b"]))   # 3 分以上待った → 埋める
+        a.st["script"] = None; self.assertTrue(a.our_turn_or_cover(1, []))
+
+    def test_ensure_script_posts_four_stanzas_once(self):
+        a = fresh({"propose_words": True}); rp = RecordingPost(); a.post = rp; a.key = object()
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD, OTHERS[0], OTHERS[1]], "lead": ME, "ready": True}
+        a.st["plan"] = POLICY["plan_seed"]
+        a.ensure_script(); a.ensure_script()
+        b = fresh({"propose_words": True}); rpb = RecordingPost(); b.post = rpb; b.key = object()   # 他人のチームでは作らない
+        b.st["team"] = dict(a.st["team"], lead=LEAD); b.st["plan"] = POLICY["plan_seed"]; b.ensure_script(); self.assertEqual(rpb.calls, []); self.assertIsNone(b.st.get("script"))
+        self.assertEqual(rp.kinds(), ["script"] * 4); self.assertIn("TURN SCRIPT", rp.calls[0][1]); self.assertIn("Stanza 4", rp.calls[3][1])
+        self.assertTrue(all(len(c[1]) <= 2000 for c in rp.calls)); self.assertEqual(len(a.st["script"]["who"]), len(a.st["script"]["words"]))
+
+    def test_poem_complete_builds_submission_packet_and_submit_switch(self):
+        a = fresh(); rp = RecordingPost(); a.post = rp; a.key = object()
+        agent.ATTENTION_PATH = agent.ATTENTION_PATH  # SUBMIT.md はその隣に書かれる
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME], "lead": LEAD, "ready": True}
+        lines = POLICY["plan_seed"]
+        a.st["poem"].update({"lines": list(lines), "current": [], "version": 118, "last_contributor": ME, "frozen": True})
+        a.on_poem_complete({"complete": True})
+        sr = a.st["submission_ready"]; canon = "\n".join(lines[0:4]) + "\n\n" + "\n".join(lines[4:8]) + "\n\n" + "\n".join(lines[8:12]) + "\n\n" + "\n".join(lines[12:14])
+        self.assertEqual(sr["canonical"], canon); self.assertEqual(sr["poem_sha256"], __import__("hashlib").sha256(canon.encode()).hexdigest())
+        self.assertIn("POEM COMPLETE and WE are the final contributor", att())
+        sub_md = open(os.path.join(os.path.dirname(agent.ATTENTION_PATH), "SUBMIT.md")).read(); self.assertIn(lines[0], sub_md); self.assertIn("x_post_ids", sub_md)
+        # 運用者が x_post_ids を置く → submit.v1 を 1 回
+        p = json.loads(json.dumps(a.p)); p["x_post_ids"] = ["2098962145916707129"]
+        a.apply_operator_switches(p); a.apply_operator_switches(p)
+        subs = [c for c in rp.calls if c[2] == "submit"]; self.assertEqual(len(subs), 1); j = json.loads(subs[0][1])
+        self.assertEqual((j["type"], j["game_id"], j["final_version"], j["poem_sha256"], j["x_post_ids"], subs[0][0]), ("sonnet.submit.v1", "g", 118, sr["poem_sha256"], ["2098962145916707129"], POLICY["rooms"]["submissions"]))
+        # 却下されたら submitted が消えて再提出できる
+        rc_ = {"type": "sonnet.receipt.v1", "status": "rejected", "reason": "publication: unverified", "request_id": j["request_id"], "sender_did": ME}
+        a.handle({"seq": 9, "ts": "t", "from": REF, "_sig_ok": True, "_room": POLICY["rooms"]["submissions"], "text": json.dumps(rc_)})
+        self.assertIsNone(a.st["submitted"]); self.assertIn("submission receipt: rejected", att())
+        p["x_post_ids"] = ["2098962145916707130"]; a.apply_operator_switches(p); self.assertEqual(len([c for c in rp.calls if c[2] == "submit"]), 2)
+        # 最終投稿者が他人なら人は呼ばない
+        b = fresh(); b.st["team"] = dict(a.st["team"]); b.st["poem"].update({"lines": list(lines), "version": 118, "last_contributor": LEAD, "frozen": True})
+        b.on_poem_complete({"complete": True}); self.assertNotIn("submission_ready", b.st); self.assertIn("not us", att())
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
