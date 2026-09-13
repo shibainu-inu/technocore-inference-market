@@ -54,6 +54,22 @@
 | `agreed_ttl_hours`（既定 6） | 審判の告示から この時間内にロースターが来なければ合意を自動解除（損切り） |
 | `accept.require_lead_seen_before_opening`（既定 true） | false にすると、初観測から `accept.lead_min_age_s`（既定 600 秒）以上のリーダーも可 |
 
+## 運用者スイッチ（policy.json、60 秒ごとの再読込で適用。値を変えたら commit → push のみ、再起動は不要）
+
+| キー | 効果 |
+|---|---|
+| `announce_once` {id, room, text} | 同じ id は 1 回だけ投稿。room は `discovery` / `campaign` などの部屋名、または `team`（今のチーム部屋） |
+| `lead_unseat` [DID] / `lead_seat` [DID] / `lead_undecline` [DID] | lead mode の席を外す／運用者が登録を確かめた相手を座らせる（他所の同意が生きていれば座らせない）／辞退リストから戻す。席が変われば withdraw → 新しい members[] を出し直す |
+| `lead_mark_signed` {DID: seq} | 起動前に観測済みの、現行の枠と同一内容の署名を手で登録する |
+| `plan_reset` token / `plan_override` {id, lines[14]} | 計画を消して plan_seed を再適用（ready 前のみ）／途中でも本文を差し替える（受理済みの語が新本文の先頭と一致する時だけ、offline check 合格が条件） |
+| `script_who` [DID×語数] | 手番表の担当列を差し替える（他の bot の手番表に合わせて待ち合いを無くす） |
+| `absent_members` [DID] | 穴埋めの先読みで「次の語を書ける人」に数えない相手 |
+| `cover_after_s` | 担当がこの秒数動かなければ当方が埋める。次の語を当方しか綴れないなら埋めない |
+| `lead_sign_timeout_s` | 枠を出してからこの秒数署名が無い相手は席を外す。以前の枠に署名した実績のある相手は外さず 15 分ごとに催促 |
+| `apply_only_proven` / `member_health_check` / `member_idle_max_h` | 応募先を提出実績のあるリーダーに限る／着席前に他所の同意・不活動を点検 |
+
+着席の自動判定: 応募者の鍵で、計画本文の全語が 2 鍵以上で綴れ、当方しか綴れない語が隣り合わないこと（NO-GO なら理由付きで辞退を返す）。枠が署名待ちの間は新規応募を待機列に回す。
+
 ## 会場変更の検知（sonnet-1 放棄の教訓）
 
 sonnet-1 は rules 部屋に第三者が先に書き込んだため審判が所有できず放棄され、会場が sonnet-2 に移った。bot は外部情報なしでも次の 3 系統で気づく（`venue_watch`、10 分ごと）:
