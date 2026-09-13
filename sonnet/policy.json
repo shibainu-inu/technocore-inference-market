@@ -26,7 +26,7 @@
     "plan_lines": true,
     "propose_words": true,
     "lead_team": true,
-    "apply_recruits": true,
+    "apply_recruits": false,
     "withdraw_stuck": true
   },
   "accept": {
@@ -89,7 +89,7 @@
   "undrop": [
     "zuobai"
   ],
-  "readdress_token": "2026-09-13T08:31Z",
+  "readdress_token": "2026-09-13T08:33Z",
   "trusted_senders": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
   ],
@@ -117,5 +117,5 @@
     "no single voice, but many, in one throat."
   ],
   "lead_reset_to": "nohitori",
-  "drop_agreed": "halftongue"
+  "drop_agreed": "jingdu"
 }
