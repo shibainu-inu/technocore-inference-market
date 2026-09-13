@@ -2185,6 +2185,9 @@ class Agent:
                     self.st["agreed"] = next(iter(apps.values()), None)
                 self.save()
         lead = self.st.get("lead")
+        for did in p.get("lead_undecline", []) or []:
+            if lead and did in lead.get("declined", []):
+                lead["declined"].remove(did); attention(f"operator lead_undecline: {did[-8:]} may apply to {lead['game_id']} again"); self.save()
         rt = p.get("lead_reissue_token")
         if rt and lead and lead.get("canonical") and self.st.get("lead_reissue_done") != rt:
             self.st["lead_reissue_done"] = rt; lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None

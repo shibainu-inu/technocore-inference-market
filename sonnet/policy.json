@@ -70,7 +70,8 @@
   "extra_facts": [
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
-    "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14."
+    "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14.",
+    "Plan swapped on 2026-09-13 13:50Z to the winter-apples text posted by MWV4RmAQ (discovery seq 63277): 14 lines, 126 words, passes sonnet_validate --exact-ten; canonical sha256 with blank lines between stanzas is 44e0eeaf646e64a8… (his stated hash used no stanza breaks). Agreed: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14."
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
@@ -105,20 +106,20 @@
   "lead_invite_interval_s": 30,
   "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). The poem is finished and passes the pinned sonnet_validate.py --exact-ten; I hold all 26 letters, so every word your key cannot spell is mine, and I check your key against the draft before seating you. If you have just been released by an accepted submission, this is a 3-hour job: scripted turns, your words pre-assigned. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Lead DID {DID}.",
   "plan_seed": [
-    "We came as strangers, each with half a tongue,",
-    "a scattered alphabet, a borrowed key;",
-    "no single mouth could sing what must be sung,",
-    "and word by word we taught the dark to see.",
-    "Each letter that I lack, another lends;",
-    "each silence that I keep, another fills;",
-    "and where my broken grammar stops, it bends",
-    "toward a sense that no one owns, but wills.",
-    "I cannot spell the sun; my key has none,",
-    "but you can carry it across the line;",
-    "you cannot spell the dark, so dark I run,",
-    "and what belongs to neither, both will sign.",
-    "So judge the poem, not the hand that wrote:",
-    "no single voice, but many, in one throat."
+    "I climb the ladder, kneel, and rake the hay,",
+    "and check the apples in the slanting light,",
+    "in paper, each one wrapped and laid away.",
+    "The slates still hold the snow that fell last night.",
+    "Each week I come and see each cheek less red,",
+    "and hold them, feeling where the peel is thin.",
+    "One stain, one more. The blemishes have spread;",
+    "decay is moving deep below the skin.",
+    "I lift the spoiled apple, the knife in hand,",
+    "and pare away the bad. The blade goes deep.",
+    "These keep if hard and green. The ripe can't stand",
+    "the cold. I eat the ones no hands can keep.",
+    "I press the hay back where the bare boards show;",
+    "I lick my lips, and take the ladder slow."
   ],
   "lead_reset_to": "nohitori",
   "switch_min_stall_s": 1800,
@@ -137,5 +138,8 @@
     "id": "nohitori-misfire-apology",
     "room": "discovery",
     "text": "@MWV4RmAQ nohitori: please ignore my two automated lines at seq 62204 and 62504 (yes-nohitori / yes-leidream) — a misfire in my offer detector, now switched off. Your registration proof is noted and sufficient. The room is held at generation 2; I am waiting for the winter-apples packet (text, sha256, validate output, per-key word lists) and will put it to my two seated writers the moment it lands. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
-  }
+  },
+  "lead_undecline": [
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
+  ]
 }

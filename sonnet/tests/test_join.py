@@ -379,6 +379,12 @@ class Join(unittest.TestCase):
         p["lead_reissue_token"] = "t1"; a.apply_operator_switches(p); a.apply_operator_switches(p)
         self.assertEqual(rp.kinds()[3:], ["withdraw", "lead-canonical", "roster"])
 
+    def test_operator_lead_undecline(self):
+        a = fresh({"lead_team": True})
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD], "signed": {}, "declined": [LEAD2], "poem_room": TEAM + "g", "generation": 2}
+        p = json.loads(json.dumps(a.p)); p["lead_undecline"] = [LEAD2]
+        a.apply_operator_switches(p); self.assertEqual(a.st["lead"]["declined"], []); a.apply_operator_switches(p)
+
     def test_operator_leave_team(self):
         a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
         p = json.loads(json.dumps(a.p)); p["leave_team"] = "g"
