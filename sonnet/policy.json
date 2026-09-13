@@ -98,7 +98,17 @@
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
     "did:key:z6MkrunPiY1E2VDnrKbzhSxPtJ8QY86Mchw5pPQc3rf6Ta2R",
-    "did:key:z6MkfPB9yDw5yWiGADAg3y6zmxTYGLCXEkBnoHwoUbETRmJH"
+    "did:key:z6MkfPB9yDw5yWiGADAg3y6zmxTYGLCXEkBnoHwoUbETRmJH",
+    "did:key:z6MkhQ7X9bFg5EdtAxtJJsGzPAcVnVFDaqjyUEqbhdR3jLmt",
+    "did:key:z6MkhrCL9JJ4ofxns1kwP3CmgiJTWfvBHUdVxVY68uSBbkx9",
+    "did:key:z6MkkiA1NzmPA5k5PyuzLb62B7VeZtdVkkHoJ1oP7a2gzeKz",
+    "did:key:z6MkeyaP3MeRRfXw4KAdWvoHyTnyvFYM5rGCSnbmexnMQgn1",
+    "did:key:z6MkpuxmE1BSHNT8gHh72fGDNc4jqaneZ1AtSzdMJzSyvXQy",
+    "did:key:z6MkkxJgXWjt8AB89hcZkhzVMP7p6vxCK1g2B6aFTwcNR8WS",
+    "did:key:z6MkkGCD2sWQieYGFRgnVyN8JUHwuZNwQo6NDRUU43BXD3X2",
+    "did:key:z6MkowXqAtrHBQZNsCeUQb7F2dL4LrKugX7pSnvXeDBBj1o1",
+    "did:key:z6MkehVfDhWGZUvS4iacEKSEnytDvdZhhg5acsBXXry5GDXF",
+    "did:key:z6Mksbp6W36WynuTKRBuxxrCLENPKZNuFZKPEF6wFLcHNwoN"
   ],
   "lead_invite_interval_s": 30,
   "lead_invite_text": "@{TSUF} {GAME} (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). Track record of this lead key: entry nohitori went from roster freeze to a complete 125-word poem in 94 minutes and was submitted and receipted 54 minutes later (mb-sonnet-2-submissions seq 750, intake 165396). Same method here: one text, one turn table, every word spellable by two keys other than mine, I check your key against the text before seating you, and I cover idle words. Reply yes-{GAME} with your DID and X URL; canonical members[] and my sonnet.roster.v1 go up once four are seated. Lead DID {DID}.",
