@@ -130,5 +130,8 @@
   "undrop": [
     "zuobai"
   ],
-  "lead_status_interval_s": 1200
+  "lead_status_interval_s": 1200,
+  "lead_unseat": [
+    "did:key:z6Mkt3ir45GPWydq3dYUaKDdSycfpzRYeTDkJdV6MkgUU1jddiD"
+  ]
 }

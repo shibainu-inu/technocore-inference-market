@@ -364,6 +364,16 @@ class Join(unittest.TestCase):
         self.assertEqual((a.st["lead"]["game_id"], a.st["lead"]["state"], a.st["lead"]["generation"]), (POLICY["lead_game_id"], "room_ready", 1))
         self.assertIn("reusing the referee-set room", att())
 
+    def test_operator_lead_unseat_reissues_roster(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp; a.key = object(); a.st["registered"] = {"seq": 1}
+        a.st["lead"] = {"game_id": "g", "request_id": "r", "state": "collecting", "at": "t", "members": [LEAD, LEAD2, OTHERS[0], OTHERS[1]], "signed": {LEAD: 1}, "declined": [], "poem_room": TEAM + "g", "generation": 2, "canonical": [ME, LEAD, LEAD2, OTHERS[0], OTHERS[1]], "canonical_at": 0}
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 2, "members": [ME, LEAD, LEAD2, OTHERS[0], OTHERS[1]], "lead": ME, "ready": False}
+        p = json.loads(json.dumps(a.p)); p["lead_unseat"] = [LEAD2]
+        a.apply_operator_switches(p)
+        self.assertEqual(a.st["lead"]["members"], [LEAD, OTHERS[0], OTHERS[1]]); self.assertIn(LEAD2, a.st["lead"]["declined"])
+        self.assertEqual(rp.kinds(), ["lead-canonical", "roster"]); self.assertEqual(json.loads(rp.calls[1][1])["members"], [ME, LEAD, OTHERS[0], OTHERS[1]])
+        a.apply_operator_switches(p); self.assertEqual(len(rp.calls), 2)   # 既に外れていれば何もしない
+
     def test_operator_leave_team(self):
         a, rp = self.signed_team(); a.readdress_recent_offers = lambda: None
         p = json.loads(json.dumps(a.p)); p["leave_team"] = "g"

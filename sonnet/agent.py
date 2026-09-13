@@ -2166,6 +2166,17 @@ class Agent:
             self.maybe_submit(p)
         except Exception as e:
             log(f"maybe_submit error: {e!r}")
+        lead = self.st.get("lead")
+        for did in p.get("lead_unseat", []) or []:
+            if lead and did in lead.get("members", []):
+                lead["members"].remove(did); lead.setdefault("declined", []).append(did)
+                lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None
+                attention(f"operator lead_unseat: {did[-8:]} removed from {lead['game_id']}; roster will be re-issued")
+                self.save()
+                try:
+                    self.lead_check_roster()
+                except Exception as e:
+                    log(f"lead_check_roster after unseat: {e!r}")
         tok = p.get("readdress_token")
         if tok and tok != self.st.get("readdress_token_done"):
             self.st["readdress_token_done"] = tok; self.save()
