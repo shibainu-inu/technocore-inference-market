@@ -464,6 +464,26 @@ class Join(unittest.TestCase):
         self.assertIn("lead_reset_to", att())
         p["lead_reset_to"] = "zzz"; a.apply_operator_switches(p); self.assertEqual(a.st["lead"]["game_id"], "g")   # setup の無いゲームには戻さない
 
+    def test_sign_recent_lead_roster_after_offer(self):
+        a, rp = roster_agent_like(self); a.st["applications"] = {}; a.st["agreed"] = None
+        a.st["first_seen"][LEAD] = BEFORE   # lead_acceptable
+        a.add_application("g", LEAD, source="offer")
+        now = agent.utc_now()
+        import datetime
+        ts = lambda ago: datetime.datetime.utcfromtimestamp(now - ago).strftime("%Y-%m-%dT%H:%M:%SZ")
+        ro = lambda members: {"type": "sonnet.roster.v1", "contest_id": CID, "game_id": "g", "poem_room": TEAM + "g", "room_generation": 1, "members": members}
+        rows = [{"seq": 10, "ts": ts(600), "from": LEAD, "text": json.dumps(ro([LEAD, ME] + OTHERS))},
+                {"seq": 11, "ts": ts(500), "from": LEAD, "text": json.dumps(ro([LEAD, LEAD2] + OTHERS))},        # 自分なし → 対象外
+                {"seq": 12, "ts": ts(2 * 3600), "from": LEAD, "text": json.dumps(ro([LEAD, ME, LEAD2, OTHERS[0]]))},  # 古い
+                {"seq": 13, "ts": ts(100), "from": OTHERS[0], "text": json.dumps(ro([LEAD, ME] + OTHERS))}]      # リーダーでない
+        old_get, old_vs = agent.fm.http_get, agent.verify_sig
+        agent.fm.http_get = lambda url, timeout=30: (200, "\n".join(json.dumps(r) for r in rows) + "\n"); agent.verify_sig = lambda room, m: True
+        try:
+            a.sign_recent_lead_roster("g", LEAD)
+        finally:
+            agent.fm.http_get, agent.verify_sig = old_get, old_vs
+        self.assertEqual(rp.kinds(), ["roster"]); self.assertEqual(a.st["team"]["game_id"], "g"); self.assertEqual(a.st["team"]["source_seq"], 10)
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

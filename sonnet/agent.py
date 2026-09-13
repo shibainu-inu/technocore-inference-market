@@ -1194,6 +1194,35 @@ class Agent:
             attention(f"lead: invited {did[-8:]} to {lead['game_id']} ({open_seats} seats open)")
             self.save(); return
 
+    def sign_recent_lead_roster(self, gid, lead_did, hours=1):
+        """席の提示を受諾した直後: リーダーが直近 hours 時間に出した、自分を載せたロースターが既にあれば
+        それを on_roster_for_us に流す（提示より先にロースターが投稿されていた場合に署名を取りこぼさないため）"""
+        if self.st.get("team") or self.key is None:
+            return
+        room = self.p["rooms"]["discovery"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=180)
+        except Exception as e:
+            log(f"sign_recent_lead_roster: {fm.err_kind(e)}"); return
+        cutoff = utc_now() - hours * 3600
+        latest = None
+        for ln in body.splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            if m.get("from") != lead_did or parse_iso(m.get("ts") or "1970-01-01T00:00:00Z") < cutoff:
+                continue
+            j = parse_json(m.get("text", ""))
+            if j and j.get("type") == "sonnet.roster.v1" and j.get("game_id") == gid and isinstance(j.get("members"), list) and self.did in j["members"]:
+                latest = (m, j)
+        if not latest:
+            log(f"sign_recent_lead_roster: no recent roster from {lead_did[-8:]} for {gid} names us"); return
+        m, j = latest
+        m["_room"] = room; m["_sig_ok"] = verify_sig(room, m)
+        log(f"sign_recent_lead_roster: lead roster seq {m['seq']} for {gid} names us; evaluating")
+        self.on_roster_for_us(m, j)
+
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
         lead = self.st.get("lead")
@@ -1649,6 +1678,10 @@ class Agent:
                                 and len(self.applications()) < self.p.get("max_applications", 3))
                 if offer_ok:
                     self.add_application(gid, lead, source="offer")
+                    try:
+                        self.sign_recent_lead_roster(gid, lead)
+                    except Exception as e:
+                        log(f"sign_recent_lead_roster: {e!r}")
                 else:
                     attention(f"seat offer for game {gid} from {lead[-6:]} NOT accepted (policy or application cap {self.p.get('max_applications', 3)}); "
                               f"open applications {sorted(self.applications())}", key="offer-declined")

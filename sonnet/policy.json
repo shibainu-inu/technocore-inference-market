@@ -87,10 +87,9 @@
   "reconsent_max": 3,
   "readdress_hours": 3,
   "undrop": [
-    "halftongue",
-    "pasukanlima"
+    "zuobai"
   ],
-  "readdress_token": "2026-09-13T07:31Z",
+  "readdress_token": "2026-09-13T08:31Z",
   "trusted_senders": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
   ],
@@ -117,5 +116,6 @@
     "So judge the poem, not the hand that wrote:",
     "no single voice, but many, in one throat."
   ],
-  "lead_reset_to": "nohitori"
+  "lead_reset_to": "nohitori",
+  "drop_agreed": "halftongue"
 }
