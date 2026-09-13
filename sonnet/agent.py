@@ -754,6 +754,13 @@ class Agent:
     def on_lead_receipt(self, m, j):
         lead = self.st["lead"]
         if lead.get("request_id") and j.get("request_id") == lead.get("request_id"):
+            setup = (self.st.get("setups") or {}).get(lead.get("game_id"))
+            if j.get("status") == "rejected" and "already assigned" in str(j.get("reason", "")) and setup:
+                # 審判が既に当方へ設定済みの部屋を再要求した（再起動後など）: 部屋はそのまま使う。名前を変えない
+                if lead.get("state") in ("requested", "allocated"):
+                    self.lead_room_setup({"room_generation": setup["generation"], "poem_room": setup["room"]})
+                log(f"lead: room request for {lead['game_id']} rejected as already assigned; the referee set it up earlier (seq {setup['seq']}), keeping it")
+                return
             if j.get("status") == "accepted":
                 lead["state"] = "allocated"; log(f"lead: room request accepted (allocation {j.get('allocation')})")
                 lead["poem_room"] = f"d-{self.p['contest_id']}-team-{lead['game_id']}"
@@ -1704,6 +1711,16 @@ class Agent:
         for g in p.get("undrop", []) or []:
             if g in dropped:
                 dropped.remove(g); attention(f"operator undrop: {g} removed from dropped"); self.save()
+        target = p.get("lead_reset_to")
+        lead = self.st.get("lead")
+        setup = (self.st.get("setups") or {}).get(target) if target else None
+        if target and setup and lead and lead.get("game_id") != target and self.st.get("lead_reset_done") != target:
+            self.st["lead_reset_done"] = target
+            old = lead.get("game_id")
+            lead.update({"game_id": target, "poem_room": setup["room"], "generation": setup["generation"],
+                         "state": "collecting" if lead.get("members") else "room_ready", "request_id": f"reset-{target}", "canonical": None})
+            attention(f"operator lead_reset_to: lead game {old} -> {target} (referee room {setup['room']} gen {setup['generation']})")
+            self.save()
         tok = p.get("readdress_token")
         if tok and tok != self.st.get("readdress_token_done"):
             self.st["readdress_token_done"] = tok; self.save()

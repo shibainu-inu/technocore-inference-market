@@ -446,6 +446,24 @@ class Join(unittest.TestCase):
         bad.make_plan = lambda ctx: None; bad.periodic()
         self.assertIsNone(bad.st["plan"]); self.assertIn("plan_seed rejected", att())
 
+    def test_late_already_assigned_rejection_keeps_our_room(self):
+        a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp
+        a.handle(setup_msg(361, "g"))   # 審判は既に部屋を設定済み（lead 無しでも setups に入る）
+        a.st["lead"] = {"game_id": "g", "request_id": "room-2", "state": "requested", "at": "t", "members": [], "signed": {}, "declined": [], "poem_room": TEAM + "g"}
+        rc_ = {"type": "sonnet.receipt.v1", "status": "rejected", "reason": "game_id: already assigned", "request_id": "room-2", "sender_did": ME}
+        a.handle({"seq": 400, "ts": "t", "from": REF, "_sig_ok": True, "_room": DISC, "text": json.dumps(rc_)})
+        self.assertEqual(a.st["lead"]["game_id"], "g"); self.assertEqual(a.st["lead"]["state"], "room_ready"); self.assertEqual(rp.calls, [])
+        self.assertEqual(a.st.get("lead_attempts", 0), 0)
+
+    def test_operator_lead_reset_to(self):
+        a = fresh({"lead_team": True}); a.handle(setup_msg(361, "g"))
+        a.st["lead"] = {"game_id": "g-66", "request_id": "room-3", "state": "requested", "at": "t", "members": [LEAD], "signed": {}, "declined": [], "poem_room": TEAM + "g"}
+        p = json.loads(json.dumps(a.p)); p["lead_reset_to"] = "g"
+        a.apply_operator_switches(p); a.apply_operator_switches(p)
+        l = a.st["lead"]; self.assertEqual((l["game_id"], l["state"], l["generation"], l["poem_room"], l["members"]), ("g", "collecting", 1, TEAM + "g", [LEAD]))
+        self.assertIn("lead_reset_to", att())
+        p["lead_reset_to"] = "zzz"; a.apply_operator_switches(p); self.assertEqual(a.st["lead"]["game_id"], "g")   # setup の無いゲームには戻さない
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
