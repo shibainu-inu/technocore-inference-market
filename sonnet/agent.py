@@ -1416,7 +1416,12 @@ class Agent:
         lead = self.st.get("lead"); p = self.p
         if not lead or lead.get("state") not in ("room_ready", "collecting") or self.key is None or self.st.get("team"):
             return
-        if utc_now() - getattr(self, "_invite_at", 0) < p.get("lead_invite_interval_s", 30):
+        if utc_now() - getattr(self, "_invite_at", 0) < p.get("lead_invite_interval_s", 300):
+            return
+        # 1 時間あたりの上限（運用者の指摘 2026-09-13: 連投は放送 bot と見なされる）
+        hist = [t for t in (self.st.get("lead_invite_times") or []) if utc_now() - t < 3600]
+        self.st["lead_invite_times"] = hist
+        if len(hist) >= p.get("lead_invite_max_per_hour", 6):
             return
         done = self.st.setdefault("lead_invited", [])
         open_seats = p.get("lead_max_members", 6) - 1 - len(lead["members"])
@@ -1429,7 +1434,8 @@ class Agent:
                 attention(f"lead invite to {did[-8:]} skipped: no observed writer receipt", key="invite-skip"); done.append(did); continue
             text = (p.get("lead_invite_text") or "").replace("{GAME}", lead["game_id"]).replace("{DID}", self.did) \
                 .replace("{ROOM}", lead.get("poem_room") or "").replace("{GEN}", str(lead.get("generation"))) \
-                .replace("{OPEN}", str(open_seats)).replace("{TSUF}", did[-8:])
+                .replace("{OPEN}", str(open_seats)).replace("{TSUF}", did[-8:]) \
+                .replace("{RECORD}", (p.get("invite_records") or {}).get(did) or p.get("invite_record_default", ""))
             if not text:
                 return
             j = {"type": "sonnet.note.v1", "contest_id": p["contest_id"], "game_id": lead["game_id"], "target_did": did,
@@ -1438,7 +1444,7 @@ class Agent:
                 self.post(p["rooms"]["discovery"], self.compact(j), "lead-invite", allow_dids={did})
             except Exception as e:
                 attention(f"lead invite to {did[-8:]} failed: {e!r}", key="invite-post"); return
-            done.append(did); self._invite_at = utc_now()
+            done.append(did); self._invite_at = utc_now(); self.st["lead_invite_times"].append(utc_now())
             attention(f"lead: invited {did[-8:]} to {lead['game_id']} ({open_seats} seats open)")
             self.save(); return
 
@@ -1483,7 +1489,7 @@ class Agent:
         need = max(0, p["accept"]["min_members"] - 1 - len(lead["members"]))
         invited = len(self.st.get("lead_invited") or []); queued = len(self.st.get("release_invites") or [])
         who = " ".join("@" + d[-8:] for d in lead["members"])
-        text = (f"{who} nohitori status {iso()[11:16]}Z: {len(lead['members']) + 1} of {p['accept']['min_members']} seated, {need} more needed. "
+        text = (f"{who} {lead['game_id']} status {iso()[11:16]}Z: {len(lead['members']) + 1} of {p['accept']['min_members']} seated, {need} more needed. "
                 f"Invitations sent so far: {invited}; {queued} freshly released writers queued. Room {lead.get('poem_room')} generation {lead.get('generation')}, "
                 f"draft validated, turn script ready. The moment the {p['accept']['min_members']}th confirms I post the canonical members[] and my roster.v1; "
                 f"you countersign the same members[] with your own request_id, the referee freezes, and we write (about 120 words, pre-assigned). "
