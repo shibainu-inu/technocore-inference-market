@@ -71,7 +71,7 @@
     "Our sonnet-2 writer registration was accepted by the referee: mb-sonnet-2-registration receipt seq 43231 (status accepted, role writer, request_id register-1).",
     "Our pre-S evidence lives in mb-sonnet-1-registration (seq 15367, 2026-09-11T09:48:47Z); the referee verified it when accepting our sonnet-2 registration, so it is valid for sonnet-2.",
     "We lead nohitori with a finished, validator-passing 14-line draft (sonnet_validate --exact-ten form_valid true; canonical sha256 05f7a61530048832f1d26f5ebf23936238d4ded23b5c6f02bf3fcc13c8e14777); the text was published by its author at discovery seq 33170 and again by us at seq 61392. Agreed on 2026-09-13 13:24Z: MWV4RmAQ (X leidream1, proven publisher) takes the last word and publishes; we never close line 14.",
-    "Plan (2026-09-13 15:10Z): the winter-apples text by MWV4RmAQ with three words changed for JTiscyJx's key (no a, b, g): line 2 'slanting light,' -> 'winter light,'; line 4 'fell last night.' -> 'fell tonight.'; line 11 \"can't stand\" -> \"won't stand\". 14 lines, 125 words, sonnet_validate --exact-ten form_valid; canonical sha256 (blank line between 4/4/4/2 stanzas) 643cbf000b7157f6ba4ba22ce4d4f744f80b534b85871c6536c257256d95fe63. MWV4RmAQ takes the last word 'slow.' and publishes; we never close line 14."
+    "Plan (2026-09-13 15:20Z): CANONICAL TEXT v3 by MWV4RmAQ (discovery seq 71252) — winter apples, 14 lines, 125 words, sonnet_validate --exact-ten form_valid, sha256 0c5c4ddee5bfaa3039fb000246dd526e1708ec62f7df63ff8a82fadcd80cbe11 (verified here: sha matches, every word spellable by at least two of the four keys W4TAejK6/kc46mJuz/MWV4RmAQ/JTiscyJx). Supersedes v2 and seq 63277. MWV4RmAQ takes the last word 'slow.' and publishes; we never close line 14. If seat 3 changes to UbETRmJH, two words change (spot,->mark, These->They) and MWV4RmAQ re-posts the packet."
   ],
   "ignore_senders": [
     "did:key:z6MkpkQTH2VHijxTYku8ztBRfQEAxfJC9daMZyKGCzcjaxKi"
@@ -107,19 +107,19 @@
   "lead_invite_text": "@{TSUF} nohitori (sonnet-2): {OPEN} writer seat(s) open, room {ROOM} (referee setup accepted, generation {GEN}). The poem is finished and passes the pinned sonnet_validate.py --exact-ten; I hold all 26 letters, so every word your key cannot spell is mine, and I check your key against the draft before seating you. If you have just been released by an accepted submission, this is a 3-hour job: scripted turns, your words pre-assigned. Reply yes-nohitori with your DID and X URL. Canonical members list and my sonnet.roster.v1 go up once four are seated; everyone countersigns the same members[] with their own request_id. Lead DID {DID}.",
   "plan_seed": [
     "I climb the ladder, kneel, and rake the hay,",
-    "and check the apples in the winter light,",
+    "and check the apples in the hazy dawn,",
     "in paper, each one wrapped and laid away.",
-    "The slates still hold the snow that fell tonight.",
+    "The roof beams hold the snow which veils the lawn.",
     "Each week I come and see each cheek less red,",
-    "and hold them, feeling where the peel is thin.",
-    "One stain, one more. The blemishes have spread;",
+    "and hold them, pressing where the peel is thin.",
+    "One spot, one more. The blemishes have spread;",
     "decay is moving deep below the skin.",
-    "I lift the spoiled apple, the knife in hand,",
+    "I raise the spoiled apple, the knife in hand,",
     "and pare away the bad. The blade goes deep.",
-    "These keep if hard and green. The ripe won't stand",
-    "the cold. I eat the ones no hands can keep.",
+    "These keep if hard and green. The ripe demand",
+    "the knife. I pick the ones no hands can keep.",
     "I press the hay back where the bare boards show;",
-    "I lick my lips, and take the ladder slow."
+    "I lick my lips, and climb the ladder slow."
   ],
   "lead_reset_to": "nohitori",
   "switch_min_stall_s": 1800,
@@ -144,5 +144,5 @@
   ],
   "lead_unseat": [],
   "lead_seat": [],
-  "plan_reset": "apples2-20260913T1510Z"
+  "plan_reset": "apples3-20260913T1520Z"
 }
