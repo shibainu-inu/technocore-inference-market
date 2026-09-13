@@ -487,6 +487,8 @@ class Agent:
         elif room in (rooms["submissions"], rooms["results"]):
             if self.is_referee(m) or j:
                 log(f"{room} {frm[-6:]} {text[:200]!r}")
+            if room == rooms["results"] and j and self.is_referee(m):
+                self.on_results(m, j)
 
     def on_rules(self, m, j):
         """rules 部屋。審判 DID は所有者ノート（find_referee）だけが決める。ここでは告示を記録し、食い違いを報告するのみ"""
@@ -549,6 +551,8 @@ class Agent:
             tm["last"] = m["ts"]
             if typ == "sonnet.roster.v1":
                 tm["roster_seq"] = m["seq"]
+            if typ == "sonnet.recruit.v1" and m.get("_sig_ok") and frm != self.did:
+                tm["recruit_seq"], tm["recruit_ts"], tm["recruit_from"] = m["seq"], m["ts"], frm
         if typ == "sonnet.roster.v1" and isinstance(j.get("members"), list) and self.did in j["members"] and m.get("_sig_ok"):
             self.on_roster_for_us(m, j)
         if self.is_referee(m) and j and self.st.get("lead"):
@@ -742,6 +746,125 @@ class Agent:
             lead["canonical"] = None; self.st["team"] = None; self.st["intro_at"] = 0
             self.save()
 
+    def on_room_rebound(self, gen):
+        """署名後に審判がチーム部屋を作り直して generation が変わった（チーム部屋の受領、または results の setup.v1 から）"""
+        team = self.st["team"]
+        old_gen = team["generation"]; team["generation"] = gen; team["ready"] = False
+        if team.get("lead") == self.did:
+            # 自分がリーダー: canonical ロースターの再発行は人が判断する
+            attention(f"CRITICAL our team room was re-bound from generation {old_gen} to {gen} after the canonical roster; members must re-sign (manual)", key="resign")
+            return
+        # 同じメンバーで新しい generation に対して署名し直す（審判の案内どおり）。
+        # 再生中（起動時）は投稿しない。その場合はリーダーの再同意依頼（on_roster_for_us）で署名し直す
+        attention(f"CRITICAL team room re-bound from generation {old_gen} to {gen} after we signed; re-signing the same roster", key="resign")
+        roster = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
+                  "room_generation": gen, "members": team["members"], "request_id": self.req_id("roster")}
+        if self.key is not None and not self._replaying:
+            try:
+                self.post(self.p["rooms"]["discovery"], self.compact(roster), "roster", allow_dids=set(team["members"]))
+                team["roster_request_id"] = roster["request_id"]; team["signed_generation"] = gen
+            except Exception as e:
+                attention(f"CRITICAL re-sign post failed: {e!r}", key="resign-post")
+
+    def on_results(self, m, j):
+        """results 部屋の審判投稿。実物の審判はチーム部屋の設定（poem_room / room_generation）を sonnet.setup.v1 として
+        results に出す（チーム部屋には sonnet.room.v1 だけ）。設定を記録し、自分がリーダーのゲームなら room_ready に進め、
+        署名済みのチームなら generation の変化を検出する"""
+        if j.get("type") != "sonnet.setup.v1" or j.get("contest_id", self.p["contest_id"]) != self.p["contest_id"]:
+            return
+        gid, gen, room = j.get("game_id"), j.get("room_generation"), j.get("poem_room")
+        if not (isinstance(gid, str) and GAME_RE.match(gid)) or type(gen) is not int:
+            return
+        if room != f"d-{self.p['contest_id']}-team-{gid}":
+            log(f"setup for {gid} names unexpected room {room!r}; ignored"); return
+        setups = self.st.setdefault("setups", {})
+        if gid not in setups and len(setups) >= TEAMS_CAP:
+            del setups[next(iter(setups))]
+        setups[gid] = {"room": room, "generation": gen, "seq": m["seq"], "ts": m["ts"]}
+        lead = self.st.get("lead")
+        if lead and lead.get("game_id") == gid and lead.get("state") in ("requested", "allocated"):
+            self.lead_room_setup({"room_generation": gen, "poem_room": room})
+        team = self.st.get("team")
+        if team and team.get("game_id") == gid and team.get("generation") not in (None, gen):
+            self.on_room_rebound(gen)
+
+    def sync_setups(self):
+        """results の /export を 1 回読んで setup.v1 を取り込む（起動時。cold 巡回は末尾しか読まないので、
+        lead が allocated のまま設定を見落とすのを防ぐ）"""
+        room = self.p["rooms"]["results"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=120)
+        except Exception as e:
+            log(f"sync_setups: {fm.err_kind(e)}"); return
+        n = 0
+        for ln in body.splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            if m.get("from") != self.st.get("referee"):
+                continue
+            j = parse_json(m.get("text", ""))
+            if not (j and j.get("type") == "sonnet.setup.v1"):
+                continue
+            m["_sig_ok"] = verify_sig(room, m)
+            if m["_sig_ok"]:
+                self.on_results(m, j); n += 1
+        log(f"sync_setups: {n} setup records from /export; lead state {(self.st.get('lead') or {}).get('state')}")
+
+    def maybe_apply_recruits(self):
+        """開かれた募集（sonnet.recruit.v1）に自分から応募する。判定は決定的:
+        審判が部屋を設定済み（results の setup.v1）、募集が recruit_fresh_hours 以内、リーダーは writer 受理を観測済みで
+        lead_acceptable を満たし無視対象でない、自分のゲーム・落ちたゲーム・応募済みでない、応募枚数が上限未満。
+        1 回の呼び出しで 1 件だけ。開始前から見えているリーダーを優先し、次に新しい募集を優先する"""
+        p = self.p
+        if not p["auto"].get("apply_recruits") or self.key is None or not self.st.get("registered") or self.st.get("team"):
+            return
+        now = utc_now()
+        if now - getattr(self, "_apply_at", 0) < p.get("apply_interval_s", 300):
+            return
+        self._apply_at = now
+        apps = self.applications()
+        if len(apps) >= p.get("max_applications", 3):
+            return
+        lead_gid = (self.st.get("lead") or {}).get("game_id")
+        fresh = p.get("recruit_fresh_hours", 3) * 3600
+        setups = self.st.get("setups") or {}
+        cands = []
+        for gid, tm in (self.st.get("teams") or {}).items():
+            rs = tm.get("recruit_seq")
+            if not rs or gid in apps or gid in self.st.get("dropped", []) or gid == lead_gid or gid not in setups:
+                continue
+            if now - parse_iso(tm.get("recruit_ts") or tm["last"]) > fresh:
+                continue
+            ld = tm.get("recruit_from")
+            if not ld or ld == self.did or ld in self.ignored() or ld not in (self.st.get("writers_ok") or {}) or not self.lead_acceptable(ld):
+                continue
+            cands.append((not self.seen_before_opening(ld), -rs, gid, ld))
+        if not cands:
+            return
+        cands.sort()
+        _, _, gid, ld = cands[0]
+        self.apply_to_recruit(gid, ld, setups[gid])
+
+    def apply_to_recruit(self, gid, lead_did, setup):
+        p = self.p
+        reg_seq = (self.st.get("registered") or {}).get("seq")
+        evidence = f"{p.get('evidence_room', 'registration room')} seq {p['evidence_seq']} @ {p.get('evidence_ts', '')}"
+        prose = p.get("application_text", "yes-{GAME}. Writer seat application from DID {DID}.") \
+            .replace("{GAME}", gid).replace("{DID}", self.did).replace("{X}", p["x_account_url"]) \
+            .replace("{RECEIPT_SEQ}", str(reg_seq)).replace("{EVIDENCE}", evidence)
+        rid = self.req_id(f"apply-{gid}")
+        frame = {"type": "sonnet.application.v1", "contest_id": p["contest_id"], "game_id": gid, "request_id": rid, "did": self.did,
+                 "x_account_url": p["x_account_url"], "registration_receipt_seq": reg_seq, "pre_s_evidence": evidence,
+                 "poem_room": setup["room"], "room_generation": setup["generation"], "text": prose}
+        try:
+            self.post(p["rooms"]["discovery"], prose, "apply")
+            self.post(p["rooms"]["discovery"], self.compact(frame), "apply-json")
+        except Exception as e:
+            attention(f"application to {gid} failed: {e!r}", key="apply-post"); return
+        self.add_application(gid, lead_did, source="recruit")
+
     def lead_room_setup(self, r):
         """チーム部屋の設定受領を lead 状態に反映（on_team から。team が未設定でも呼べる）"""
         lead = self.st.get("lead")
@@ -892,22 +1015,7 @@ class Agent:
             team = self.st.get("team")
             if team and type(r.get("room_generation")) is int:
                 if team.get("generation") not in (None, r["room_generation"]):
-                    old_gen = team["generation"]; team["generation"] = r["room_generation"]; team["ready"] = False
-                    if team.get("lead") == self.did:
-                        # 自分がリーダー: canonical ロースターの再発行は人が判断する
-                        attention(f"CRITICAL our team room was re-bound from generation {old_gen} to {r['room_generation']} after the canonical roster; members must re-sign (manual)", key="resign")
-                    else:
-                        # 署名後に部屋が再設定された: 同じメンバーで新しい generation に対して署名し直す（審判の案内どおり）。
-                        # 再生中（起動時）は投稿しない。その場合はリーダーの再同意依頼（on_roster_for_us）で署名し直す
-                        attention(f"CRITICAL team room re-bound from generation {old_gen} to {r['room_generation']} after we signed; re-signing the same roster", key="resign")
-                        roster = {"type": "sonnet.roster.v1", "contest_id": self.p["contest_id"], "game_id": team["game_id"], "poem_room": team["room"],
-                                  "room_generation": r["room_generation"], "members": team["members"], "request_id": self.req_id("roster")}
-                        if self.key is not None and not self._replaying:
-                            try:
-                                self.post(self.p["rooms"]["discovery"], self.compact(roster), "roster", allow_dids=set(team["members"]))
-                                team["roster_request_id"] = roster["request_id"]; team["signed_generation"] = r["room_generation"]
-                            except Exception as e:
-                                attention(f"CRITICAL re-sign post failed: {e!r}", key="resign-post")
+                    self.on_room_rebound(r["room_generation"])
                 else:
                     team["generation"] = r["room_generation"]
             log(f"team room set up: generation {r.get('room_generation')} state {str(r.get('state_hash'))[:8]}")
@@ -1478,6 +1586,10 @@ class Agent:
             self.maybe_lead()
         except Exception as e:
             log(f"maybe_lead error: {e!r}")
+        try:
+            self.maybe_apply_recruits()
+        except Exception as e:
+            log(f"maybe_apply_recruits error: {e!r}")
         if getattr(self, "_resync_room", False) and self.st.get("team"):
             self._resync_room = False
             self.replay_room(self.st["team"]["room"])
@@ -1544,6 +1656,8 @@ class Agent:
             if k in self.HOT:
                 self.start_reader(r)
         self.start_cold_reader([r for k, r in self.p["rooms"].items() if k not in self.HOT])
+        if self.st.get("referee"):
+            self.sync_setups()
         if self.st.get("team"):
             self.replay_room(self.st["team"]["room"])
             self.start_reader(self.st["team"]["room"])

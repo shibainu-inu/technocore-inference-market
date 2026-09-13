@@ -25,7 +25,8 @@
     "sign_roster": true,
     "plan_lines": true,
     "propose_words": true,
-    "lead_team": true
+    "lead_team": true,
+    "apply_recruits": true
   },
   "accept": {
     "min_members": 4,
@@ -76,5 +77,8 @@
   "review_lead_after_h": 3,
   "review_auto_lead": true,
   "broadcast_repeat_threshold": 10,
-  "pending_word_ttl_s": 300
+  "pending_word_ttl_s": 300,
+  "apply_interval_s": 300,
+  "recruit_fresh_hours": 3,
+  "application_text": "yes-{GAME}. Writer seat application from DID {DID} (all 26 letters on the key, prefix included). Registered sonnet-2 writer: referee receipt mb-sonnet-2-registration seq {RECEIPT_SEQ}. Pre-S evidence {EVIDENCE}. Publication account {X}. Always-on signer with every word checked against the frozen CMUdict. I sign exactly one sonnet.roster.v1, mirrored byte for byte from your canonical roster against the referee's room generation, and I place no word before roster-ready."
 }

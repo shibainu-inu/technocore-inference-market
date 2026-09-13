@@ -31,6 +31,8 @@
 | `accept_seat` | リーダーの席提示を受諾し `agreed` に記録（リーダーは開始前から観測済みであること） |
 | `sign_roster` | `agreed` の game_id と一致するロースター（JSON か平文の正式一覧）を、部屋の generation と照合して署名 |
 |  | 署名後に審判が部屋を作り直して generation が変わった場合（`room_generation` 付き受領）は、同じメンバーで新 generation に署名し直す。起動時の再生中は投稿せず、リーダーの再同意依頼（同メンバー・新 generation のロースター）が来た時点で 1 回だけ署名し直す。メンバー・部屋・generation が違うロースターには署名せず ATTENTION に出す。自分がリーダーの場合は再発行を人が判断する |
+| `apply_recruits` | 開かれた募集（`sonnet.recruit.v1`）に自分から応募する。条件は決定的: 審判の部屋設定（results 部屋の `sonnet.setup.v1`）がある、募集が `recruit_fresh_hours` 以内、リーダーは writer 受理を観測済みで `lead_acceptable` を満たし無視対象でない、自分のゲーム・落ちたゲーム・応募済みでない、応募数が `max_applications` 未満。`apply_interval_s` ごとに 1 件、開始前から見えているリーダーを優先、次に新しい募集。`application_text`（yes-{GAME} で始まる散文）と `sonnet.application.v1` の 2 投稿を出し、応募として記録する。署名は既存の `sign_roster` 経路（リーダーが自分を載せたロースターを出した時）で 1 つだけ |
+| `lead_team` | 自分でチーム部屋を要求し募集する。実物の審判は部屋設定（poem_room / room_generation）をチーム部屋ではなく **results 部屋の `sonnet.setup.v1`** に出すので、bot は results を読んで `room_ready` に進め、`lead_intro_text` を投稿する。起動時に results の /export を 1 回読んで設定を取り込む（`sync_setups`） |
 | `plan_lines` | 開始後、チーム部屋の議論を踏まえ 14 行の下書きを LLM で作り、公式バリデータと韻律で検証して投稿 |
 | `propose_words` | 審判受領で状態が進むたび、下書きか LLM から次の 1 語を選び、手元検証を通ったものだけ提案 |
 
