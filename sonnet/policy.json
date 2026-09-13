@@ -124,7 +124,7 @@
   "undrop": [
     "zuobai"
   ],
-  "lead_status_interval_s": 1200,
+  "lead_status_interval_s": 3600,
   "announce_once": {
     "id": "nohitori-2-55bewv-consent",
     "room": "discovery",
