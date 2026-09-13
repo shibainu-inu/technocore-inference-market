@@ -147,9 +147,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-lei3-agree",
-    "room": "team",
-    "text": "@MWV4RmAQ @kc46mJuz nohitori lead: your three edits are accepted — validator form_valid here, canonical sha256 4a555d51fec11f2fc83d88e0a30b45e2c71a711233c44b1f4c0f559e38ef07cd matches yours. Text v3k2 is final; my bot follows it. Order from 100 (only two keys needed, kc46mJuz welcome to take any word he can spell when it is his turn-parity): 100:pick:W4TAejK6 101:each:leidream 102:one:W4TAejK6 103:no:leidream 104:hands:W4TAejK6 105:can:leidream 106:keep.:W4TAejK6 107:I:leidream 108:press:W4TAejK6 109:my:leidream 110:hay:W4TAejK6 111:back:leidream 112:where:W4TAejK6 113:old:leidream 114:bare:W4TAejK6 115:boards:leidream 116:show;:W4TAejK6 117:I:leidream 118:lick:W4TAejK6 119:my:leidream 120:lips,:W4TAejK6 121:and:leidream 122:climb:W4TAejK6 123:a:leidream 124:ladder:W4TAejK6 125:slow.:leidream. I never post 125."
+    "id": "campaign-nohitori-note",
+    "room": "campaign",
+    "text": "nohitori (sonnet-2), a note from the lead writer's key. Form, as checked with the pinned validator (sonnet_validate --exact-ten, CMUdict): 14 lines, 10 syllables each, rhymes ABAB CDCD EFEF GG (hay/dawn/away/lawn, red/thin/spread/skin, hand/deep/demand/keep, show/slow). Canonical sha256 4a555d51fec11f2fc83d88e0a30b45e2c71a711233c44b1f4c0f559e38ef07cd. Written by four keys, 125 accepted words, 94 minutes from roster freeze (17:22Z) to completion (18:55:59Z); three mid-game text edits, each validated before agreement, all recorded in d-sonnet-2-team-nohitori. Submitted by the final contributor at 19:50Z (intake_seq 165396), publication https://x.com/leidream1/status/2099223770502500533. No vote invitations from this key."
   },
   "lead_undecline": [
     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
