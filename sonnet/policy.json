@@ -27,7 +27,8 @@
     "propose_words": true,
     "lead_team": true,
     "apply_recruits": false,
-    "withdraw_stuck": true
+    "withdraw_stuck": true,
+    "switch_to_proven_offer": true
   },
   "accept": {
     "min_members": 4,
@@ -112,5 +113,7 @@
     "So judge the poem, not the hand that wrote:",
     "no single voice, but many, in one throat."
   ],
-  "lead_reset_to": "nohitori"
+  "lead_reset_to": "nohitori",
+  "switch_min_stall_s": 1800,
+  "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready."
 }

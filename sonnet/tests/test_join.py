@@ -484,6 +484,69 @@ class Join(unittest.TestCase):
             agent.fm.http_get, agent.verify_sig = old_get, old_vs
         self.assertEqual(rp.kinds(), ["roster"]); self.assertEqual(a.st["team"]["game_id"], "g"); self.assertEqual(a.st["team"]["source_seq"], 10)
 
+    # ---- 実績あるリーダーの誘いに乗る（運用者決定 2026-09-13） ----
+    SUBS = POLICY["rooms"]["submissions"]
+
+    def proven(self, a, did=LEAD2):
+        rc_ = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "sub-x", "sender_did": did, "eligibility": "pending"}
+        a.handle({"seq": 700, "ts": "t", "from": REF, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(rc_)})
+
+    def stalled_team_agent(self):
+        a = fresh({"switch_to_proven_offer": True, "sign_roster": True}); rp = RecordingPost(); a.post = rp
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, OTHERS[0], OTHERS[1], ME], "lead": LEAD,
+                        "roster_signed": 7, "ready": False, "signed_at": "2026-09-13T08:00:00Z"}
+        a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": "t"}}; a.st["agreed"] = a.st["applications"]["g"]
+        a.readdress_recent_offers = lambda: None; a.sign_recent_lead_roster = lambda gid, lead: rp.calls.append(("_", gid, "sign-recent"))
+        a.handle(setup_msg(500, "h")); a.st["first_seen"][LEAD2] = BEFORE
+        return a, rp
+
+    def offer(self, frm=LEAD2, text=None, target=ME, seq=900, gid="h"):
+        j = {"type": "sonnet.note.v1", "contest_id": CID, "game_id": gid, "target_did": target, "request_id": "o1",
+             "text": text or "@W4TAejK6 fact check first — your roster never froze. h is ready to freeze: room " + TEAM + "h gen 1. Reply yes-h."}
+        return {"seq": seq, "ts": "t", "from": frm, "_sig_ok": True, "_room": DISC, "text": json.dumps(j)}
+
+    def test_proven_submitter_recorded_from_submission_receipt(self):
+        a = fresh(); self.proven(a); self.assertIn(LEAD2, a.st["proven_submitters"])
+        rc_ = {"type": "sonnet.receipt.v1", "status": "rejected", "reason": "publication: unverified", "request_id": "sub-y", "sender_did": OTHERS[0]}
+        a.handle({"seq": 701, "ts": "t", "from": REF, "_sig_ok": True, "_room": self.SUBS, "text": json.dumps(rc_)})
+        self.assertNotIn(OTHERS[0], a.st["proven_submitters"])
+
+    def test_switch_to_proven_offer_while_stalled(self):
+        a, rp = self.stalled_team_agent(); self.proven(a)
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T09:00:00Z")   # 署名から 60 分
+        a.handle(self.offer())
+        kinds = rp.kinds(); self.assertEqual(kinds[:2], ["withdraw", "disc-reply"]); self.assertIn("sign-recent", kinds)
+        self.assertEqual(json.loads(rp.calls[0][1])["game_id"], "g"); self.assertTrue(rp.calls[1][1].startswith("yes-h. @" + LEAD2[-8:]))
+        self.assertIn("withdrawn my g consent", rp.calls[1][1])
+        self.assertIsNone(a.st["team"]); ap = a.application_for("h"); self.assertEqual((ap["lead_did"], ap["source"]), (LEAD2, "proven-offer"))
+        self.assertIn("g", a.st["dropped"]); self.assertIn("took a proven lead's offer", att())
+        a.handle(self.offer(seq=901)); self.assertEqual(len([k for k in rp.kinds() if k == "withdraw"]), 1)   # 二重に動かない
+
+    def test_switch_refusals(self):
+        cases = {
+            "not proven": (lambda a: None, lambda: self.offer()),
+            "team fresh (<30min)": (lambda a: (self.proven(a), a.st["team"].update({"signed_at": "2026-09-13T08:45:00Z"})), lambda: self.offer()),
+            "team ready": (lambda a: (self.proven(a), a.st["team"].update({"ready": True})), lambda: self.offer()),
+            "offer to someone else": (lambda a: self.proven(a), lambda: self.offer(target=OTHERS[0])),
+            "game without setup": (lambda a: self.proven(a), lambda: self.offer(text="@W4TAejK6 join room " + TEAM + "zzz gen 1, reply yes-zzz", gid="zzz")),
+            "same game as ours": (lambda a: self.proven(a), lambda: self.offer(text="@W4TAejK6 re-sign yes-g please", gid="g")),
+            "ignored lead": (lambda a: (self.proven(a), a.p["ignore_senders"].append(LEAD2)), lambda: self.offer()),
+            "flag off": (lambda a: (self.proven(a), a.p["auto"].update({"switch_to_proven_offer": False})), lambda: self.offer()),
+        }
+        for name, (mut, mk) in cases.items():
+            a, rp = self.stalled_team_agent(); mut(a)
+            agent.utc_now = lambda: agent.parse_iso("2026-09-13T09:00:00Z")
+            a.handle(mk())
+            self.assertNotIn("withdraw", rp.kinds(), name); self.assertIsNotNone(a.st["team"], name)
+
+    def test_switch_when_no_team(self):
+        a = fresh({"switch_to_proven_offer": True}); rp = RecordingPost(); a.post = rp
+        a.readdress_recent_offers = lambda: None; a.sign_recent_lead_roster = lambda gid, lead: None
+        a.handle(setup_msg(500, "h")); a.st["first_seen"][LEAD2] = BEFORE; self.proven(a)
+        a.handle(self.offer())
+        self.assertEqual(rp.kinds(), ["disc-reply"]); self.assertTrue(rp.calls[0][1].startswith("yes-h.")); self.assertNotIn("withdrawn", rp.calls[0][1])
+        self.assertEqual(a.application_for("h")["source"], "proven-offer")
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

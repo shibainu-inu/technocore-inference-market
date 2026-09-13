@@ -505,6 +505,8 @@ class Agent:
                 log(f"{room} {frm[-6:]} {text[:200]!r}")
             if room == rooms["results"] and j and self.is_referee(m):
                 self.on_results(m, j)
+            if room == rooms["submissions"] and j and self.is_referee(m):
+                self.on_submissions(m, j)
 
     def on_rules(self, m, j):
         """rules 部屋。審判 DID は所有者ノート（find_referee）だけが決める。ここでは告示を記録し、食い違いを報告するのみ"""
@@ -632,6 +634,12 @@ class Agent:
                 if len(senders) == self.p.get("venue_mention_threshold", 5):
                     attention(f"{len(senders)} distinct senders mentioned 'sonnet-{other}' in discovery this hour (we are on {self.p['contest_id']}): "
                               f"possible venue change; sample: {clip(text, 200)}", key=f"venue-mention-{other}")
+        if self.mentions_us(text) and frm not in self.ignored() and m.get("_sig_ok"):
+            try:
+                if self.maybe_switch_to_proven_offer(m, j):
+                    return
+            except Exception as e:
+                log(f"maybe_switch_to_proven_offer error: {e!r}")
         if self.mentions_us(text):
             if frm in self.ignored():
                 log(f"DISC addressed by ignored sender {frm[-6:]} (seq {m['seq']}); skipped"); return
@@ -836,6 +844,89 @@ class Agent:
         if team and team.get("game_id") == gid and team.get("generation") not in (None, gen):
             self.on_room_rebound(gen)
 
+    def on_submissions(self, m, j):
+        """提出部屋の審判受領: status accepted の sender_did は「提出まで通した実績のあるリーダー」（proven_submitters）"""
+        if j.get("type") != "sonnet.receipt.v1" or j.get("status") != "accepted":
+            return
+        d = j.get("sender_did")
+        if isinstance(d, str) and DID_RE.fullmatch(d):
+            ps = self.st.setdefault("proven_submitters", {})
+            if d not in ps:
+                ps[d] = m["seq"]; log(f"proven submitter observed: {d[-8:]} (submissions seq {m['seq']})")
+
+    def sync_proven_submitters(self):
+        """起動時: 提出部屋の /export から受理済み提出者を取り込む（cold 巡回は末尾しか読まない）"""
+        room = self.p["rooms"]["submissions"]
+        try:
+            st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=120)
+        except Exception as e:
+            log(f"sync_proven_submitters: {fm.err_kind(e)}"); return
+        n = 0
+        for ln in body.splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            if m.get("from") != self.st.get("referee"):
+                continue
+            j = parse_json(m.get("text", ""))
+            if j and j.get("type") == "sonnet.receipt.v1" and j.get("status") == "accepted" and verify_sig(room, m):
+                self.on_submissions(m, j); n += 1
+        log(f"sync_proven_submitters: {n} accepted submission receipts; {len(self.st.get('proven_submitters') or {})} proven leads")
+
+    OFFER_GAME_RE = re.compile(r"(?:yes-|team-)([a-z0-9][a-z0-9-]{1,30})")
+
+    def maybe_switch_to_proven_offer(self, m, j):
+        """運用者の決定（2026-09-13）: 停滞したロースターに座っている間（凍結せず switch_min_stall_s 以上）、または席が無い間に、
+        提出受理の実績があるリーダーから当方宛ての個別の誘いが来たら乗る: 今の同意を取り下げ、応募として記録し、
+        yes-<game> を返し、リーダーの直近ロースターがあれば署名する。誘いの game は審判の setup がある部屋に限る"""
+        p = self.p
+        if not p["auto"].get("switch_to_proven_offer") or self.key is None or not self.st.get("registered"):
+            return False
+        frm = m["from"]
+        if frm == self.did or frm not in (self.st.get("proven_submitters") or {}):
+            return False
+        team = self.st.get("team")
+        if team:
+            if team.get("ready") or team.get("lead") == self.did:
+                return False
+            if utc_now() - parse_iso(team.get("signed_at") or iso()) < p.get("switch_min_stall_s", 1800):
+                return False
+        text = m["text"] if not j else (j.get("text") or "")
+        if j and j.get("target_did") not in (None, self.did):
+            return False
+        cands = []
+        for g in self.OFFER_GAME_RE.findall(text) + ([j.get("game_id")] if j and isinstance(j.get("game_id"), str) else []):
+            g = g.rstrip("-.,;:")
+            if g and GAME_RE.match(g) and g in (self.st.get("setups") or {}) and g not in cands:
+                cands.append(g)
+        if team:
+            cands = [g for g in cands if g != team["game_id"]]
+        if not cands or self.application_for(cands[0]):
+            return False
+        gid = cands[0]
+        if gid in self.st.get("dropped", []):
+            self.st["dropped"].remove(gid)
+        old = team["game_id"] if team else None
+        if team:
+            self.lose_team(f"switching to a proven lead's offer ({frm[-8:]}, game {gid}, seq {m['seq']})", withdraw=True, readdress=False)
+        self.add_application(gid, frm, source="proven-offer")
+        reply = (p.get("proven_offer_reply") or "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. DID {DID}.") \
+            .replace("{GAME}", gid).replace("{LEAD_SUFFIX}", frm[-8:]).replace("{SEQ}", str(m["seq"])).replace("{DID}", self.did) \
+            .replace("{X}", p["x_account_url"]).replace("{RECEIPT_SEQ}", str((self.st.get("registered") or {}).get("seq"))) \
+            .replace("{OLD}", f"I have withdrawn my {old} consent (it never froze). " if old else "")
+        try:
+            self.post(p["rooms"]["discovery"], reply, "disc-reply")
+        except Exception as e:
+            attention(f"proven-offer reply failed: {e!r}", key="offer-post")
+        attention(f"took a proven lead's offer: {frm[-8:]} game {gid} (seq {m['seq']}); left {old or 'nothing'}")
+        self.save()
+        try:
+            self.sign_recent_lead_roster(gid, frm)
+        except Exception as e:
+            log(f"sign_recent_lead_roster: {e!r}")
+        return True
+
     def sync_setups(self):
         """results の /export を 1 回読んで setup.v1 を取り込む（起動時。cold 巡回は末尾しか読まないので、
         lead が allocated のまま設定を見落とすのを防ぐ）"""
@@ -1015,7 +1106,7 @@ class Agent:
             return
         self.lose_team(f"lead's newer roster (seq {m['seq']}) for {team['game_id']} no longer lists us", withdraw=True)
 
-    def lose_team(self, why, withdraw):
+    def lose_team(self, why, withdraw, readdress=True):
         """署名済みの席を失う/離れる共通処理: withdraw.v1（必要なら）、team を消す、席のために取り下げた応募先を復活、
         直近の自分宛の席提示を返信対象に戻す"""
         team = self.st.get("team")
@@ -1042,6 +1133,8 @@ class Agent:
                 log(f"{g} removed from dropped (was dropped only because we took the {gid} seat)")
         self.st["intro_at"] = 0
         self.save()
+        if not readdress:
+            return
         try:
             self.readdress_recent_offers()
         except Exception as e:
@@ -2072,6 +2165,10 @@ class Agent:
         self.start_cold_reader([r for k, r in self.p["rooms"].items() if k not in self.HOT])
         if self.st.get("referee"):
             self.sync_setups()
+            try:
+                self.sync_proven_submitters()
+            except Exception as e:
+                log(f"sync_proven_submitters error: {e!r}")
         if self.st.get("team"):
             self.replay_room(self.st["team"]["room"])
             self.start_reader(self.st["team"]["room"])
