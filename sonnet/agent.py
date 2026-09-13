@@ -2253,6 +2253,25 @@ class Agent:
                     self.lead_check_roster()
                 except Exception as e:
                     log(f"lead_check_roster after unseat: {e!r}")
+        for did in p.get("lead_seat", []) or []:
+            # 運用者が登録を確かめた相手を待機列や辞退リストから席に戻す（writer 証跡の観測窓の外でも可）。他所の同意が生きていれば座らせない
+            if lead and lead.get("generation") is not None and did != self.did and did not in lead.get("members", []) \
+                    and len(lead["members"]) < p.get("lead_max_members", 6) - 1 and lead.get("lead_seat_done") != did:
+                lead["lead_seat_done"] = did
+                bad = [w for x, w in self.member_health([did], lead["game_id"]) if not w.startswith("silent") and w != "never seen posting"]
+                if bad:
+                    attention(f"operator lead_seat: {did[-8:]} not seated ({bad[0]})"); self.save(); continue
+                for k in ("waitlist", "declined"):
+                    if did in (lead.get(k) or []):
+                        lead[k].remove(did)
+                lead["members"].append(did); lead["state"] = "collecting"
+                lead["canonical"] = None; self.st["team"] = None
+                attention(f"operator lead_seat: {did[-8:]} seated in {lead['game_id']} ({len(lead['members']) + 1} of {p.get('lead_max_members', 6)}); roster will be issued")
+                self.save()
+                try:
+                    self.lead_check_roster()
+                except Exception as e:
+                    log(f"lead_check_roster after lead_seat: {e!r}")
         tok = p.get("readdress_token")
         if tok and tok != self.st.get("readdress_token_done"):
             self.st["readdress_token_done"] = tok; self.save()
@@ -2489,6 +2508,13 @@ class Agent:
             self.check_stuck_roster()
         except Exception as e:
             log(f"check_stuck_roster error: {e!r}")
+        # 署名待ちの期限は時間で切れる: 応募などのイベントが無くても定期に点検する（無いと期限が一度も発火しない）
+        if self.st.get("lead") and self.st["lead"].get("canonical") and now - getattr(self, "_lead_tick_at", 0) > 60:
+            self._lead_tick_at = now
+            try:
+                self.lead_check_roster()
+            except Exception as e:
+                log(f"lead_check_roster tick error: {e!r}")
         if now - getattr(self, "_pend_at", 0) > 60:
             self._pend_at = now
             try:
