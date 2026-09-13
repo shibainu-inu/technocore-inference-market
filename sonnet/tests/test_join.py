@@ -162,6 +162,47 @@ class Join(unittest.TestCase):
         a.handle(setup_msg(400, "g", gen=2))
         self.assertEqual(rp.calls, []); self.assertEqual(a.st["team"]["generation"], 2); self.assertIn("manual", att())
 
+    # ---- 署名後に凍結しないロースターの損切り ----
+    def stuck_agent(self, auto=None, lead=LEAD):
+        a = fresh(dict({"withdraw_stuck": True}, **(auto or {}))); rp = RecordingPost(); a.post = rp
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME] + OTHERS, "lead": lead,
+                        "roster_signed": 7, "ready": False, "signed_generation": 1, "signed_at": "2026-09-13T01:00:00Z"}
+        a.st["applications"] = {"g": {"game_id": "g", "lead_did": LEAD, "at": "2026-09-13T00:30:00Z"}}; a.st["agreed"] = a.st["applications"]["g"]
+        return a, rp
+
+    def test_stuck_roster_warns_then_withdraws(self):
+        a, rp = self.stuck_agent()
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T02:00:00Z"); a.check_stuck_roster()      # 1.0h: 何もしない
+        self.assertEqual(rp.calls, []); self.assertNotIn("CRITICAL", att())
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T02:40:00Z"); a.check_stuck_roster()      # 1.67h: 警告のみ
+        self.assertEqual(rp.calls, []); self.assertIn("still not roster_ready", att()); self.assertIsNotNone(a.st["team"])
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T04:05:00Z"); a.check_stuck_roster()      # 3.08h: 取り下げ
+        self.assertEqual(rp.kinds(), ["withdraw"]); w = json.loads(rp.calls[0][1])
+        self.assertEqual((w["type"], w["contest_id"], w["game_id"]), ("sonnet.withdraw.v1", CID, "g")); self.assertIn("request_id", w)
+        self.assertIsNone(a.st["team"]); self.assertEqual(a.applications(), {}); self.assertIn("g", a.st["dropped"]); self.assertEqual(a.st["intro_at"], 0)
+        self.assertEqual(a.st["dropped"].count("g"), 1)
+        a.check_stuck_roster(); self.assertEqual(len(rp.calls), 1)   # team が無ければ何もしない
+
+    def test_stuck_roster_no_withdraw_when_ready_or_we_lead_or_flag_off(self):
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T05:00:00Z")
+        a, rp = self.stuck_agent(); a.st["team"]["ready"] = True; a.check_stuck_roster(); self.assertEqual(rp.calls, [])
+        a, rp = self.stuck_agent(lead=ME); a.check_stuck_roster(); self.assertEqual(rp.calls, []); self.assertIsNotNone(a.st["team"])
+        a, rp = self.stuck_agent({"withdraw_stuck": False}); a.check_stuck_roster()
+        self.assertEqual(rp.calls, []); self.assertIsNotNone(a.st["team"]); self.assertIn("withdraw_stuck=False", att())
+
+    def test_stuck_roster_signed_at_falls_back_to_sent_log(self):
+        a, rp = self.stuck_agent(); a.st["team"].pop("signed_at")
+        a.st["sent"] = [{"ts": "2026-09-13T00:00:00Z", "kind": "roster", "room": DISC, "seq": 7, "text": "{}"}]
+        agent.utc_now = lambda: agent.parse_iso("2026-09-13T03:30:00Z"); a.check_stuck_roster()
+        self.assertEqual(a.st["team"] and a.st["team"].get("signed_at"), None)   # 3.5h → 取り下げ済み
+        self.assertEqual(rp.kinds(), ["withdraw"])
+
+    def test_stuck_roster_withdraw_post_failure_keeps_team(self):
+        a, rp = self.stuck_agent()
+        def boom(room, text, kind, allow_dids=()): raise RuntimeError("post refused: test")
+        a.post = boom; agent.utc_now = lambda: agent.parse_iso("2026-09-13T05:00:00Z"); a.check_stuck_roster()
+        self.assertIsNotNone(a.st["team"]); self.assertIn("withdraw post failed", att())
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})
