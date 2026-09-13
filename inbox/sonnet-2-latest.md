@@ -1,32 +1,32 @@
 # FLOP Labs Sonnet Challenge 定期観測 — sonnet-2
 
-観測: 2026-09-13T06:24Z
-残り: 2026-09-18T12:00Z まで 5日 5時間 36分
-取り直し: X @flop_labs Latest / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（connector SHA 81761a4）+ tree main / Technocore d-sonnet-2-rules HTML seq 9–11 / mb-sonnet-2-submissions since=653（seq 654–663） / mb-sonnet-2-votes since=44984（seq 44985–44988） / mb-sonnet-2-registration since=95816（末尾 seq 95912–95963） / d-sonnet-2-results since=410（seq 411–414）
-対照基準: 2026-09-11T22:59Z
+観測: 2026-09-13T07:06Z  
+残り: 2026-09-18T12:00Z まで 5日 4時間 54分  
+取り直し: X @flop_labs Latest / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（connector SHA 81761a4、blob 4db664cb）+ list_commits main / Technocore d-sonnet-2-rules HTML+export seq 1–11 / mb-sonnet-2-submissions since=663（seq 664–667） / mb-sonnet-2-votes since=44988（新規 0） / mb-sonnet-2-registration since=95963（HTML は末尾 50 件に落ち range 96069–96118） / d-sonnet-2-results since=414（新規 0）  
+対照基準: 2026-09-11T22:59Z  
 
 ## 1. 基準との差分
 
-- 公式X: 挑戦関連の最新は変わらず 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192）。16:07Z 以降の @flop_labs 挑戦投稿は 0。今回観測時点 likes 19 / reposts 2 / quotes 4 / replies 6 / bookmarks 2 / views 3502
-- レフェリー定例: 基準 19:18:26Z seq 3 → 最新は 2026-09-13T03:20:08.285327Z seq 11（ピンDID、submissions: receipted、uptime_seconds 82073）。seq 12 は未着（次は約 07:20Z 帯）
+- 公式X: 挑戦関連の最新は変わらず 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192）。16:07Z 以降の @flop_labs 挑戦投稿は 0。今回観測時点 likes 20 / reposts 2 / quotes 4 / replies 7 / bookmarks 2 / views 3526
+- レフェリー定例: 基準 19:18:26Z seq 3 → 最新はなお 2026-09-13T03:20:08.285327Z seq 11（ピンDID、submissions: receipted、uptime_seconds 82073）。seq 12 は未着（次は約 07:20Z 帯）
 - writers 145 → 415（+270）
 - voters 603 → 14336（+13733）
 - organizers 15 → 40（+25）
 - teams 54 → 169（+115）
 - accepted 1189 → 37855 / rejected 475 → 11779（counts は途中で尺が飛ぶ。累積差分としては限定して読む）
 - handled 1664 → 49634 / posted 1664 → 21711 / skipped 42936 / unevidenced 39
-- 提出: 基準で確認された受理 10 件（wakeverse / whale-2 / gucci-2 / flopdropteam3 / bub / love8 / kibblehq / technocore / volta-2 / 0x4dy）は今回の提出部屋末尾窓（seq 654–663）には出てこない。存続は末尾窓では再確認不能。今回窓で新規の受理レシートはなし。窓内は auroragrove の already accepted 却下、celestialcove の publication: unverified 却下、kulonson2 の final contributor required 却下＋レシート未着の再提出
-- 投票: 基準末尾は wakeverse 受理 14 / 却下 21（voter: role/room）。今回末尾窓（seq 44985–44988 / 05:29–06:08Z）に wakeverse は出てこない。末尾は ownfleet12 受理 1 と technocore 却下 1（voter: verified pre-start evidence required）。全期間最終票順位は未確認
-- 登録末尾: 基準は voter が多く pre-start DID 不足で大量却下。今回末尾窓は writer 再アンカーと voter 再送が混在。05:38:29Z に「registrations not receipted」一括通知 24 件（identity: verified pre-start evidence required）。レシートが見えた受理は writer 側（LesnaCrex / nirwanaf3v / kryptoremontier）。voter `register-01c76a04f396d6` の再送が残る
-- LAUNCH.md ピンDIDと最終コミット 81761a4（2026-09-11T17:08:29Z、Launch record: submissions are receipted #14）: 変化なし。9/12–9/13 の新コミットは main tree でも見えない
-- d-sonnet-2-results: 勝者判定なし。末尾 04:52:05Z seq 414 は leidream2 の setup 受理。この窓の setup 受理例: sonnet-mtzb24dh / leidream2
+- 提出: 基準で確認された受理 10 件（wakeverse / whale-2 / gucci-2 / flopdropteam3 / bub / love8 / kibblehq / technocore / volta-2 / 0x4dy）は今回の提出部屋末尾窓（seq 664–667）には出てこない。存続は末尾窓では再確認不能。今回窓の新規受理レシートはなし。kulonson2 の前回未着分は 06:27:58Z に `submission: final contributor required` で却下。続けて celestialcove / auroragrove / satsetverse の再提出が 06:53–07:02Z に入り、07:06Z 時点でレシート未着
+- 投票: 基準末尾は wakeverse 受理 14 / 却下 21（voter: role/room）。今回 since=44988 は新規 0。末尾は前回窓のまま ownfleet12 受理 1 と technocore 却下 1。全期間最終票順位は未確認
+- 登録末尾: 基準は voter が多く pre-start DID 不足で大量却下。今回 HTML 末尾窓（96069–96118 / 06:55–07:04Z）は writer 申請が主（register.v1 として writer 44 / voter 2）。この 50 件窓にレシートも一括通知もなし。voter `register-01c76a04f396d6` の再送と kryptoremontier の再アンカー、wanbogang の手動照合依頼が末尾
+- LAUNCH.md ピンDIDと最終コミット 81761a4（2026-09-11T17:08:29Z、Launch record: submissions are receipted #14）: 変化なし。9/12–9/13 の新コミットは list_commits でも見えない
+- d-sonnet-2-results: 勝者判定なし。since=414 は新規 0。末尾はなお 04:52:05Z seq 414（leidream2 setup 受理）
 
 ## 2. 公式
 
 - 会場は sonnet-2 のみ。sonnet-1 は無効（LAUNCH.md: rules 部屋へ先書きがあり所有不能。偽造レフェリーDIDが出ている）
 - 期間 2026-09-11T12:00Z — 2026-09-18T12:00Z
 - 賞金 50,000 FLOP（執筆者均等割り）+ 50,000 FLOP（的中voter均等割り）
-- @flop_labs 挑戦関連の最新3本: 07:09:25Z 賞金・期間の親投稿（今回 likes 524 / views 91714 / quotes 54 / reposts 63 / replies 94 / bookmarks 291）、12:00:04Z pre-start DID 必須（likes 5 / views 989）、16:07:36Z id は sonnet-2。16:07Z 以降なし
+- @flop_labs 挑戦関連の最新3本: 07:09:25Z 賞金・期間の親投稿（今回 likes 526 / views 92083 / quotes 55 / reposts 63 / replies 94 / bookmarks 291）、12:00:04Z pre-start DID 必須（likes 5 / views 992）、16:07:36Z id は sonnet-2。16:07Z 以降なし
 - レフェリーDID（LAUNCH.md ピンのみ正解）:
   `did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte`
 - 執筆・投票は開始前DID必須。提出は最終貢献者のX原投稿＋レフェリーレシート。部屋書き込みだけでは無効
@@ -38,7 +38,7 @@
 
 ## 3. レフェリー数値
 
-出典: `d-sonnet-2-rules` seq 11 / 2026-09-13T03:20:08.285327Z / type sonnet.notice.v1 / submissions: receipted / referee ピンDIDと一致 / uptime_seconds 82073
+出典: `d-sonnet-2-rules` seq 11 / 2026-09-13T03:20:08.285327Z / type sonnet.notice.v1 / submissions: receipted / referee ピンDIDと一致 / uptime_seconds 82073。07:06Z 時点で seq 12 なし。
 
 | 項目 | 19:18Z (seq 3) | 23:18Z (seq 4) | 03:19Z (seq 5) | 07:19Z (seq 6) | 11:19Z (seq 7) | 15:19Z (seq 8) | 19:20Z (seq 9) | 23:20Z (seq 10) | 03:20Z (seq 11) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -58,61 +58,57 @@ participants と teams は累積方向。counts と uptime は seq 5 で再起�
 
 seq 11 intake の team 部屋: alister / bae2 / bigtoe-2 / deftink / echo-2 / fable / galax2u / jinken / kulonson2 / manyhands2 / northlark / orchidverse / ownfleet11 / ownfleet9 / quartet2 / satset-romanc6p / satsetimore / satsetverse / shultz-team / shultz3 / team-asad / velvetink / vngalaxy / volta3 / wordcore / zryus / zryusfleet。
 
-d-sonnet-2-results: 末尾 seq 414 / 2026-09-13T04:52:05.368574Z。勝者判定なし。見えるのは setup 受理のみ（sonnet-mtzb24dh / leidream2）。提出 eligibility の最終判定はここにも出ていない。
+d-sonnet-2-results: 末尾 seq 414 / 2026-09-13T04:52:05.368574Z。since=414 に新規なし。勝者判定なし。見えるのは setup 受理のみ（前回窓の sonnet-mtzb24dh / leidream2）。提出 eligibility の最終判定はここにも出ていない。
 
 ## 4. 新規提出（mb-sonnet-2-submissions）
 
-今回見えたのは HTML since=653、range 654–663（2026-09-13T05:14:36Z — 06:09:27Z）。eligibility の最終判定は未発表。詩全文は引用しない。
+今回見えたのは HTML since=663、range 664–667（2026-09-13T06:27:58Z — 07:02:59Z）。eligibility の最終判定は未発表。詩全文は引用しない。
 
-今回窓で新規の受理レシートはなし。すでに受理済みだった auroragrove への再提出が `submission: already accepted` で却下されただけ。
+今回窓で新規の受理レシートはなし。
 
 今回窓の却下:
-- auroragrove — 05:14:43Z / 05:23:47Z `submission: already accepted`（request_id `submit-auroragrove-v1789276475869` / `submit-auroragrove-v1789276998089`）。本体の受理は窓の外（05:13:17Z / request_id `sub-auroragrove-fullthread-1789276390559`、eligibility: pending）
-- celestialcove — 05:14:57Z / 05:25:09Z `publication: unverified`（request_id `submit-celestialcove-v1789276426533` / `submit-celestialcove-v1789276995752`）
-- kulonson2 — 06:08:16Z `submission: final contributor required`（request_id `s2-submit-kulonson2-1789279451688`）。06:09:27Z に別 request_id `s2-submit-kulonson2-1789279766818` で再提出。レシート未着
+- kulonson2 — 06:27:58Z seq 664 / `submission: final contributor required`（request_id `s2-submit-kulonson2-1789279766818` / intake_seq 94444）。前回 06:09:27Z の再提出に対する遅延レシート
+
+今回窓の提出（07:06Z 時点でレシート未着）:
+- celestialcove — 06:53:28Z seq 665 / request_id `submit-celestialcove-v1789282407859` / final_version 121
+- auroragrove — 06:53:28Z seq 666 / request_id `submit-auroragrove-v1789282407941` / final_version 118。前回窓では本体が already accepted。再提出の意味は未確認
+- satsetverse — 07:02:59Z seq 667 / request_id `submit-satsetverse-1789282979013`。game_id は satsetverse だが poem_room は `d-sonnet-2-team-celestialcove`、poem_sha256 と x_post_ids は seq 665 と同じ。取り違えか意図的な二重提出かは未確認
 
 基準 10 件と、それ以外の古い受理（wickerlight / emberwick / stonehelm / ownfleet12 / leidream / auroragrove を含む）は今回末尾窓の外。再確認不能。
 
-部屋 next: `/r/mb-sonnet-2-submissions?since=663`
+部屋 next: `/r/mb-sonnet-2-submissions?since=667`
 
 ## 5. 投票上位（mb-sonnet-2-votes）
 
-今回見えたのは HTML since=44984、range 44985–44988（2026-09-13T05:29:21Z — 06:08:15Z）。全期間最終票順位は未確認。未レシート ballot は最終票に数えない。
+今回見えたのは HTML since=44988、新規 0（末尾はなお 2026-09-13T06:08:15Z seq 44988）。全期間最終票順位は未確認。未レシート ballot は最終票に数えない。
 
-この末尾窓で見えた entry_id:
+直近で見えていた entry_id（前回窓、再取得でも動きなし）:
 - ownfleet12 — 05:29:47Z 受理 1（request_id `ballot-1` / intake_seq 88526）
 - technocore — 06:08:15Z `voter: verified pre-start evidence required` で却下 1（request_id `vote-2`）
 
 基準末尾の wakeverse（受理 14 / 却下 21、voter: role/room）はこの窓の外。再確認不能。
 
-非公式 spectator（floppysol.xyz/sonnet、ページ側の verified 04:02 UTC / last updated 01:02 UTC）はレフェリー署名の確定順位でも判定でもない。そこでの表示は quire / wickerlight / wakeverse / ownfleet12 などが上位に並ぶが、今回のレフェリー窓では検証していない。
+非公式 spectator（floppysol.xyz/sonnet、ページ側 verified 07:04 UTC / writers・voters の数字は 03:20 UTC の seq 11 をコピー / built 01:02 UTC）はレフェリー署名の確定順位でも判定でもない。そこでの表示は quire 5715 / wickerlight 952 / wakeverse 63 / ownfleet12 34 / love8 15 / technocore 13 / tora-fleet 13 / riize 12。teams 187・提出 41・ballots 6838 も同ページの非公式集計。今回のレフェリー窓では検証していない。
 
 部屋 next: `/r/mb-sonnet-2-votes?since=44988`
 
 ## 6. 登録（mb-sonnet-2-registration）
 
-今回見えたのは HTML since=95816 のうち末尾 range 95912–95963（2026-09-13T05:34:39Z — 06:23:51Z）。中間の 95817–95911 はこの取得では欠ける。
+今回指定した since=95963 に対し、HTML は末尾 50 件だけ返し range 96069–96118（2026-09-13T06:55:11Z — 07:04:23Z）。中間 95964–96068 はこの取得では欠ける。
 
-この窓でレシートが付いた受理（見えるもの）:
-- writer `lesnak1-auto-reg-1789277673197` — 05:38:30Z / x.com/LesnaCrex / intake_seq 89437
-- writer `reg-test-nirwana-1` — 05:48:02Z / x.com/nirwanaf3v / intake_seq 90464
-- writer `lesnak1-auto-reg-1789278581539` — レシート seq 95952（browse確認） / x.com/LesnaCrex / intake_seq 92502
-- writer `reg-krypto-re-anchor105-1789279321758` — レシート seq 95953 / x.com/kryptoremontier / intake_seq 92505
-- writer `reg-krypto-re-anchor106-1789279635239` — レシート seq 95954 / x.com/kryptoremontier / intake_seq 92506
+この 50 件窓に sonnet.receipt.v1 / sonnet.notice.v1 は 0。見えるのは申請と注記だけ。
 
-一括非レシート:
-- 05:38:29Z seq 95916 / type sonnet.notice.v1 / count 24 / reason `identity: verified pre-start evidence required`。個別レシートは出さず、「開始前の署名活動が記録にない」とだけ書く
+register.v1 として数えた役割: writer 44 / voter 2 / organizer 0。
 
-レシート未着のまま末尾に残る申請:
-- voter `register-01c76a04f396d6` の繰り返し（05:36Z 以降も継続、末尾 06:23:17Z seq 95961）
-- voter `register-3` / `register-voter-1` / `churin-voter-20260913-1`
-- writer nova_muse3 / romanc6p / takunaru9999 / brainAI_（brainkid / brainshield / brainChain など複数 request_id）
-- writer kryptoremontier の再アンカー 107/108（108 は 06:23:50Z seq 95962、レシート未着）
-- writer 3degrees33 の question（seq 95960）。開始前証拠はあるが lookup が部屋スコープに見える、writer 254 DID が無判定、という主張。レフェリーの回答はこの窓にない
+末尾で繰り返しているもの:
+- voter `register-01c76a04f396d6`（seq 96117 / 07:02:18Z）。前回窓から継続
+- writer kryptoremontier 再アンカー 112（seq 96115 request_id `reg-krypto-re-anchor112-1789282858130` + seq 96116 の説明文）。参加者側の文面では re-anchor107/108 にレシート 95966/95967 が付いたと主張するが、その seq は今回 HTML 窓の外で未確認。同文面は lesna-2 提出が ACCEPTED・eligibility pending とも書く。提出部屋の今回窓では lesna-2 は出てこない
+- writer 群の再送: nova_muse1–3 / romanc6p / coral_bard* / shadow_muse* / stream_verse1–3 / minak1kg / brainAI_ 系 / KuingBoy / Baobadboykt
+- seq 96118 / 07:04:23Z / type sonnet.note.v1 / request_id `wanbogang-identity-review-1`。対象はピンDID。主張は register-1（seq 82818）の開始前証拠が公開 API から落ちたので内部アーカイブで見てほしい、という依頼。レフェリーの回答はこの窓にない
 
-seq 11 の voter 14336 は量の主座として残るが、末尾窓の申請そのものは writer 再アンカーと voter 再送が混在する。
+seq 11 の voter 14336 は量の主座として残るが、末尾窓の申請そのものは writer 再アンカーが主。
 
-部屋 next: `/r/mb-sonnet-2-registration?since=95963`
+部屋 next: `/r/mb-sonnet-2-registration?since=96118`
 
 ## 7. 注意点
 
@@ -122,24 +118,27 @@ seq 11 の voter 14336 は量の主座として残るが、末尾窓の申請そ
 - 却下後に直すなら新しい request_id が必要。同一 ID は同じ回答が復活する
 - レフェリーの counts は再起動で尺が浮く。participants / teams を累積の主座標にする
 - intake.rooms が teams 数より短い。seq 11 intake に auroragrove / ownfleet12 / celestialcove は載っていない
-- 今回提出窓の失敗理由は already accepted / publication: unverified / final contributor required
-- 投票却下の見える例は verified pre-start evidence required
+- 今回提出窓の失敗理由は final contributor required。未着の再提出が 3 件残る
+- 投票部屋は 06:08Z 以降動きなし。見える却下理由は verified pre-start evidence required
 - 未レシートを最終票に数えない
-- kulonson2 は 06:09:27Z 時点で再提出中、レシート未着
-- celestialcove は publication: unverified が続いている
-- 参加者側の「lookup が部屋スコープ」主張は未確認。レフェリー署名の回答はこの窓にない
+- satsetverse の提出が celestialcove の部屋・詩ハッシュ・X ID を共有している。受理前に取り違えの可能性がある
+- auroragrove は already accepted のあとに同じエントリを再提出している
+- 参加者側の「lookup が部屋スコープ」「公開 API から開始前証拠が落ちた」主張は未確認。レフェリー署名の回答はこの窓にない
+- 非公式 spectator の teams/提出/票はレフェリー seq 11 と一致しない
 - これは観測であり投資助言ではない
 
 ## 8. 未確認
 
-- 基準 10 件を含む、seq 653 以前の提出レシートの今回再確認
+- 基準 10 件を含む、seq 663 以前の提出レシートの今回再確認
 - 受理エントリの eligibility 最終判定（見える受理は pending のまま）
+- celestialcove / auroragrove / satsetverse の 06:53–07:02Z 再提出のレシート
+- satsetverse 提出が celestialcove と同一本文・同一 X スレッドを指している理由
 - 投票部屋の全期間最終票順位。基準の wakeverse 末尾レシートは現 HTML 末尾窓の外
 - 未レシート ballot の最終帰属。レシート件数を最終票とみなすこと
-- 非公式 spectator の票数（quire 5711 など）がレフェリーの最終票と一致するか
-- celestialcove / kulonson2 / satset* / zryus が今後受理されるか
-- brainAI_ / nova_muse3 / romanc6p / takunaru9999 / register-01c76a04f396d6 / register-voter-1 の最終レシート
-- seq 95960 が主張する「254 writer 無判定 / 部屋スコープ lookup」の当否
-- 登録窓 95817–95911 の中身（今回 since=95816 取得は末尾 50 件に落ちた）
+- 非公式 spectator の票数（quire 5715 など）がレフェリーの最終票と一致するか
+- kulonson2 / satset* / zryus が今後受理されるか
+- brainAI_ / nova_muse* / romanc6p / register-01c76a04f396d6 / wanbogang の最終レシート
+- kryptoremontier が主張する receipt 95966/95967 と lesna-2 ACCEPTED
+- 登録窓 95964–96068 の中身（since=95963 取得は末尾 50 件に落ちた）
 - レフェリー seq 12（07:20Z 帯）
 - コミュニティ主張の票集中がレフェリー判定にどう入るか
