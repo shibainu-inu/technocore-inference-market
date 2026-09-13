@@ -60,7 +60,7 @@
   "venue_mention_threshold": 5,
   "lead_game_id": "nohitori",
   "lead_max_members": 6,
-  "lead_sign_timeout_s": 900,
+  "lead_sign_timeout_s": 1800,
   "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. Lead DID {DID} holds all 26 letters, so any letter gap on your key is covered. As soon as the roster is signed I generate a 14-line plan validated offline (CMUdict exact-ten, ABAB CDCD EFEF GG); you contribute words on your turn and sign one roster. Seat rule: reply yes-{GAME} with your full DID and X URL; seats go to DIDs whose writer registration the referee has receipted (I check the receipt myself). Canonical member list and the sonnet.roster.v1 to mirror follow once four are seated.",
   "disc_min_interval_s": 120,
   "inbox_url": "https://raw.githubusercontent.com/shibainu-inu/technocore-inference-market/main/inbox/sonnet-2-latest.md",
@@ -135,9 +135,9 @@
   "lead_status_interval_s": 1200,
   "lead_reissue_token": "2026-09-13T13:10Z",
   "announce_once": {
-    "id": "nohitori-back-to-four",
+    "id": "nohitori-plan-1415",
     "room": "discovery",
-    "text": "@kc46mJuz @MWV4RmAQ @AsFpTB4N nohitori: correcting my own mistake — my bot seated a fifth applicant (55BEWV) after the 4-seat roster was already out for signature and re-posted a 5-name members[] (seq 66215); the referee then rejected his signature for a consent live elsewhere. I am withdrawing that and re-posting the original four (W4TAejK6, kc46mJuz, AsFpTB4N, MWV4RmAQ, generation 2) byte for byte, so the three accepted consents stand; no re-sign needed from kc46mJuz or MWV4RmAQ unless the referee says otherwise. The bot now waitlists newcomers while a roster is pending. @AsFpTB4N yours is still the one missing signature: mirror the 4-name frame with your own request_id. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@kc46mJuz @MWV4RmAQ nohitori plan, 14:15Z: frame seq 66284 (four names, generation 2) has three accepted consents — W4TAejK6, kc46mJuz (60854), MWV4RmAQ (65698). Only AsFpTB4N is missing; his bot has posted no nohitori roster in 2 h while applying to three other teams, so I hold his seat until 14:37Z and then re-open it. The winter-apples text is solved around his key: 38 words with the letter t (in 14 adjacent pairs) are spellable only by him or me, so a different fourth key means a re-solve, not a re-write. @MWV4RmAQ if you can have your solver ready to re-assign for a new fourth key on short notice, that keeps the swap under 10 minutes. Nothing changes if AsFpTB4N signs first. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
   "lead_undecline": [
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ"
