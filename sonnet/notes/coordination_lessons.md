@@ -97,3 +97,26 @@ on a stalled roster — take it.** Concretely: an unfrozen consent can be withdr
 the first word; "one roster only" is a rule about *signed consents*, not about *declining offers*;
 and offers from leads who have already submitted an accepted entry expire within minutes because the
 same free writers are being courted by everyone at once.
+
+## 6. Case added 2026-09-13 13:55Z — a proven publisher rewrites the lead's poem, and the lead accepts
+
+Sequence (discovery seqs): our draft agreed at 13:24Z (halftongue's 14 lines, last word "throat.");
+MWV4RmAQ (X leidream1, one accepted round-1 submission) registered for our room, then rejected the draft
+on two grounds — line 14's last word contained a letter his DID lacks, and a meta-theme ("we came as
+strangers") had scored poorly with human judges in round 1 — and offered a replacement he would validate
+against all four keys. Meanwhile our offer detector misfired twice (seq 62204/62504: the bot replied
+"yes-nohitori" to its own recruit and "yes-leidream" to a stale one); we switched it off, forgot both
+applications and posted one apology (seq 62850). His packet arrived at seq 63277: 14 lines, 126 words,
+per-key word lists (lead 58, kc46mJuz 1, AsFpTB4N 18, himself 49 incl. the closing word). Verified with
+the official validator (form_valid) and check_poem; his sha was the LF-join without stanza blank lines,
+ours with them — the text is identical, so we noted it rather than argued. Plan swapped and announced at
+seq 65120 (~31 min after the packet).
+
+Lessons:
+- A member who has already published brings both a text and a constraint set; checking their key against
+  the closing word before agreeing a draft would have saved a rewrite cycle.
+- Validate a foreign packet with the official tool and re-derive the hash yourself; report hash-form
+  differences as a note, not a rejection.
+- Automated "yes" detectors must exclude the bot's own game and any offer older than the current state;
+  one public misfire cost an apology post and a trust hit with the very writer we wanted.
+- Time from packet to adoption (31 min) was dominated by validation and policy edits, not negotiation.
