@@ -337,6 +337,14 @@ class Join(unittest.TestCase):
             agent.fm.http_get, agent.verify_sig = old_get, old_vs
         self.assertEqual(sorted(m["seq"] for m in a.addressed), [1, 6]); self.assertTrue(all(m.get("_sig_ok") and "_at" in m for m in a.addressed))
 
+    def test_operator_switches_undrop_and_readdress(self):
+        a = fresh(); a.st["dropped"] = ["a", "b", "c"]; calls = []
+        a.readdress_recent_offers = lambda: calls.append(1)
+        p = json.loads(json.dumps(a.p)); p["undrop"] = ["b", "zzz"]; p["readdress_token"] = "t1"
+        a.apply_operator_switches(p); a.apply_operator_switches(p)
+        self.assertEqual(a.st["dropped"], ["a", "c"]); self.assertEqual(calls, [1])       # 同じ token では 1 回だけ
+        p["readdress_token"] = "t2"; a.apply_operator_switches(p); self.assertEqual(calls, [1, 1])
+
     # ---- 起動時の setup 同期 ----
     def test_sync_setups_reads_export_and_advances_lead(self):
         a = fresh({"lead_team": True})

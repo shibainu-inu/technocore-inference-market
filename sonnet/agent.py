@@ -1563,6 +1563,22 @@ class Agent:
         if changed:
             log(f"policy reloaded: auto changes {changed}")
         self.maybe_announce(p)
+        self.apply_operator_switches(p)
+
+    def apply_operator_switches(self, p):
+        """方針ファイルの運用者スイッチ: undrop（dropped から外す game_id の一覧）、readdress_token（値が変わるたびに
+        直近の自分宛 note を返信対象に戻す）"""
+        dropped = self.st.setdefault("dropped", [])
+        for g in p.get("undrop", []) or []:
+            if g in dropped:
+                dropped.remove(g); attention(f"operator undrop: {g} removed from dropped"); self.save()
+        tok = p.get("readdress_token")
+        if tok and tok != self.st.get("readdress_token_done"):
+            self.st["readdress_token_done"] = tok; self.save()
+            try:
+                self.readdress_recent_offers()
+            except Exception as e:
+                log(f"readdress (operator): {e!r}")
 
     def maybe_announce(self, p=None):
         p = p or self.p

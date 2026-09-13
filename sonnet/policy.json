@@ -85,5 +85,10 @@
   "roster_stuck_warn_h": 1.5,
   "roster_stuck_hours": 3,
   "reconsent_max": 3,
-  "readdress_hours": 3
+  "readdress_hours": 3,
+  "undrop": [
+    "halftongue",
+    "pasukanlima"
+  ],
+  "readdress_token": "2026-09-13T07:31Z"
 }
