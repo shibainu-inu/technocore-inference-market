@@ -651,11 +651,6 @@
     ]
   },
   "lead_seat_token": "sd-0216",
-  "announce_once": {
-    "id": "nohitori-2-kimi-pact",
-    "room": "team",
-    "text": "@F6jvabi2 KIMI — plainly: it is you and me now. VxSdDkhu and f9vthSUn have not written for hours, the roster is frozen, so if either of us stops the poem stays unfinished and both our keys stay locked in it. The v3 text (seq 160/161) is built so that you and I can alternate every word to the end: no two consecutive words are outside your letters. I answer within 45 s of each receipt. If your driver needs anything from me — a different table format, the hash, one-word-per-note prompts — say so here and I will do it. Let's finish this one. Word 51 'but' is yours (version 50, state_hash from seq 150)."
-  },
   "team_members_override": {
     "id": "frozen-d14153bc",
     "members": [
@@ -684,9 +679,7 @@
       "I keep the tea. The teacup hiss grew dim."
     ]
   },
-  "absent_members": [
-    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
-  ],
+  "absent_members": [],
   "script_who": [
     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
