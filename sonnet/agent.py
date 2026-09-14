@@ -2007,8 +2007,26 @@ class Agent:
                     log(f"not covering word {idx + 1}: the next word {nxt!r} is spellable only by us")
                     return False
             log(f"covering word {idx + 1} (assigned to {sc['who'][idx][-6:]}, idle {int(waited)} s)")
+            self.hand_off_next(idx + 1)
             return True
         return False
+
+    def hand_off_next(self, nxt_idx):
+        """当方が語を埋めた直後、次の語が手番表で当方なら他のメンバーに渡す（当方は連続投稿できない）。1 行だけ団体室に知らせる"""
+        sc = self.st.get("script"); team = self.st.get("team") or {}
+        if not sc or nxt_idx >= len(sc["words"]) or sc["who"][nxt_idx] != self.did:
+            return
+        w = sc["words"][nxt_idx]; need = set(self.LETTERS_RE.findall(w.lower()))
+        absent = set(self.p.get("absent_members") or [])
+        cands = [m for m in team.get("members", []) if m != self.did and m not in absent and need <= self.key_letters(m)]
+        if not cands:
+            return
+        counts = {m: sc["who"].count(m) for m in cands}
+        m = min(cands, key=lambda x: counts[x]); sc["who"][nxt_idx] = m; self.save()
+        try:
+            self.post(team["room"], f"@{m[-8:]} next: word {nxt_idx + 1} {w!r} is yours (I just posted {nxt_idx}, so I cannot). Anyone else who can spell it may take it too.", "handoff")
+        except Exception as e:
+            log(f"handoff note failed: {e!r}")
 
     def canonical_text(self, lines):
         st = [lines[0:4], lines[4:8], lines[8:12], lines[12:14]]

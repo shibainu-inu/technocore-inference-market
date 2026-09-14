@@ -652,9 +652,9 @@
   },
   "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-write-nudge-0412",
+    "id": "nohitori-2-word29-handoff",
     "room": "team",
-    "text": "@f9vthSUn @F6jvabi2 @VxSdDkhu nohitori-2 is frozen and writing (version 3: 'My father kept'). The referee accepts the first valid word from any member who did not post the previous one, so please do not wait for your table slot: whenever the newest receipt's sender is not you, post the next word of the text with that receipt's version and state_hash. I cover idle words after 45 s but cannot post two in a row, so the poem only moves when one of you alternates with me. Text sha256 298aaf9a…; table at seq 12–15."
+    "text": "@F6jvabi2 @f9vthSUn nohitori-2: word 29 'wave' is open for either of you — I posted 28 ('the') so I cannot take it; VxSdDkhu cannot spell it (a, w). Use version 28 and the state_hash from the newest receipt (seq 95). After that the table resumes: 30 'that' F6jvabi2/f9vthSUn, 31 'hit', 32 'the'…"
   },
   "team_members_override": {
     "id": "frozen-d14153bc",
