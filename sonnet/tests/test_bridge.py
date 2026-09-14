@@ -215,3 +215,27 @@ class TestOpusTextBeforeFreeze(unittest.TestCase):
         bridge_file(tmp, "nohitori-3", TEST_PLAN, who, [ME, B, C, D], id_="same1")
         a.apply_bridge()
         self.assertEqual(a.st["bridge_done"], "same1"); self.assertNotIn("script", a.post.kinds())
+
+
+class TestRoomRequestFallback(unittest.TestCase):
+    """審判の「team room is not claimable; request a different game_id」（problem 欄）に別名で再請求する"""
+
+    def test_problem_field_triggers_variant_retry(self):
+        a = fresh({"lead_team": True}); a.post = RecordingPost()
+        a.st["lead"] = {"game_id": "nohitori-3", "request_id": "room-1", "state": "requested", "at": "t", "members": [], "signed": {}, "declined": []}
+        a.st["lead_game_id_override"] = "nohitori-3"
+        j = {"contest_id": CID, "game_id": "nohitori-3", "problem": "team room is not claimable by the referee; request a different game_id",
+             "request_id": "room-1", "sender_did": ME, "status": "rejected", "type": "sonnet.receipt.v1"}
+        a.on_lead_receipt({"seq": 5, "ts": "t", "from": REF, "_sig_ok": True}, j)
+        self.assertEqual(a.st["lead"]["game_id"], "nohitori-3b"); self.assertEqual(a.st["lead_game_id_override"], "nohitori-3b")
+        self.assertEqual(a.post.kinds(), ["team-request"]); self.assertIn("retrying the room request with game_id nohitori-3b", att())
+        self.assertEqual(agent.Agent.next_game_variant("nohitori-3b"), "nohitori-3c")
+        self.assertEqual(agent.Agent.next_game_variant("nohitori"), "nohitorib")
+
+    def test_operator_next_game_id_change_resets_block(self):
+        a = fresh({"lead_team": True}); a.post = RecordingPost()
+        a.st["lead"] = None; a.st["team"] = None; a.st["lead_game_id_override"] = "nohitori-3"; a.st["lead_block_until"] = 10**12
+        a.p["next_game_id"] = "nohitori-3b"
+        self.assertEqual(a.lead_game_id(), "nohitori-3b"); self.assertEqual(a.st["lead_block_until"], 0)
+        a.maybe_lead()
+        self.assertEqual(a.st["lead"]["game_id"], "nohitori-3b"); self.assertIn("team-request", a.post.kinds())

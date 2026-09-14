@@ -827,16 +827,18 @@ class Agent:
                 self.start_reader(lead["poem_room"])
                 self.save()
             else:
-                reason = str(j.get("reason", ""))
+                reason = str(j.get("reason") or j.get("problem") or "")   # 審判は reason ではなく problem に理由を入れることがある（2026-09-14 13:59Z）
                 attention(f"lead: room request for {lead['game_id']} rejected: {reason}", key="lead-reject")
                 attempts = self.st.get("lead_attempts", 0) + 1
                 self.st["lead_attempts"] = attempts
                 if attempts >= self.p.get("lead_max_attempts", 3):
                     attention(f"CRITICAL lead mode stopped after {attempts} rejected room requests (last: {reason}); set auto.lead_team false or fix the cause", key="lead-stop")
                     self.p["auto"]["lead_team"] = False; self.st["lead"] = None
-                elif "already assigned" in reason or "not claimable" in reason:
-                    lead["game_id"] = f"{lead['game_id'][:12]}-{int(utc_now()) % 97}"; lead["state"] = "requested"
+                elif "already assigned" in reason or "not claimable" in reason or "different game_id" in reason:
+                    lead["game_id"] = self.next_game_variant(lead["game_id"]); lead["state"] = "requested"
+                    self.st["lead_game_id_override"] = lead["game_id"]
                     lead["request_id"] = self.req_id("room")
+                    attention(f"lead: retrying the room request with game_id {lead['game_id']}")
                     self.post(self.p["rooms"]["discovery"], self.compact({"type": "sonnet.team-request.v1", "contest_id": self.p["contest_id"],
                                                                           "game_id": lead["game_id"], "request_id": lead["request_id"]}), "team-request")
                 else:
@@ -1617,9 +1619,28 @@ class Agent:
         self.save()
 
     def lead_game_id(self):
-        """次に率いるゲーム ID: 解放時に立てた override が policy の lead_game_id より優先"""
+        """次に率いるゲーム ID: 解放時に立てた override が policy の lead_game_id より優先。
+        運用者が policy の next_game_id を変えたら（lead も team も無い間に限り）override をそれに合わせ、待ち時間も解く"""
+        ng = self.p.get("next_game_id")
+        if isinstance(ng, str) and GAME_RE.match(ng) and not self.st.get("lead") and not self.st.get("team") \
+                and self.st.get("lead_game_id_override") and self.st.get("lead_game_id_override") != ng \
+                and self.st.get("next_game_id_seen") != ng:
+            self.st["next_game_id_seen"] = ng; self.st["lead_game_id_override"] = ng; self.st["lead_block_until"] = 0
+            attention(f"operator next_game_id {ng}: next room request will use it")
         ov = self.st.get("lead_game_id_override")
         return ov if isinstance(ov, str) and GAME_RE.match(ov) else self.p.get("lead_game_id")
+
+    @staticmethod
+    def next_game_variant(gid):
+        """審判に「別の game_id を」と言われた時の次の名前: nohitori-3 -> nohitori-3b -> nohitori-3c …（16 文字以内）"""
+        m = re.fullmatch(r"(.*?)([a-z])?", gid)
+        base, suf = (m.group(1), m.group(2)) if m else (gid, None)
+        if suf and re.search(r"\d$", base):
+            nxt = chr(ord(suf) + 1) if suf < "z" else "b"
+            cand = base + nxt
+        else:
+            cand = gid + "b"
+        return cand[:16]
 
     def maybe_next_entry_on_release(self, m, j):
         """審判が当方チームの詩の提出を受理した = 全員の同意が解放された（規則）。auto.next_entry_on_release が真なら

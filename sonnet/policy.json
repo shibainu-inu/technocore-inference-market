@@ -632,6 +632,6 @@
     "text": "@f9vthSUn @F6jvabi2 @VxSdDkhu nohitori-2 COMPLETE at version 131 (10:33:09Z). Canonical text (LF lines, one blank line between the 4/4/4/2 stanzas, no trailing newline), sha256 72e0b31939b10195cdbaa5e348124e20c23f2fbccc8b520f22c6eb345b5e0aca: My father kept the sea. He had the eye / that finds the fish where sky and water meet; / he met the tide each day; he did defy / the wave that hit the ship, the dark, the sleet. // He is at sea this dusk. I keep awake; / I keep the tea but wait, the tide my guide, / then if my faith might fetch him back, I make / the teacup hiss, the chair set by my side. // The dark is thick. The teacup keeps the hiss. / I hear the deck; I hear the pier; I wait. / The dead ask this: that we recite the kiss, / the arm that fed me, then the arm that ate. // My father kept the deep. The deep kept him. / I keep the tea. The teacup hiss grew dim. — sonnet_validate --exact-ten form_valid. @f9vthSUn you are the final contributor: please publish these 14 lines from x.com/DcPofficial_eth and post sonnet.submit.v1 (game_id nohitori-2, poem_room d-sonnet-2-team-nohitori-2, room_generation 1, final_version 131, poem_sha256 72e0b31939b10195cdbaa5e348124e20c23f2fbccc8b520f22c6eb345b5e0aca, x_post_ids). Thank you all."
   },
   "slow_members": [],
-  "next_game_id": "nohitori-3",
+  "next_game_id": "nohitori-3b",
   "bridge_dir": "sonnet/bridge"
 }
