@@ -93,7 +93,8 @@
   "reconsent_max": 3,
   "readdress_hours": 3,
   "trusted_senders": [
-    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+    "did:key:z6MkpMTr9oavSDBsuqi1j68uizVNdectgPXAJyzfqTuW9mKu"
   ],
   "consent_retry_max": 2,
   "lead_invites": [],
@@ -103,13 +104,13 @@
   "lead_reset_to": null,
   "switch_min_stall_s": 1800,
   "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
-  "leave_team": "zuobai",
+  "leave_team": null,
   "cover_after_s": 45,
   "member_health_check": false,
   "member_idle_max_h": 2,
   "apply_only_proven": true,
   "undrop": [
-    "zuobai"
+    "prophet"
   ],
   "lead_status_interval_s": 3600,
   "lead_next_game": "prophet-switch-20260914T1450Z",
@@ -639,15 +640,10 @@
     "lead_did": "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
   },
   "resign_token": {
-    "id": "prophet-resign-20260914T1522Z",
+    "id": "prophet-resign-20260914T1846Z",
     "game_id": "prophet",
     "lead_did": "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
-    "hours": 3,
-    "release": [
-      "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
-      "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
-      "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
-    ]
+    "hours": 1
   },
   "member_cover_after_s": 120
 }
