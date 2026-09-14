@@ -81,7 +81,7 @@
   "max_applications": 3,
   "lead_silence_hours": 2,
   "review_every_s": 1800,
-  "review_lead_after_h": 1.7,
+  "review_lead_after_h": 0.6,
   "review_auto_lead": true,
   "broadcast_repeat_threshold": 10,
   "pending_word_ttl_s": 300,
