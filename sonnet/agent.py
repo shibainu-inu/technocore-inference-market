@@ -1809,6 +1809,8 @@ class Agent:
             if isinstance(r.get("syllables"), int):
                 poem["syllables"] = r["syllables"]
             poem["last_contributor"] = r.get("sender_did")
+            if isinstance(r.get("sender_did"), str) and r["sender_did"] not in (poem.get("contributors") or []):
+                poem.setdefault("contributors", []).append(r["sender_did"])
             word = (pend["word"] if mine else (self.st.get("proposals", {}).get(f"{r.get('sender_did')}|{rid}") or {}).get("word"))
             if word:
                 self.append_word(word)
@@ -2014,11 +2016,16 @@ class Agent:
     def hand_off_next(self, nxt_idx):
         """当方が語を埋めた直後、次の語が手番表で当方なら他のメンバーに渡す（当方は連続投稿できない）。1 行だけ団体室に知らせる"""
         sc = self.st.get("script"); team = self.st.get("team") or {}
-        if not sc or nxt_idx >= len(sc["words"]) or sc["who"][nxt_idx] != self.did:
+        if not sc or nxt_idx >= len(sc["words"]):
+            return
+        # 次の語の担当が当方、または（この詩でまだ 1 語も受理されていない）沈黙メンバーなら、動いているメンバーに渡す
+        active = set(self.st.get("poem", {}).get("contributors") or [])
+        cur = sc["who"][nxt_idx]
+        if cur != self.did and (cur in active or not active):
             return
         w = sc["words"][nxt_idx]; need = set(self.LETTERS_RE.findall(w.lower()))
         absent = set(self.p.get("absent_members") or [])
-        cands = [m for m in team.get("members", []) if m != self.did and m not in absent and need <= self.key_letters(m)]
+        cands = [m for m in team.get("members", []) if m != self.did and m not in absent and need <= self.key_letters(m) and (not active or m in active)]
         if not cands:
             return
         counts = {m: sc["who"].count(m) for m in cands}

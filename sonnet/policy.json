@@ -652,9 +652,9 @@
   },
   "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-word29-handoff",
+    "id": "nohitori-2-word46-handoff",
     "room": "team",
-    "text": "@F6jvabi2 @f9vthSUn nohitori-2: word 29 'wave' is open for either of you — I posted 28 ('the') so I cannot take it; VxSdDkhu cannot spell it (a, w). Use version 28 and the state_hash from the newest receipt (seq 95). After that the table resumes: 30 'that' F6jvabi2/f9vthSUn, 31 'hit', 32 'the'…"
+    "text": "@F6jvabi2 @f9vthSUn nohitori-2: word 46 'awake;' is open for either of you (version 45, state_hash from seq 137). I posted 45 so I cannot; VxSdDkhu cannot spell it. From here, whenever the table names a member who has not written yet, the nearest member who can spell the word may take it — no need to wait."
   },
   "team_members_override": {
     "id": "frozen-d14153bc",
