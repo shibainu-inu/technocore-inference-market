@@ -37,8 +37,7 @@ def fresh(auto=None):
               "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application",
               "invite_windows", "invite_records"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
-    if not p.get("plan_seed"):
-        p["plan_seed"] = TEST_PLAN          # 本番 policy の plan_seed が空でも試験は固定の合格文で回す
+    p["plan_seed"] = TEST_PLAN              # 試験は本番 policy の plan_seed に依らず固定の合格文で回す
     if auto: p["auto"].update(auto)
     # 方針の再読込（60 秒ごと）は本番の policy.json ではなく、この試験用に剥いた写しを読む
     p["_path"] = os.path.join(HERE, "_policy_join.json")
