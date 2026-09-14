@@ -2406,11 +2406,11 @@ class Agent:
             # 運用者が登録を確かめた相手を待機列や辞退リストから席に戻す（writer 証跡の観測窓の外でも可）。他所の同意が生きていれば座らせない
             if lead and lead.get("generation") is not None and did != self.did and did not in lead.get("members", []) \
                     and len(lead["members"]) < p.get("lead_max_members", 6) - 1 and lead.get("lead_seat_done") != did:
-                lead["lead_seat_done"] = did
-                # 運用者が登録を確かめた上での着席: writer 受領の観測窓の外は許す。他所の生きている同意だけは弾く
+                # 運用者が登録を確かめた上での着席: writer 受領の観測窓の外は許す。他所の生きている同意だけは弾く（弾いた時は次の再読込で再試行する）
                 bad = [w for x, w in self.member_health([did], lead["game_id"]) if w.startswith("live consent")]
                 if bad:
-                    attention(f"operator lead_seat: {did[-8:]} not seated ({bad[0]})"); self.save(); continue
+                    attention(f"operator lead_seat: {did[-8:]} not seated ({bad[0]})", key=f"lead-seat-{did}"); continue
+                lead["lead_seat_done"] = did
                 self.st.setdefault("writers_ok", {}).setdefault(did, "operator-verified")
                 for k in ("waitlist", "declined"):
                     if did in (lead.get(k) or []):
