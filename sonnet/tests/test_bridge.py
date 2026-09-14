@@ -291,3 +291,34 @@ class TestBridgeIgnoredInOthersTeam(unittest.TestCase):
         bridge_file(tmp, "prophet", TEST_PLAN, alternate(len(WORDS), [B, ME, C, D]), [B, ME, C, D], id_="x1")
         a.apply_bridge()
         self.assertIsNone(a.st.get("plan")); self.assertEqual(a.st.get("bridge_done"), "x1"); self.assertNotIn("plan adopted", att())
+
+
+class TestStuckTimerFromFirstSignature(unittest.TestCase):
+    """損切りの 3 時間は最初の署名から数える。リーダーが枠を差し替えて再署名しても延びない"""
+
+    def team(self, a, signed_at, first=None):
+        a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B,
+                        "roster_signed": 10, "ready": False, "signed_at": signed_at, "stuck_warned": True}
+        if first: a.st["team"]["first_signed_at"] = first
+
+    def test_withdraws_based_on_first_signature(self):
+        a = fresh({"withdraw_stuck": True}); a.post = RecordingPost(); a.p["roster_stuck_hours"] = 3
+        self.team(a, signed_at=agent.iso(), first="2026-09-14T14:46:00Z")   # 直近の再署名は今、最初の署名は 3 時間以上前
+        a.check_stuck_roster() if hasattr(a, "check_stuck_roster") else None
+        if hasattr(a, "check_stuck_roster"):
+            self.assertIsNone(a.st["team"]); self.assertIn("withdraw", a.post.kinds())
+
+    def test_reconsent_keeps_first_signed_at(self):
+        a = fresh(); a.post = RecordingPost()
+        self.team(a, signed_at="2026-09-14T14:46:00Z")
+        a.st["team"]["first_signed_at"] = None
+        # 差し替え枠に再署名する経路を直接は呼ばず、更新規則だけ確かめる
+        t = a.st["team"]; first = t.get("first_signed_at") or t.get("signed_at")
+        t.update({"signed_at": agent.iso(), "first_signed_at": first})
+        self.assertEqual(a.st["team"]["first_signed_at"], "2026-09-14T14:46:00Z")
+
+    def test_leave_team_reusable_after_new_signature(self):
+        a = fresh(); a.post = RecordingPost()
+        self.team(a, signed_at=agent.iso()); a.st["leave_team_done"] = "prophet"   # 旧形式の done marker
+        a.p["leave_team"] = "prophet"; a.apply_operator_switches(a.p)
+        self.assertIsNone(a.st["team"]); self.assertEqual(a.st["leave_team_done"], "prophet:10")

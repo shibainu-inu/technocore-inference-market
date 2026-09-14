@@ -25,7 +25,7 @@
     "sign_roster": true,
     "plan_lines": true,
     "propose_words": true,
-    "lead_team": false,
+    "lead_team": true,
     "apply_recruits": true,
     "withdraw_stuck": true,
     "switch_to_proven_offer": false,
@@ -109,11 +109,9 @@
   "member_health_check": false,
   "member_idle_max_h": 2,
   "apply_only_proven": true,
-  "undrop": [
-    "prophet"
-  ],
+  "undrop": null,
   "lead_status_interval_s": 3600,
-  "lead_next_game": "prophet-switch-20260914T1450Z",
+  "lead_next_game": "leave-prophet-20260914T2150Z",
   "lead_invite_max_per_hour": 6,
   "invite_windows": {
     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ": [
@@ -635,15 +633,8 @@
   "slow_members": [],
   "next_game_id": "nohitori-3b",
   "bridge_dir": "sonnet/bridge",
-  "manual_agreed": {
-    "game_id": "prophet",
-    "lead_did": "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
-  },
-  "resign_token": {
-    "id": "prophet-resign-20260914T1846Z",
-    "game_id": "prophet",
-    "lead_did": "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
-    "hours": 1
-  },
-  "member_cover_after_s": 120
+  "manual_agreed": null,
+  "resign_token": null,
+  "member_cover_after_s": 120,
+  "drop_agreed": "prophet"
 }

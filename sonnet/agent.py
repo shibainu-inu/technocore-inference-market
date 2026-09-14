@@ -1224,6 +1224,7 @@ class Agent:
         old = [d[-8:] for d in team.get("members") or []]
         team.update({"members": list(members), "roster_signed": seq, "source_seq": m["seq"], "roster_request_id": mine["request_id"],
                      "signed_generation": j["room_generation"], "signed_at": iso(), "stuck_warned": False,
+                     "first_signed_at": team.get("first_signed_at") or team.get("signed_at") or iso(),   # 損切りの時計は最初の署名から（差し替えで延びない）
                      "reconsents": team.get("reconsents", 0) + 1})
         attention(f"re-consented to the lead's changed roster for {gid} (seq {m['seq']}): withdrew and re-signed; members {old} -> {[d[-8:] for d in members]}")
         self.save()
@@ -1428,6 +1429,9 @@ class Agent:
         if not at:
             sent = [x for x in self.st.get("sent", []) if x.get("kind") == "roster"]
             at = team["signed_at"] = sent[-1]["ts"] if sent else iso()
+        if not team.get("first_signed_at"):
+            team["first_signed_at"] = at
+        at = team["first_signed_at"]   # 運用者の指示（2026-09-14）: 枠の差し替えで時計をずらさない。合計で roster_stuck_hours 待つ
         h = (utc_now() - parse_iso(at)) / 3600
         warn, limit = self.p.get("roster_stuck_warn_h", 1.5), self.p.get("roster_stuck_hours", 3)
         if h >= warn and not team.get("stuck_warned"):
@@ -2576,8 +2580,8 @@ class Agent:
             self.save()
         lv = p.get("leave_team")
         team = self.st.get("team")
-        if lv and team and team.get("game_id") == lv and self.st.get("leave_team_done") != lv:
-            self.st["leave_team_done"] = lv; self.save()
+        if lv and team and team.get("game_id") == lv and self.st.get("leave_team_done") != f"{lv}:{team.get('roster_signed')}":
+            self.st["leave_team_done"] = f"{lv}:{team.get('roster_signed')}"; self.save()   # 同じ game でも署名し直した後なら再度使える
             self.lose_team(f"operator leave_team ({lv})", withdraw=True, readdress=False)
         try:
             self.maybe_submit(p)
