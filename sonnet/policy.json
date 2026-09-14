@@ -41,7 +41,7 @@
   "intro_repeat_hours": 6,
   "llm": {
     "model": "opus",
-    "timeout_s": 150,
+    "timeout_s": 400,
     "models": {
       "disc": "opus",
       "word": "opus",
