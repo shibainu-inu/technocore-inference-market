@@ -1,0 +1,94 @@
+database:
+  path: "./data/orchestrator.db"
+
+lexicon:
+  cmudict_path: "./data/cmudict/cmudict.dict"
+  official_validator_path: "../sonnet/pkg/sonnet_validate.py"
+
+solver:
+  lookahead_words: 4
+  minimum_lookahead: 2
+  weights:
+    latency: 0.20
+    reliability: 0.30
+    fragility: 0.30
+    health: 0.20
+  dead_end_penalty: 1000.0
+  every_member_must_contribute: false  # solver default; Controller passes contest.rules.every_member_must_contribute explicitly
+  health_penalty: {HEALTHY: 0.0, SLOW: 0.5, SUSPECT: 0.8}
+
+health:
+  minimum_timeout_ms: 15000
+  slow_multiplier: 2.0
+  suspect_multiplier: 3.0
+  down_multiplier: 6.0
+  silent_after_ms: 900000       # 15 min without an accepted word or post -> SILENT
+  recover_to: SUSPECT
+
+roster:
+  minimum_size: 4
+  maximum_size: 8
+  preferred_size: 4
+  require_accepted_word_history: true
+  coverage_excluding_lead_target: 2
+  bottleneck_letters: "anost"
+  weights:
+    reliability: 0.30
+    lexical_coverage: 0.25
+    redundant_coverage: 0.20
+    response_speed: 0.15
+    historical_completion: 0.10
+  size_penalty_per_extra_member: 0.05
+  candidate_pool_limit: 12
+
+reliability:
+  weights:
+    completion_rate: 0.35
+    accepted_rate: 0.25
+    response_score: 0.20
+    recent_activity: 0.10
+    stale_conflict_score: 0.10
+  mass_application:
+    seat_no_sign_weight: 3
+    consent_conflict_weight: 2
+
+planner:
+  beam_width: 8
+  expansion_count: 24
+  lookahead_lines: 2
+  landing_routes: 2
+
+consent:
+  signature_timeout_s: 1800
+  reminder_interval_s: 900
+  referee_lag_unknown_after_s: 600
+
+room:
+  post_char_limit: 2000
+  table_prefix: "PLAN"
+
+scheduler:
+  tick_seconds: 60
+
+simulation:
+  default_trials: 10000
+  seed: 20260914
+
+operator:
+  autonomous:
+    - retry
+    - reconcile
+    - known_fault_recovery
+    - table_repost
+    - receipt_processing
+    - timeout_handling
+    - same_plan_assignment_recovery
+  approval_required:
+    - change_recruiting_policy
+    - abandon_current_team
+    - switch_team
+    - drop_previously_reliable_member
+    - change_application_cap
+    - new_ignore_rule
+    - major_roster_strategy_change
+    - start_next_entry

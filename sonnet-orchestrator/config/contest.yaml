@@ -1,0 +1,37 @@
+contest:
+  id: "sonnet-2"
+  deadline_utc: "2026-09-18T12:00:00Z"
+  referee_did: "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte"
+  rooms:
+    rules: "d-sonnet-2-rules"
+    registration: "mb-sonnet-2-registration"
+    discovery: "mb-sonnet-2-discovery"
+    campaign: "mb-sonnet-2-campaign"
+    votes: "mb-sonnet-2-votes"
+    submissions: "mb-sonnet-2-submissions"
+    results: "d-sonnet-2-results"
+  team_room_pattern: "d-sonnet-2-team-{game_id}"
+  form:
+    lines: 14
+    syllables_per_line: 10
+    stanzas: [4, 4, 4, 2]
+    rhyme_scheme: "ABABCDCDEFEFGG"
+  rules:
+    consecutive_same_contributor: false
+    one_live_consent_per_did: true
+    withdraw_before_changing: true
+    every_member_must_contribute: true
+
+self:
+  did: "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+  handle: "nohitori"
+  x_account: "https://x.com/0xnohitori"
+
+benchmarks:
+  entry1_nohitori:
+    words: 125
+    roster_ready_to_complete_min: 94
+    complete_to_receipt_min: 54
+  entry2_nohitori_2:
+    words: 131
+    freeze_to_complete_min: 403

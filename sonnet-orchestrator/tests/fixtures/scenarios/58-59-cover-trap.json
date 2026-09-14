@@ -1,0 +1,308 @@
+{
+ "name": "58-59-cover-trap",
+ "description": "Lead's cover took word 58 while word 59 was spellable only by the lead or an absent member (entry 1: 'more.' -> 'The', fixed by 'The'->'Some'). Cover must look one word ahead and treat silent members as absent. Words carry the original 'The' at 0-based 58.",
+ "writers": [
+  {
+   "did": "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+   "profile": "healthy",
+   "letters": null,
+   "latency_ms": 16417.4,
+   "x_account": "proven",
+   "is_lead": false,
+   "down_after": null,
+   "handle": null
+  },
+  {
+   "did": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+   "profile": "healthy",
+   "letters": null,
+   "latency_ms": 904.9,
+   "x_account": null,
+   "is_lead": true,
+   "down_after": null,
+   "handle": null
+  },
+  {
+   "did": "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+   "profile": "healthy",
+   "letters": null,
+   "latency_ms": 1113.3,
+   "x_account": null,
+   "is_lead": false,
+   "down_after": null,
+   "handle": null
+  },
+  {
+   "did": "did:key:z6MkwBgTg4QUjvCR9hF6HEnA4hc68ug4gri6JjiN3sLzg7ws",
+   "profile": "silent",
+   "letters": null,
+   "latency_ms": 66731.8,
+   "x_account": null,
+   "is_lead": false,
+   "down_after": null,
+   "handle": null
+  }
+ ],
+ "faults": [
+  {
+   "kind": "cover_trap",
+   "at_index": 57,
+   "at_tick": null,
+   "params": {
+    "next_word_original": "The",
+    "next_word_final": "Some",
+    "lookahead": true
+   }
+  }
+ ],
+ "expectations": {
+  "completion_rate_min": 0.9,
+  "controller": {
+   "cover_refuses_when_next_is_lead_only": true
+  }
+ },
+ "words": [
+  "I",
+  "climb",
+  "the",
+  "ladder,",
+  "kneel,",
+  "and",
+  "rake",
+  "the",
+  "hay,",
+  "and",
+  "check",
+  "the",
+  "apples",
+  "in",
+  "a",
+  "hazy",
+  "dawn,",
+  "in",
+  "paper,",
+  "each",
+  "one",
+  "wrapped",
+  "and",
+  "laid",
+  "away.",
+  "The",
+  "roof",
+  "beams",
+  "hold",
+  "the",
+  "snow",
+  "which",
+  "veils",
+  "the",
+  "lawn.",
+  "Each",
+  "week",
+  "I",
+  "come",
+  "and",
+  "see",
+  "each",
+  "cheek",
+  "less",
+  "red,",
+  "and",
+  "hold",
+  "them,",
+  "pressing",
+  "where",
+  "a",
+  "peel",
+  "is",
+  "thin.",
+  "One",
+  "mark,",
+  "one",
+  "more.",
+  "The",
+  "blemishes",
+  "have",
+  "spread;",
+  "decay",
+  "is",
+  "moving",
+  "deep",
+  "below",
+  "the",
+  "skin.",
+  "I",
+  "raise",
+  "the",
+  "spoiled",
+  "apple,",
+  "a",
+  "knife",
+  "in",
+  "hand,",
+  "and",
+  "pare",
+  "away",
+  "the",
+  "bad.",
+  "The",
+  "blade",
+  "goes",
+  "deep.",
+  "These",
+  "keep",
+  "if",
+  "hard",
+  "and",
+  "green.",
+  "The",
+  "ripe",
+  "demand",
+  "a",
+  "knife.",
+  "I",
+  "pick",
+  "each",
+  "one",
+  "no",
+  "hands",
+  "can",
+  "keep.",
+  "I",
+  "press",
+  "my",
+  "hay",
+  "back",
+  "where",
+  "old",
+  "bare",
+  "boards",
+  "show;",
+  "I",
+  "lick",
+  "my",
+  "lips,",
+  "and",
+  "climb",
+  "a",
+  "ladder",
+  "slow."
+ ],
+ "sim": {
+  "stall_prob": 0.024,
+  "stall_s": 428.9,
+  "word_overhead_s": 17.9
+ },
+ "evidence": {
+  "entry1_58_59": {
+   "game_id": "nohitori",
+   "members": [
+    "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+    "did:key:z6MkwBgTg4QUjvCR9hF6HEnA4hc68ug4gri6JjiN3sLzg7ws"
+   ],
+   "positions_1based": [
+    58,
+    59
+   ],
+   "58": {
+    "word": "more.",
+    "contributor": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "spellers": [
+     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+     "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz"
+    ],
+    "accepted_at": "2026-09-13T18:10:48.350925+00:00"
+   },
+   "59": {
+    "word": "Some",
+    "contributor": "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+    "spellers": [
+     "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    ],
+    "accepted_at": "2026-09-13T18:14:41.603678+00:00"
+   },
+   "gap_before_j_s": 233.3
+  },
+  "nohitori2_words_at_58_59": {
+   "game_id": "nohitori-2",
+   "members": [
+    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+    "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+   ],
+   "positions_1based": [
+    58,
+    59
+   ],
+   "58": {
+    "word": "if",
+    "contributor": "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+    "spellers": [
+     "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+    ],
+    "accepted_at": "2026-09-14T09:18:34.774943+00:00"
+   },
+   "59": {
+    "word": "my",
+    "contributor": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "spellers": [
+     "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+    ],
+    "accepted_at": "2026-09-14T09:19:01.802708+00:00"
+   },
+   "gap_before_j_s": 27.0
+  },
+  "nohitori2_equivalent_56_57": {
+   "game_id": "nohitori-2",
+   "members": [
+    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+    "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+    "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+   ],
+   "positions_1based": [
+    56,
+    57
+   ],
+   "56": {
+    "word": "guide,",
+    "contributor": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+    "spellers": [
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+    ],
+    "accepted_at": "2026-09-14T08:46:31.493535+00:00"
+   },
+   "57": {
+    "word": "then",
+    "contributor": "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+    "spellers": [
+     "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
+     "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
+    ],
+    "accepted_at": "2026-09-14T09:18:15.185630+00:00"
+   },
+   "gap_before_j_s": 1903.7
+  },
+  "words_note": "index 58 (1-based 59) is the original 'The'; the accepted text has 'Some'"
+ },
+ "tags": [
+  "addendum",
+  "cover",
+  "replay"
+ ],
+ "schema": 1
+}

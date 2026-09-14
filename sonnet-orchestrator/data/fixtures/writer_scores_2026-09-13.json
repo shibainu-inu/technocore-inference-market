@@ -1,0 +1,3539 @@
+[
+ {
+  "did": "did:key:z6MkjQ1NWXQHomwLjRNx2mKSoYp5CBv4BcGpoS35MWV4RmAQ",
+  "poems": 2,
+  "poem_ids": [
+   "leidream",
+   "nohitori"
+  ],
+  "words": 118,
+  "final": 2,
+  "lat_med": 16,
+  "rej": 3,
+  "sign_med": 131,
+  "chat": 27,
+  "seqref": 19,
+  "spam": 0.22,
+  "lead": false,
+  "consent": "2026-09-13T17:22:00.910953Z",
+  "score": 21.1
+ },
+ {
+  "did": "did:key:z6MkuJDcegSVQnncj4uTNUCJACbHhZCfsypMx667AsHAMhgt",
+  "poems": 2,
+  "poem_ids": [
+   "deftink",
+   "quill"
+  ],
+  "words": 85,
+  "final": 2,
+  "lat_med": 12,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 17.0
+ },
+ {
+  "did": "did:key:z6MkwfnckxULjn9dPvoPnJSPbc7aWNegeXrirWzBLpfVgqSM",
+  "poems": 3,
+  "poem_ids": [
+   "deftink",
+   "herushi",
+   "whale-2"
+  ],
+  "words": 130,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 14.0
+ },
+ {
+  "did": "did:key:z6MkhQ7X9bFg5EdtAxtJJsGzPAcVnVFDaqjyUEqbhdR3jLmt",
+  "poems": 2,
+  "poem_ids": [
+   "bae-2",
+   "signed"
+  ],
+  "words": 68,
+  "final": 1,
+  "lat_med": 6,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 14.0
+ },
+ {
+  "did": "did:key:z6MkhrCL9JJ4ofxns1kwP3CmgiJTWfvBHUdVxVY68uSBbkx9",
+  "poems": 2,
+  "poem_ids": [
+   "stonehelm",
+   "wickerlight"
+  ],
+  "words": 43,
+  "final": 1,
+  "lat_med": 54,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 13.2
+ },
+ {
+  "did": "did:key:z6MkkiA1NzmPA5k5PyuzLb62B7VeZtdVkkHoJ1oP7a2gzeKz",
+  "poems": 2,
+  "poem_ids": [
+   "bae-2",
+   "signed"
+  ],
+  "words": 68,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 8,
+  "seqref": 5,
+  "spam": 0.0,
+  "lead": false,
+  "consent": null,
+  "score": 12.0
+ },
+ {
+  "did": "did:key:z6Mksn7twFztjENsZjbBsxqSe9QGhruAPmDtzBqCnv6Yk7Ub",
+  "poems": 1,
+  "poem_ids": [
+   "volta-2"
+  ],
+  "words": 57,
+  "final": 1,
+  "lat_med": 27,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.8
+ },
+ {
+  "did": "did:key:z6MkgXnKEkaTt6Hrir3KQzE1JGy7eiPBbwJypBYvW4v9ue6Q",
+  "poems": 1,
+  "poem_ids": [
+   "aurora-2"
+  ],
+  "words": 55,
+  "final": 1,
+  "lat_med": 3,
+  "rej": 21,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.8
+ },
+ {
+  "did": "did:key:z6MkeyaP3MeRRfXw4KAdWvoHyTnyvFYM5rGCSnbmexnMQgn1",
+  "poems": 1,
+  "poem_ids": [
+   "ponyo"
+  ],
+  "words": 57,
+  "final": 1,
+  "lat_med": 35,
+  "rej": 13,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.8
+ },
+ {
+  "did": "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+  "poems": 1,
+  "poem_ids": [
+   "nohitori"
+  ],
+  "words": 58,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 57,
+  "seqref": 42,
+  "spam": 0.07,
+  "lead": true,
+  "consent": "2026-09-13T17:19:50.500949Z",
+  "score": 10.7
+ },
+ {
+  "did": "did:key:z6MkpRDNDS5WBPmvnx7nTqWa4T7RWX8hSnt8ssVyJC8HTyqB",
+  "poems": 1,
+  "poem_ids": [
+   "volta-2"
+  ],
+  "words": 40,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 137,
+  "seqref": 78,
+  "spam": 0.18,
+  "lead": false,
+  "consent": "2026-09-13T19:26:00.414433Z",
+  "score": 10.5
+ },
+ {
+  "did": "did:key:z6MkvYt6yHRPYXk3KB6G9AFRD1uoJQj2CkKD5v2fYedtPoXv",
+  "poems": 1,
+  "poem_ids": [
+   "herushi"
+  ],
+  "words": 50,
+  "final": 1,
+  "lat_med": 12,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.5
+ },
+ {
+  "did": "did:key:z6MkpuxmE1BSHNT8gHh72fGDNc4jqaneZ1AtSzdMJzSyvXQy",
+  "poems": 1,
+  "poem_ids": [
+   "bae2"
+  ],
+  "words": 50,
+  "final": 1,
+  "lat_med": 3,
+  "rej": 4,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.5
+ },
+ {
+  "did": "did:key:z6MkthCbJe4QHRLZgEnrUAzoTafPBxpGS4n6SL5QE2gcWbys",
+  "poems": 1,
+  "poem_ids": [
+   "gucci-2"
+  ],
+  "words": 41,
+  "final": 1,
+  "lat_med": 7,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.1
+ },
+ {
+  "did": "did:key:z6MkkxJgXWjt8AB89hcZkhzVMP7p6vxCK1g2B6aFTwcNR8WS",
+  "poems": 2,
+  "poem_ids": [
+   "herushi",
+   "signed"
+  ],
+  "words": 42,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 10.1
+ },
+ {
+  "did": "did:key:z6MknDn3CH7vumHw5rXREhdQN5KjsSp2RWi4aUHusBDRVoRz",
+  "poems": 1,
+  "poem_ids": [
+   "technocore"
+  ],
+  "words": 38,
+  "final": 1,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.9
+ },
+ {
+  "did": "did:key:z6MkkGCD2sWQieYGFRgnVyN8JUHwuZNwQo6NDRUU43BXD3X2",
+  "poems": 1,
+  "poem_ids": [
+   "zfleet5"
+  ],
+  "words": 38,
+  "final": 1,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.9
+ },
+ {
+  "did": "did:key:z6MkfYfHUNrtPmbGTiaTsKUXG7WFyuq3DaoAzc1nPBzKo6Ym",
+  "poems": 1,
+  "poem_ids": [
+   "riize"
+  ],
+  "words": 35,
+  "final": 1,
+  "lat_med": 33,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.8
+ },
+ {
+  "did": "did:key:z6MkowXqAtrHBQZNsCeUQb7F2dL4LrKugX7pSnvXeDBBj1o1",
+  "poems": 1,
+  "poem_ids": [
+   "emberwick"
+  ],
+  "words": 36,
+  "final": 1,
+  "lat_med": 47,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.8
+ },
+ {
+  "did": "did:key:z6Mkh21soGPHMbC1cppq7ttQstNoPzTbc1Eiuw8Mp2ABRvvm",
+  "poems": 1,
+  "poem_ids": [
+   "flopmu08utlx"
+  ],
+  "words": 26,
+  "final": 1,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": 28,
+  "chat": 2,
+  "seqref": 0,
+  "spam": 0.5,
+  "lead": false,
+  "consent": "2026-09-13T20:07:18.174329Z",
+  "score": 9.8
+ },
+ {
+  "did": "did:key:z6MksueBPr4PuiSEjx9yVsp8UVy94sQ2zCt8xdHYXSAhv3sh",
+  "poems": 1,
+  "poem_ids": [
+   "tora-fleet"
+  ],
+  "words": 33,
+  "final": 1,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.7
+ },
+ {
+  "did": "did:key:z6MkjB21TMnMZcyFw83SuNTEdELWBg5Q4VU9nAVxpZyAb4NL",
+  "poems": 1,
+  "poem_ids": [
+   "quorum-2"
+  ],
+  "words": 31,
+  "final": 1,
+  "lat_med": 47,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.6
+ },
+ {
+  "did": "did:key:z6Mkk6SzbwtaCRYLZvFT3YnZ5QfwR57KXGZLLoUtjPkiXshH",
+  "poems": 1,
+  "poem_ids": [
+   "lumen-2"
+  ],
+  "words": 32,
+  "final": 1,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.6
+ },
+ {
+  "did": "did:key:z6MkehVfDhWGZUvS4iacEKSEnytDvdZhhg5acsBXXry5GDXF",
+  "poems": 1,
+  "poem_ids": [
+   "jinken"
+  ],
+  "words": 32,
+  "final": 1,
+  "lat_med": 9,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.6
+ },
+ {
+  "did": "did:key:z6Mksr6j2y5cUAeTRexBHh5k9MsyyYQrXZtvJCMLTc6WQNhe",
+  "poems": 1,
+  "poem_ids": [
+   "wakeverse"
+  ],
+  "words": 30,
+  "final": 1,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.5
+ },
+ {
+  "did": "did:key:z6Mksbp6W36WynuTKRBuxxrCLENPKZNuFZKPEF6wFLcHNwoN",
+  "poems": 1,
+  "poem_ids": [
+   "harborkeep"
+  ],
+  "words": 30,
+  "final": 1,
+  "lat_med": 9,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.5
+ },
+ {
+  "did": "did:key:z6MktrGB8UZGApSNcRuhxTbyHdf8aGVS5ruLMJZhWMTg9Njo",
+  "poems": 1,
+  "poem_ids": [
+   "whale-2"
+  ],
+  "words": 29,
+  "final": 1,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.4
+ },
+ {
+  "did": "did:key:z6Mkt3ir45GPWydq3dYUaKDdSycfpzRYeTuU3jBvUU1jddiD",
+  "poems": 1,
+  "poem_ids": [
+   "assay"
+  ],
+  "words": 37,
+  "final": 1,
+  "lat_med": 47,
+  "rej": 4,
+  "sign_med": null,
+  "chat": 12,
+  "seqref": 9,
+  "spam": 0.42,
+  "lead": true,
+  "consent": "2026-09-13T22:05:05.142867Z",
+  "score": 9.4
+ },
+ {
+  "did": "did:key:z6Mkg7unfyTWgshfXdC5R4SLUqNeCC9UEoQVAeARPrJFBxkC",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 28,
+  "final": 1,
+  "lat_med": 50,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.4
+ },
+ {
+  "did": "did:key:z6MkneGTw337Psw7Fei61Bw2MhxhUnVXvYi5y3GVLH1CV7c5",
+  "poems": 1,
+  "poem_ids": [
+   "bub"
+  ],
+  "words": 26,
+  "final": 1,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.3
+ },
+ {
+  "did": "did:key:z6MkksivqhozkXAPnLNkGnkBoyXceCTBxZM13yQ25L7PzCU3",
+  "poems": 1,
+  "poem_ids": [
+   "li888"
+  ],
+  "words": 27,
+  "final": 1,
+  "lat_med": 8,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.3
+ },
+ {
+  "did": "did:key:z6Mkp1vWcx469sZMAXMFJdECmUN7x5WsysTzCuc6xcXEnpTv",
+  "poems": 1,
+  "poem_ids": [
+   "triples24"
+  ],
+  "words": 45,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 2,
+  "sign_med": 46,
+  "chat": 1,
+  "seqref": 0,
+  "spam": 0.0,
+  "lead": false,
+  "consent": "2026-09-13T17:45:36.442031Z",
+  "score": 9.2
+ },
+ {
+  "did": "did:key:z6Mko3LhttNpGSCRevcaBrPVzoQFavYJ6kmQckmfg9gBWzSU",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 23,
+  "final": 1,
+  "lat_med": 10,
+  "rej": 5,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.2
+ },
+ {
+  "did": "did:key:z6Mkt9W7ZFhqDUgVYA6hx6sCfAacc3x1sQhVnioh8KET2rAu",
+  "poems": 1,
+  "poem_ids": [
+   "wordcore"
+  ],
+  "words": 20,
+  "final": 1,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 9.0
+ },
+ {
+  "did": "did:key:z6Mkkt4Pxe9FK7kCV3ELNnjaoWSfsC4D3X5u71FXEGWcJMV7",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 18,
+  "final": 1,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.9
+ },
+ {
+  "did": "did:key:z6MkkSKFomcuTC2kHkdbazAatLRYeCVYrwPMjN28gGf5mLVF",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 19,
+  "final": 1,
+  "lat_med": 27,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.9
+ },
+ {
+  "did": "did:key:z6Mkgp35PmWiXmHF9Roxy6gi7jjpk8a3hpUwkjPpF5SAX7pk",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 17,
+  "final": 1,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.8
+ },
+ {
+  "did": "did:key:z6Mkrs9FviuKvQnAnexWfF1RWduNh6CqydrMAw8RUo73zoje",
+  "poems": 1,
+  "poem_ids": [
+   "love8"
+  ],
+  "words": 17,
+  "final": 1,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.8
+ },
+ {
+  "did": "did:key:z6MksaT24xNWsHoooq3wqAUt87KZ2P1u49iAFWwus8fH55rB",
+  "poems": 1,
+  "poem_ids": [
+   "ownfleet12"
+  ],
+  "words": 31,
+  "final": 1,
+  "lat_med": 64,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.6
+ },
+ {
+  "did": "did:key:z6MknSUo9qCK8cvrCnmtose2MPWHMipQ8QnUBLz3UeJxRodZ",
+  "poems": 1,
+  "poem_ids": [
+   "auroragrove"
+  ],
+  "words": 10,
+  "final": 1,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.5
+ },
+ {
+  "did": "did:key:z6MkpbZ3BTUqrjPgRZLnGRSkk69f7Qu1edi8qTUNdSro7iDF",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 8,
+  "final": 1,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.4
+ },
+ {
+  "did": "did:key:z6MkvubyebrFEAvuEcYuprNMaGyMD1reeLJYjPFHkw4UovXz",
+  "poems": 1,
+  "poem_ids": [
+   "signed"
+  ],
+  "words": 7,
+  "final": 1,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.3
+ },
+ {
+  "did": "did:key:z6MkoqneVT4JjpwJvZGbAgUXei6NrQ794qSKcchf5iHDd96L",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 1,
+  "final": 1,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.1
+ },
+ {
+  "did": "did:key:z6MkohgL2qzi6r2EUr11i49H4Z9LPX8HCjmjbrDRwUvJ2Mmd",
+  "poems": 1,
+  "poem_ids": [
+   "celestialcove"
+  ],
+  "words": 2,
+  "final": 1,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 8.1
+ },
+ {
+  "did": "did:key:z6Mki8anQ5dHknwM6FJU8uyJiBaqpgjTsZaEG2UdZDP4KGuS",
+  "poems": 1,
+  "poem_ids": [
+   "triples24"
+  ],
+  "words": 22,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": 54,
+  "chat": 1,
+  "seqref": 0,
+  "spam": 0.0,
+  "lead": false,
+  "consent": "2026-09-13T17:45:36.791302Z",
+  "score": 8.1
+ },
+ {
+  "did": "did:key:z6Mks6p4aUaHVzBStAEpHMnWJNpUao5FAo3erxYmZUhkuQkJ",
+  "poems": 1,
+  "poem_ids": [
+   "flopmu08utlx"
+  ],
+  "words": 45,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": 27,
+  "chat": 2,
+  "seqref": 0,
+  "spam": 0.5,
+  "lead": false,
+  "consent": "2026-09-13T20:07:17.873498Z",
+  "score": 7.8
+ },
+ {
+  "did": "did:key:z6Mkp5YDnFL7XY5B9T1x9u47WLTZzjoakXF1WdVhdY5Eo4fK",
+  "poems": 1,
+  "poem_ids": [
+   "leidream"
+  ],
+  "words": 54,
+  "final": 0,
+  "lat_med": 11,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.7
+ },
+ {
+  "did": "did:key:z6Mkgohhx4YYpbBTGp9qXyo5zeRqKDTLsaXbK6cKuEYterEj",
+  "poems": 1,
+  "poem_ids": [
+   "bae2"
+  ],
+  "words": 52,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.6
+ },
+ {
+  "did": "did:key:z6MkiaXbLah55hwZioUtNRosjxsokpA8TYTQSWFPsyJNnspr",
+  "poems": 1,
+  "poem_ids": [
+   "aurora-2"
+  ],
+  "words": 51,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 1324,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.5
+ },
+ {
+  "did": "did:key:z6MkevNrxH1t5ZwJ6nTwEPsSEH4ath6Si5WRFrafM8AynvBq",
+  "poems": 1,
+  "poem_ids": [
+   "wordcore"
+  ],
+  "words": 49,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.5
+ },
+ {
+  "did": "did:key:z6MkfmHqhJY5ParjUJqoM35gXred469y9k2PoP7mkc46mJuz",
+  "poems": 1,
+  "poem_ids": [
+   "nohitori"
+  ],
+  "words": 4,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": 4,
+  "chat": 5,
+  "seqref": 1,
+  "spam": 0.0,
+  "lead": false,
+  "consent": "2026-09-13T17:19:51.297324Z",
+  "score": 7.4
+ },
+ {
+  "did": "did:key:z6MkgcF5qRG26QDqkaRjnWXFLzw6KGLtMfTTdLq9WVYzDdM9",
+  "poems": 1,
+  "poem_ids": [
+   "shultz3"
+  ],
+  "words": 27,
+  "final": 1,
+  "lat_med": 677,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.3
+ },
+ {
+  "did": "did:key:z6MkuortrfTCMTaBWs4H5VXYAjdu9AoH9vRKsMQnGxjuLEyP",
+  "poems": 1,
+  "poem_ids": [
+   "bub"
+  ],
+  "words": 44,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.2
+ },
+ {
+  "did": "did:key:z6MkheicRgXVbaYCs6Suc1RNTZLtQoZU2HuEhs49cD9yK6Tt",
+  "poems": 1,
+  "poem_ids": [
+   "auroragrove"
+  ],
+  "words": 45,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.2
+ },
+ {
+  "did": "did:key:z6MknEZMrEeb3eAznUYvGNnTJPVTVNi3i7kT7p3B8m1HuFkT",
+  "poems": 1,
+  "poem_ids": [
+   "celestialcove"
+  ],
+  "words": 44,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.2
+ },
+ {
+  "did": "did:key:z6MkibY9BqMwGfp1r5JwRmZJoA8rwXDoK8FLLQHhkFqGVxvE",
+  "poems": 1,
+  "poem_ids": [
+   "triples24"
+  ],
+  "words": 44,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 1,
+  "seqref": 0,
+  "spam": 0.0,
+  "lead": false,
+  "consent": "2026-09-13T17:44:52.029805Z",
+  "score": 7.2
+ },
+ {
+  "did": "did:key:z6MkhzGWRHZAagfbtVFSoNnzgYfaQ4LnUhSUpXmqNFxmya3H",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 42,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.1
+ },
+ {
+  "did": "did:key:z6MkggNC2HduZZ4zbAbHxeMMATrRizkZCtEM7QrwncFmp1rL",
+  "poems": 1,
+  "poem_ids": [
+   "ponyo"
+  ],
+  "words": 42,
+  "final": 0,
+  "lat_med": 33,
+  "rej": 10,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.1
+ },
+ {
+  "did": "did:key:z6MkvZrHmw2buoCf8TfdKPdtKoyKinS6eSQGfFkj7GniHhYq",
+  "poems": 1,
+  "poem_ids": [
+   "love8"
+  ],
+  "words": 40,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.0
+ },
+ {
+  "did": "did:key:z6MkwRhzX7jVYuVTL6GyUPaaTCXhDL9nbAfP2LqQsc8oEB7S",
+  "poems": 1,
+  "poem_ids": [
+   "gucci-2"
+  ],
+  "words": 41,
+  "final": 0,
+  "lat_med": 60,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.0
+ },
+ {
+  "did": "did:key:z6MktDqcJj7xpbixPkkXAmWMGGurULBYG2BoLHivRd8kt6dJ",
+  "poems": 2,
+  "poem_ids": [
+   "assay",
+   "quill"
+  ],
+  "words": 21,
+  "final": 0,
+  "lat_med": 193,
+  "rej": 7,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 7.0
+ },
+ {
+  "did": "did:key:z6MkohkHDCasL4GDZsnsfBTLt4VpK3xnvoerAwuGchHg6J7t",
+  "poems": 1,
+  "poem_ids": [
+   "celestialcove"
+  ],
+  "words": 38,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.9
+ },
+ {
+  "did": "did:key:z6MktU13Pf4jVf6Ck5D3pwNYX2PVUAfNC61ytciyb4Coyh7e",
+  "poems": 1,
+  "poem_ids": [
+   "love8"
+  ],
+  "words": 36,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.8
+ },
+ {
+  "did": "did:key:z6Mknq1C6cdiHNy8LysYRxmrknU6oe7JBqVFNjrpzPkE1abW",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 35,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.8
+ },
+ {
+  "did": "did:key:z6Mks5BCnVwf6XGP8tyj2stb3SLDAbdq2Dy2p3PrVi1jufLy",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 35,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.8
+ },
+ {
+  "did": "did:key:z6MkquwJgHrYZWYpGYjVrv8nVK9iDCt2KXbaTra7h52LSLep",
+  "poems": 1,
+  "poem_ids": [
+   "tora-fleet"
+  ],
+  "words": 36,
+  "final": 0,
+  "lat_med": 35,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.8
+ },
+ {
+  "did": "did:key:z6Mkoxu4BautnQ2mLPj7K35aLUYoue2LRVUzRNC5WG61xFZE",
+  "poems": 1,
+  "poem_ids": [
+   "celestialcove"
+  ],
+  "words": 37,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.8
+ },
+ {
+  "did": "did:key:z6MkuP8rtZTi4JrAV532r5nCKq7aNiexFXgV4wDbL4QRnNbh",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 34,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6MksHHDkNxRoRap4FDeSLeAi3UhcL5LjbRTYyfiN7XRyEEg",
+  "poems": 1,
+  "poem_ids": [
+   "riize"
+  ],
+  "words": 34,
+  "final": 0,
+  "lat_med": 34,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6MkuZ2zqDMsNQLFBrdqjh4BwnfwpBDEgAwocTC93w3aM8E3",
+  "poems": 1,
+  "poem_ids": [
+   "quorum-2"
+  ],
+  "words": 33,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6Mkh4TL93PnponBUTcsopeZyj3tG1dGD9RsPLwob9Zao86f",
+  "poems": 1,
+  "poem_ids": [
+   "emberwick"
+  ],
+  "words": 34,
+  "final": 0,
+  "lat_med": 48,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6MktDXQJUmMLtmc1gLBZibzq7Gam88pf8JTpKiGNuE9EJKm",
+  "poems": 1,
+  "poem_ids": [
+   "auroragrove"
+  ],
+  "words": 34,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6MkpnQQpQae77QNKYRwnnKhQjfFbL4qm3Z4GcD1Wx5XKkCn",
+  "poems": 1,
+  "poem_ids": [
+   "zfleet5"
+  ],
+  "words": 33,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.7
+ },
+ {
+  "did": "did:key:z6Mkoxggbhq8Hv1Us2zhrvGt1SFRsMzaFezVuZpNGzDnKf3u",
+  "poems": 1,
+  "poem_ids": [
+   "technocore"
+  ],
+  "words": 32,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.6
+ },
+ {
+  "did": "did:key:z6MktCMi2vopi9cPBcoct2GD8WN4PKgnroQkpSEh2aiknToi",
+  "poems": 1,
+  "poem_ids": [
+   "wakeverse"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MknGaz5S1duXNs5rASbUoN9UT6edf945w7xCkM1LbYozYK",
+  "poems": 1,
+  "poem_ids": [
+   "wakeverse"
+  ],
+  "words": 29,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkmjehaddvQCsbAj3mjdu63mh5EpjuPseG9Y6xRTyeorPC",
+  "poems": 1,
+  "poem_ids": [
+   "wakeverse"
+  ],
+  "words": 29,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mkof5viS8HipnBfig39RBCzGuHHoTwtrjUAjA26SZ3wpPX",
+  "poems": 1,
+  "poem_ids": [
+   "whale-2"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkvNEZHX8VEpxJ5EuBdaxk6nL5sJTwRRo6TDLNS1NdHUGn",
+  "poems": 1,
+  "poem_ids": [
+   "li888"
+  ],
+  "words": 29,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkrJnBruaxkRj6aK8Z5nDC2oUTEMoW5zQNhajWEknfa5GM",
+  "poems": 1,
+  "poem_ids": [
+   "tora-fleet"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkjgH8qpqNJZfDSaha3cnwnxnEp3Vn9iEax2AZS3kqooLH",
+  "poems": 1,
+  "poem_ids": [
+   "riize"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 34,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mkigh3tDgJa13uU1WUdG6vc8Uzu4nU3iL6c5NpM27n1dxg",
+  "poems": 1,
+  "poem_ids": [
+   "riize"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 33,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mkt7dhQwWMfLJj7AE2HXdHGTvdrvFf9Atj2SC6sjPUDS4n",
+  "poems": 1,
+  "poem_ids": [
+   "auroragrove"
+  ],
+  "words": 29,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkuDUtSVyVZ1WioHuhvLBtV8DK2DWsKkMRjqqW8LMBFEzD",
+  "poems": 1,
+  "poem_ids": [
+   "wordcore"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mkw9xhXy3UAWn2jicSN3zGcjZMBpVjdTdq53DTgSa9FZL4",
+  "poems": 1,
+  "poem_ids": [
+   "wordcore"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mknj6UYeJHhRukkcHkTNYAuX2gpggjfeGtAXYW7737bBh2",
+  "poems": 1,
+  "poem_ids": [
+   "harborkeep"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 11,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkqduMMjmDombQpNsdHhgVMZSto5xsYRpVtC3zEraHsUM6",
+  "poems": 1,
+  "poem_ids": [
+   "harborkeep"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 13,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkurTsRZanEcgxo3nBVLG2PFm46wwdm5RrkD4KgbjFAoQB",
+  "poems": 1,
+  "poem_ids": [
+   "harborkeep"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 12,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkumhfKbb5sdpKdDrgN5EUN9D2qnJLsSXkya5PTsqQEn2g",
+  "poems": 1,
+  "poem_ids": [
+   "jinken"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkvPk1vycCcXFJBeacGN5gM3x8hL8g1oGsgNtbVeTg94pr",
+  "poems": 1,
+  "poem_ids": [
+   "jinken"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6Mkgjm3ekNi9L2511aPSc4N221jvuvsNaE3AtHRwNLpqSXT",
+  "poems": 1,
+  "poem_ids": [
+   "jinken"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkkZwvyHLe8a9Rh3YMmWzEsC4zdZ1SLijhbhSFVFyHsGbZ",
+  "poems": 1,
+  "poem_ids": [
+   "triples24"
+  ],
+  "words": 21,
+  "final": 1,
+  "lat_med": 5,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 4,
+  "seqref": 0,
+  "spam": 0.5,
+  "lead": true,
+  "consent": "2026-09-13T17:43:10.613725Z",
+  "score": 6.5
+ },
+ {
+  "did": "did:key:z6MkkCR2AgQh8ecL2vMVVbZ7sL92hPpFmceoxpdKh7W1obrj",
+  "poems": 1,
+  "poem_ids": [
+   "whale-2"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 10,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6MkrhVbiGwbDq2yNoT2h2FZCSx37CyMUUfp1Mf9zxWJJdaa",
+  "poems": 1,
+  "poem_ids": [
+   "li888"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6Mkvr2RNSXhJeYtqxmGuD6oe9Jv7QopS3BD8mNb3nPKRC7j",
+  "poems": 1,
+  "poem_ids": [
+   "bae-2"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 6,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6MkomW7khvZMAndeL1JevjuRgUe9rbrgjd7evysvdeUHfpX",
+  "poems": 1,
+  "poem_ids": [
+   "bae-2"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 12,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6MkvG6yUVd9Bz58uGLySZpoKD6F1BhDGHMGhKwKUBqgaVEr",
+  "poems": 1,
+  "poem_ids": [
+   "zfleet5"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6MkmGwVm4qswSyN1aDm8NRiabEzKzm5pcjqJqZ4nQYiZpWZ",
+  "poems": 1,
+  "poem_ids": [
+   "shultz3"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 23,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.4
+ },
+ {
+  "did": "did:key:z6MktfToA2nKZbFTjef4ab2wgEdPK1u5a5tWE39FEzX8dutK",
+  "poems": 1,
+  "poem_ids": [
+   "bub"
+  ],
+  "words": 27,
+  "final": 0,
+  "lat_med": 27,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.3
+ },
+ {
+  "did": "did:key:z6MkeyFuzSzEUa3tXyAwm2b9VuYmXLtf9KEM9j7Ngdxn5LPf",
+  "poems": 1,
+  "poem_ids": [
+   "li888"
+  ],
+  "words": 26,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.3
+ },
+ {
+  "did": "did:key:z6MkwbwwayjyPJoT1acdNDyPGMQYJw7sAX8dvfXJavGKKrVu",
+  "poems": 1,
+  "poem_ids": [
+   "emberwick"
+  ],
+  "words": 26,
+  "final": 0,
+  "lat_med": 48,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.3
+ },
+ {
+  "did": "did:key:z6MksMhpuiZCsfZYtpDfnhtsaNkunenjBDT7GrumLGrshPvE",
+  "poems": 1,
+  "poem_ids": [
+   "shultz3"
+  ],
+  "words": 26,
+  "final": 0,
+  "lat_med": 46,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.3
+ },
+ {
+  "did": "did:key:z6Mkw1wmdRVLPScoJx1wczCcrs9ggFEufgAqK5gLusm9c7Bq",
+  "poems": 1,
+  "poem_ids": [
+   "technocore"
+  ],
+  "words": 23,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.2
+ },
+ {
+  "did": "did:key:z6MkoQ6vfU7fgPkbsMc3sfo9MLsKWSYCbFkPrPfA3DUKrEAQ",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 25,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.2
+ },
+ {
+  "did": "did:key:z6Mksi1qpBncxQVSZJHRe744CnVuqEgMvV7okEAo5T4Lfa5p",
+  "poems": 1,
+  "poem_ids": [
+   "love8"
+  ],
+  "words": 22,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.1
+ },
+ {
+  "did": "did:key:z6MkvnnMdaEyeYwTN5YT54gkh8DMpek9ZkArrAqKgPeoii8B",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 22,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.1
+ },
+ {
+  "did": "did:key:z6MktMPgccidNheUYx6LJticsc6zwEEJsxeZwsup6DBWgBFY",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkfSATFv5xxbSYRGB1sTVQULpuP7Mai6FqqH23cwYUoQEc",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 20,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MktxnssqwUv4tRs9Dvc72DfczbDfYQHs31kdYZNbmZDGHW",
+  "poems": 1,
+  "poem_ids": [
+   "gucci-2"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 12,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkmF6s4jHVeDYP2r99gpw2S94bAcWeUjR2dEX34cNqTg6Y",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 1,
+  "final": 1,
+  "lat_med": 297,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MktSMm5HJuoDCzZNJ5YVKPjHrTw86iEn3YwXKNExe9UsZn",
+  "poems": 1,
+  "poem_ids": [
+   "lesna-2"
+  ],
+  "words": 39,
+  "final": 0,
+  "lat_med": 18,
+  "rej": 4,
+  "sign_med": null,
+  "chat": 4,
+  "seqref": 0,
+  "spam": 0.0,
+  "lead": true,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkrWpyheRW44T8NVcVV7Dqz6EPSwXwnpiKGubNn8xdGLyP",
+  "poems": 1,
+  "poem_ids": [
+   "lesna-2"
+  ],
+  "words": 1,
+  "final": 1,
+  "lat_med": 15360,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6Mki4qPDnvcbBx88WpYVAYcBemE8w77vcGi3GsHzX9CQV3g",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 20,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6Mko9eA6uniAMaLoEXMYcvUa3ZmYytjKPkqtYkVQrsNERrE",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 20,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6Mku5XVmRUYscBQVhXZyP4tRdUoXeULWagS7mTgq8DkCad9",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 46,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkfHbMd5hRf7c5qDBPkHAwx1mdi2zfJNgdzpmo5zLMGUns",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 20,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkhKM31gTzniUoxxqLSLp9MJoFETHEWJEQ7vZdqi3bCrcW",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 22,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MktC1xCs1XvaEWM6712qQ1LgcqVoEmNCRaVK3CVLvt9KG5",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 21,
+  "final": 0,
+  "lat_med": 8,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6MkiwixDfuU8adCDB5mVh7FcT7oFRC7uWjFF9BV7hiSHGty",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 20,
+  "final": 0,
+  "lat_med": 9,
+  "rej": 7,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6Mkuc4U4Gv9N4VM2duRGznS9dYp5eZuosfsLrQPPhFvZFo4",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 8,
+  "rej": 5,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 6.0
+ },
+ {
+  "did": "did:key:z6Mkkq6Z9eeVByJYozjVWFez6nvLQE2X5YQ3pHGCmwpEBN6m",
+  "poems": 1,
+  "poem_ids": [
+   "ponyo"
+  ],
+  "words": 18,
+  "final": 0,
+  "lat_med": 33,
+  "rej": 7,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.9
+ },
+ {
+  "did": "did:key:z6MkgJchpKXzLrGPhX7vx9qvraHKPTuiDi9mMf4wRqvEjb1N",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 18,
+  "final": 0,
+  "lat_med": 22,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.9
+ },
+ {
+  "did": "did:key:z6MkkTCUWL89aNtPfUq7Ssv1WCdjbMnb5NoUKwX9d775rBGa",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 18,
+  "final": 0,
+  "lat_med": 10,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.9
+ },
+ {
+  "did": "did:key:z6Mkj25vopjPga4YWhwMwJwnUVBtrVuW6THP4RiUXoSqAsHu",
+  "poems": 1,
+  "poem_ids": [
+   "flopmu08utlx"
+  ],
+  "words": 8,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 2,
+  "sign_med": 29,
+  "chat": 2,
+  "seqref": 0,
+  "spam": 0.5,
+  "lead": false,
+  "consent": "2026-09-13T20:07:18.524361Z",
+  "score": 5.9
+ },
+ {
+  "did": "did:key:z6MkvK9EdVMB3mZLdcz2umXfZ6Y48igzBAoNPRz53sLKcxQj",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MksAndcR4WxMuRVeArnyAJRBUVNX6fBfefGa8hVkbvE1PM",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6Mkg1fcXUmrcyqAKNFzonKM6jbjNRGz6pv3nKnNYAmaVjcu",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkoenXa6Aq4TfDgLQKLceDzwUxJtPvz7FE3m9ScCKMDgTy",
+  "poems": 1,
+  "poem_ids": [
+   "flopdropteam3"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkvYoXPa8dJH8Zd3u5LHwZME4p9SXtYQK9b9VrUYBiHJdi",
+  "poems": 1,
+  "poem_ids": [
+   "technocore"
+  ],
+  "words": 15,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkhtnwmPfENWULPstEp7Exo1R3QPFGRDuKnCQ9Kt1NbABT",
+  "poems": 1,
+  "poem_ids": [
+   "volta-2"
+  ],
+  "words": 15,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MktViN6ruoXbPWyhxXNyhJFyB7uuqM2LWzsuSTKvfqSgXX",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6Mks3ZJxaPg9ReUjxz5EuKPk12AXtq7kiUXqm8jDNSfK78a",
+  "poems": 1,
+  "poem_ids": [
+   "lesna-2"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkjBovRGecUKzkXwFVtgtJ2GrHwdc3ydrhvhJHq3gh6VLM",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6Mkv2PiwePk1mCbcTFcFcEHWNkYAstg55dB1492qhHXEEp9",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 16,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkqgVDWuMJ6yZeHVuAgPw6qfYSjfA26aLYC4V1EfykxuiU",
+  "poems": 1,
+  "poem_ids": [
+   "ponyo"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 32,
+  "rej": 8,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkjJmB3HLtEKqkUSLGsoA281HnJc9MdEBYAqpmz3qNi2ET",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 20,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkpSBoUdybcYuq1enE36FSaZbDoiXeFjzoksdXgKnKciL8",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 25,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkeZ8r5HixpTxUda5eGZdfYHfhh8s2U6FnnGcNtmiT8qdG",
+  "poems": 1,
+  "poem_ids": [
+   "quietlake"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.8
+ },
+ {
+  "did": "did:key:z6MkjpJt62rf1XDxiAfHVbuLQnkbunDaqyDBseuAsdSiofz3",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkfh1pKzMd9op8VLcEhSVQxA6De3zGEHtZv81A5JoVsHS1",
+  "poems": 1,
+  "poem_ids": [
+   "emberwick"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 48,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6MknXhzfoqKdD8m5eyA3V2aVjvCynghnM3Jutbnn4hhhv6p",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 49,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkj2HcZSfD3YttzSeoF394TLBxo8eDLT6NoT9ycaEtC8jp",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 48,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkro5Jrz3GsiYD7KtGrq5XRMHTDNQVhPwgTrigSjoFn3uM",
+  "poems": 1,
+  "poem_ids": [
+   "leidream"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 9,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkg2fhrqmGuvoeyzbfK95hx4pUMUudPNABzfAdd6oYw5qs",
+  "poems": 1,
+  "poem_ids": [
+   "zfleet5"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6MkjcXHBR9s3daL33nBpALQLbATtmBJLKspH8Sr9baDWgG7",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6MkkShuk6HBzq3unzsdVRtkPVuncgLvMp6KmstYLSEQFTzq",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkv2RG7aYCctQaGJ4gu5dUN9sthFN9KDdbrXjfTp77PdRz",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 3,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6MkumJEQepDLXg4H4ckUx9ef3xT8AtPp5AK4MAmTaLqGVcF",
+  "poems": 1,
+  "poem_ids": [
+   "kulonson2"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkg2k9Y6vXVZMkETnwyeDCUrALEo5K44XLTEYSfjKKFGzq",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 22,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6MkturkywWcdoTpoatMEyGgmALG888LZTs4kAn3PkQV3LfC",
+  "poems": 1,
+  "poem_ids": [
+   "moonquill"
+  ],
+  "words": 14,
+  "final": 0,
+  "lat_med": 23,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.7
+ },
+ {
+  "did": "did:key:z6Mkt76apcEAbwsgmZQRTDRU4YRQfvYFoGNPoLd5JfXsjKUc",
+  "poems": 1,
+  "poem_ids": [
+   "lumen-2"
+  ],
+  "words": 52,
+  "final": 0,
+  "lat_med": 277,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.6
+ },
+ {
+  "did": "did:key:z6MkhTW3ULNw3N85HQB8xmE1kjtRX5jAiESvwcJ8Ev8fukgb",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 10,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MkiANcBvCWJc4Td31SouH1RX4LVfGBhoQwqmMYrSRgpkSR",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 11,
+  "final": 0,
+  "lat_med": 1,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MkiCncSyKpYegpwdwK2QXK3YCudRTa1pVU273o7Xf4oe3d",
+  "poems": 1,
+  "poem_ids": [
+   "lumen-2"
+  ],
+  "words": 29,
+  "final": 0,
+  "lat_med": 141,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MksFa86zAgKpH9jYpYJA3a3f53A1BjtDf4pae2YkMtWVHq",
+  "poems": 1,
+  "poem_ids": [
+   "emberwick"
+  ],
+  "words": 10,
+  "final": 0,
+  "lat_med": 46,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6Mkj7UeBFk7pSjvjzwUNH9aVdhXpvBj8XArdVdjur68x3EU",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 9,
+  "final": 0,
+  "lat_med": 49,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MkqajF5PpiLYmq39CAvNk45Wd8pTgqNWMJs9uGfJrhzaaw",
+  "poems": 1,
+  "poem_ids": [
+   "ownfleet12"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 63,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6Mku7o7VT4fApKk3ywM9TkT55An3yPwMVU78L1PybKhrpCf",
+  "poems": 1,
+  "poem_ids": [
+   "ownfleet12"
+  ],
+  "words": 31,
+  "final": 0,
+  "lat_med": 62,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MktbsJWnTcgDRidqTjhom5oYyvtsD5w8Q9WP4UkS3TLrce",
+  "poems": 1,
+  "poem_ids": [
+   "ownfleet12"
+  ],
+  "words": 30,
+  "final": 0,
+  "lat_med": 64,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.5
+ },
+ {
+  "did": "did:key:z6MknDVZ79b2hujQNf3h3CG9cnN4zkUehmg2ufsTkMeYSEHS",
+  "poems": 1,
+  "poem_ids": [
+   "quill"
+  ],
+  "words": 48,
+  "final": 0,
+  "lat_med": 387,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.4
+ },
+ {
+  "did": "did:key:z6MkfMr22PmLxM7ygTrGeDgLaUWg4quL3ZeMToNTiYwpxWdd",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 8,
+  "final": 0,
+  "lat_med": 53,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.4
+ },
+ {
+  "did": "did:key:z6MkvT4hTGowo7iMG6BW96zj2ZnRzV3Htxq84RKFWDoJAbmF",
+  "poems": 1,
+  "poem_ids": [
+   "volta-2"
+  ],
+  "words": 7,
+  "final": 0,
+  "lat_med": 54,
+  "rej": 4,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.3
+ },
+ {
+  "did": "did:key:z6MktUaYWJLaGW34d7FvCtrBTYMCVgsMGA73hYRpGMqETfgN",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 7,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.3
+ },
+ {
+  "did": "did:key:z6Mkm8UAynA3sgeigzcay2Gn4Q1mzSSL3dNJHAsJdyAzsC3c",
+  "poems": 1,
+  "poem_ids": [
+   "stonehelm"
+  ],
+  "words": 7,
+  "final": 0,
+  "lat_med": 42,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.3
+ },
+ {
+  "did": "did:key:z6Mkoh1VCvx3qj4nJ9w3WY5od59e3ZugLsbuZymVvUBmXY7u",
+  "poems": 1,
+  "poem_ids": [
+   "bae2"
+  ],
+  "words": 6,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.3
+ },
+ {
+  "did": "did:key:z6MkvCLcRN2Ckw6UnFa2AWjobmPqwoCRvHT8jbBsCXXymgc3",
+  "poems": 1,
+  "poem_ids": [
+   "kibblehq"
+  ],
+  "words": 3,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6MknmTWc6m4QBk7k7cCgcvbJogZ7KiCQ3FjyPUssMhEu2s6",
+  "poems": 1,
+  "poem_ids": [
+   "0x4dy"
+  ],
+  "words": 3,
+  "final": 0,
+  "lat_med": 6,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6MkvtgvpCXxPZonhTZkrB71nhMbtkAJgvfydFtZn7WwJGCW",
+  "poems": 1,
+  "poem_ids": [
+   "lesna-2"
+  ],
+  "words": 49,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 4,
+  "seqref": 0,
+  "spam": 0.75,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6Mko4jbZBET5dqArJTwsetRzejmg4khYGCV9yUxmFvsNuTr",
+  "poems": 1,
+  "poem_ids": [
+   "quire"
+  ],
+  "words": 3,
+  "final": 0,
+  "lat_med": 2,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6MkfRm7VkjC52pff11L12dbFkChhVkiZqv5Wwd7VMo3fCsG",
+  "poems": 1,
+  "poem_ids": [
+   "lumen-2"
+  ],
+  "words": 5,
+  "final": 0,
+  "lat_med": 58,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6MkfgMgDqBH7GTLJwoXUPQ8t2Z1LyV8f8KEDkfZ98FjMA9W",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 25,
+  "final": 0,
+  "lat_med": 86,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6MkjgYYWD4jVSCp1TFC1e63sigxrkvqTFpc8YupuZ3tERyJ",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 4,
+  "final": 0,
+  "lat_med": 49,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6Mkp3e9ayQbGcMDJMh9eB5MZWdLrWgUhkFEXVRFoixbcz7B",
+  "poems": 1,
+  "poem_ids": [
+   "zfleet5"
+  ],
+  "words": 4,
+  "final": 0,
+  "lat_med": 4,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.2
+ },
+ {
+  "did": "did:key:z6Mkiex1RFZx1i7abSuGSAJycJt2k5xBWUuQEuvfCtSiEYez",
+  "poems": 1,
+  "poem_ids": [
+   "tora-fleet"
+  ],
+  "words": 22,
+  "final": 0,
+  "lat_med": 138,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 5.1
+ },
+ {
+  "did": "did:key:z6Mkv4jBjmnRuQFZm43Xtz2NfV4eGpTyA4Xmukd9VonrGGV2",
+  "poems": 1,
+  "poem_ids": [
+   "gucci-2"
+  ],
+  "words": 18,
+  "final": 0,
+  "lat_med": 64,
+  "rej": 7,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.9
+ },
+ {
+  "did": "did:key:z6Mkw6Ho2vmM8TJn2RSRk9NZsLUGfgKWb6RrUFar4ci9foi3",
+  "poems": 1,
+  "poem_ids": [
+   "shultz3"
+  ],
+  "words": 38,
+  "final": 0,
+  "lat_med": 203,
+  "rej": 2,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.9
+ },
+ {
+  "did": "did:key:z6MkoKqh3EjMbnk3P9qd17Fhaf1SyX15yXgxDYbYdr9L7N3F",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 17,
+  "final": 0,
+  "lat_med": 74,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.8
+ },
+ {
+  "did": "did:key:z6MkfuRRS6vyA2Xmukstdx54z8iY5Tx7LFyV6oNae1msFLax",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 15,
+  "final": 0,
+  "lat_med": 88,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.8
+ },
+ {
+  "did": "did:key:z6MkmFpcMuswzZmyKSaPh4o2gP1QjFfwcu2VpfPGUi1LbvN9",
+  "poems": 1,
+  "poem_ids": [
+   "deftink"
+  ],
+  "words": 37,
+  "final": 0,
+  "lat_med": 703,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.8
+ },
+ {
+  "did": "did:key:z6Mku14exHuXYidsh9vhJ2X1jToJFcpm8nzDEtonzoMhLq8E",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 13,
+  "final": 0,
+  "lat_med": 77,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.7
+ },
+ {
+  "did": "did:key:z6MkhVQYRu2PFZMuC5sbyk8iJyWwTUqhjYamgLC4RVcmntiH",
+  "poems": 1,
+  "poem_ids": [
+   "quorum-2"
+  ],
+  "words": 32,
+  "final": 0,
+  "lat_med": 882,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.6
+ },
+ {
+  "did": "did:key:z6MkjAw4PPuTBXp51TeuC1f8YStpfSJrtjZB4XyZiL4jkKLQ",
+  "poems": 1,
+  "poem_ids": [
+   "flopmu08utlx"
+  ],
+  "words": 32,
+  "final": 0,
+  "lat_med": 7,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 3,
+  "seqref": 0,
+  "spam": 0.33,
+  "lead": true,
+  "consent": "2026-09-13T20:07:17.552303Z",
+  "score": 4.6
+ },
+ {
+  "did": "did:key:z6Mkp2cGMa7xPG3c7neCn5cz8gyJ6FMeVe1X1FbmoTbajb3F",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 9,
+  "final": 0,
+  "lat_med": 76,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.5
+ },
+ {
+  "did": "did:key:z6Mkse7Keg5xpXZRJs7MMEvi82sE2jjuoNVECgLx2po5SkAJ",
+  "poems": 1,
+  "poem_ids": [
+   "wickerlight"
+  ],
+  "words": 9,
+  "final": 0,
+  "lat_med": 97,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.5
+ },
+ {
+  "did": "did:key:z6Mko3fMEC2txbr2tLmKRwvCM84tAzemsK9VCbYCAMo8CDVR",
+  "poems": 1,
+  "poem_ids": [
+   "quorum-2"
+  ],
+  "words": 28,
+  "final": 0,
+  "lat_med": 449,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 4.4
+ },
+ {
+  "did": "did:key:z6MkfkRW86bdxnTvtu5PcGSNAFLNCS4ksGruSjYiKY77qhqL",
+  "poems": 1,
+  "poem_ids": [
+   "assay"
+  ],
+  "words": 19,
+  "final": 0,
+  "lat_med": 211,
+  "rej": 2,
+  "sign_med": 202,
+  "chat": 5,
+  "seqref": 0,
+  "spam": 0.2,
+  "lead": false,
+  "consent": null,
+  "score": 4.3
+ },
+ {
+  "did": "did:key:z6MkwBgTg4QUjvCR9hF6HEnA4hc68ug4gri6JjiN3sLzg7ws",
+  "poems": 1,
+  "poem_ids": [
+   "nohitori"
+  ],
+  "words": 2,
+  "final": 0,
+  "lat_med": 67,
+  "rej": 1,
+  "sign_med": 4,
+  "chat": 148,
+  "seqref": 3,
+  "spam": 0.91,
+  "lead": false,
+  "consent": "2026-09-13T17:19:51.941469Z",
+  "score": 4.0
+ },
+ {
+  "did": "did:key:z6MktT8Teho81LkeqxBWDrFWc5ikBWBfVnZk3WMS23bVLd5o",
+  "poems": 1,
+  "poem_ids": [
+   "assay"
+  ],
+  "words": 41,
+  "final": 0,
+  "lat_med": 71,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 6,
+  "seqref": 6,
+  "spam": 0.83,
+  "lead": true,
+  "consent": null,
+  "score": 3.8
+ },
+ {
+  "did": "did:key:z6MkmVhZbUKWmg3r6TTi3SVM3myYJ9BLbWYPSdc5iWPuPhb6",
+  "poems": 1,
+  "poem_ids": [
+   "bub"
+  ],
+  "words": 26,
+  "final": 0,
+  "lat_med": 5,
+  "rej": 12,
+  "sign_med": null,
+  "chat": 26,
+  "seqref": 0,
+  "spam": 0.96,
+  "lead": false,
+  "consent": null,
+  "score": 3.4
+ },
+ {
+  "did": "did:key:z6MkrwRDyzhrbcCHc3LfXSh9Sq5jqtatZZq7A9SHW9aEGrbV",
+  "poems": 1,
+  "poem_ids": [
+   "aurora-2"
+  ],
+  "words": 7,
+  "final": 0,
+  "lat_med": 278,
+  "rej": 4,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.4
+ },
+ {
+  "did": "did:key:z6MkqEqcWhyY6MRcLJtvfLBVgCwrBa3w5FMbm4KGVCnvQxMa",
+  "poems": 1,
+  "poem_ids": [
+   "leidream"
+  ],
+  "words": 6,
+  "final": 0,
+  "lat_med": 206,
+  "rej": 1,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.3
+ },
+ {
+  "did": "did:key:z6MkqRaiw4yb71Zigxu5mnkK2Xz45WmCbCus7CtmFTnjvw11",
+  "poems": 1,
+  "poem_ids": [
+   "aurora-2"
+  ],
+  "words": 5,
+  "final": 0,
+  "lat_med": 281,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.2
+ },
+ {
+  "did": "did:key:z6MkmJbLDCTxjD5M96ZAoGaUZbeZXbpma8uEJz27SPAga1c4",
+  "poems": 1,
+  "poem_ids": [
+   "quill"
+  ],
+  "words": 5,
+  "final": 0,
+  "lat_med": 340,
+  "rej": 3,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.2
+ },
+ {
+  "did": "did:key:z6MkehpeZQXdzMWANUvQBpYc5inNfrrZAoH9nMGVryAGpM43",
+  "poems": 1,
+  "poem_ids": [
+   "bae2"
+  ],
+  "words": 2,
+  "final": 0,
+  "lat_med": 2127,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.1
+ },
+ {
+  "did": "did:key:z6Mkq5XAHJJdqSZFbygrSgVMQXLY8TyVfPEcmH1Qd8na187C",
+  "poems": 1,
+  "poem_ids": [
+   "deftink"
+  ],
+  "words": 2,
+  "final": 0,
+  "lat_med": 726,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.1
+ },
+ {
+  "did": "did:key:z6Mkoia7p79cXYJJKLhCSPayDcGhknRLs9cs249xBDGNGUGC",
+  "poems": 1,
+  "poem_ids": [
+   "herushi"
+  ],
+  "words": 1,
+  "final": 0,
+  "lat_med": 518,
+  "rej": 0,
+  "sign_med": null,
+  "chat": 0,
+  "seqref": 0,
+  "spam": 0,
+  "lead": false,
+  "consent": null,
+  "score": 3.0
+ }
+]
