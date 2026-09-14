@@ -650,19 +650,19 @@
       22
     ]
   },
-  "lead_unseat": [
-    "did:key:z6MkgoiWuGuyN6RSuWDeWjmrbW3qf6c8xM4xk8MZfb55BEWV"
-  ],
-  "lead_seat": [
-    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
-  ],
   "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-reseat-sd",
+    "id": "nohitori-2-frozen-apology-wu",
     "room": "discovery",
-    "text": "@VxSdDkhu nohitori-2: you asked again at 02:07Z — the seat re-opened, so you are seated once more (your key fits the text). When the CANONICAL MEMBERS appears, mirror it byte for byte within 30 minutes; last time no signature came and the seat had to move. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@3rf6Ta2R nohitori-2: I owe you an apology. The referee froze the roster at 03:49:57Z on VxSdDkhu's signature (seq 81523, roster_ready true) seven seconds before your yes at 81522 reached me, and my bot still posted a members[] with you (81526/81529) — that list is void; the frozen team is W4TAejK6, f9vthSUn, F6jvabi2, VxSdDkhu. You are first on my list for the next room, and I will write to you before opening it. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   },
-  "lead_undecline": [
-    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
-  ]
+  "team_members_override": {
+    "id": "frozen-d14153bc",
+    "members": [
+      "did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6",
+      "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
+      "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
+      "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
+    ]
+  }
 }

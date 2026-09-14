@@ -2415,6 +2415,18 @@ class Agent:
             self.st["lead_invited"] = []; self.st["release_invites"] = []; self.st["lead_status_key"] = None
             attention(f"operator lead_next_game {ng}: game {old_gid} archived; requesting a new team room for {p.get('lead_game_id')}")
             self.save()
+        tmo = p.get("team_members_override")
+        if isinstance(tmo, dict) and isinstance(tmo.get("members"), list) and tmo.get("id") != self.st.get("team_members_override_done") \
+                and self.st.get("team") and all(DID_RE.fullmatch(x) for x in tmo["members"]) and self.did in tmo["members"]:
+            # 審判が凍結した members[] に当方の記録を合わせる（別の応募が同時に来て bot が枠を出し直した時の是正）。手番表は作り直す
+            self.st["team_members_override_done"] = tmo["id"]
+            self.st["team"]["members"] = list(tmo["members"]); self.st["team"]["ready"] = True
+            if lead:
+                lead["members"] = [x for x in tmo["members"] if x != self.did]; lead["canonical"] = list(tmo["members"])
+                lead["declined"] = [d for d in lead.get("declined", []) if d not in tmo["members"]]
+            self.st["script"] = None
+            attention(f"operator team_members_override {tmo['id']}: team set to {[x[-8:] for x in tmo['members']]}; turn script will be rebuilt")
+            self.save()
         pr = p.get("plan_reset")
         if pr and pr != self.st.get("plan_reset_done") and not (self.st.get("team") or {}).get("ready"):
             self.st["plan_reset_done"] = pr; self.st["plan"] = None; self.st["script"] = None; self._plan_at = 0
