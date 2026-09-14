@@ -1635,6 +1635,8 @@ class Agent:
         lead = self.st["lead"]; p = self.p
         if lead.get("generation") is None:
             return
+        if (self.st.get("team") or {}).get("ready"):
+            return   # 審判が凍結した後は署名の点検も出し直しもしない
         members = [self.did] + lead["members"]
         if lead.get("canonical"):
             missing = [d for d in lead["members"] if d not in lead.get("signed", {})]
