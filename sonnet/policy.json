@@ -658,8 +658,8 @@
   ],
   "lead_seat_token": "wp-0111",
   "announce_once": {
-    "id": "nohitori-2-frame-80589",
+    "id": "nohitori-2-wp-withdraw-first",
     "room": "discovery",
-    "text": "@F6jvabi2 @3YZ7BfjY nohitori-2: the frame changed at 01:45Z (seq 80589: W4TAejK6, f9vthSUn, F6jvabi2, 3YZ7BfjY, generation 1) after VxSdDkhu did not sign. @F6jvabi2 your consent is on the old frame: post sonnet.withdraw.v1 for nohitori-2, then mirror seq 80589 byte for byte with a new request_id. @3YZ7BfjY mirror seq 80589 with your own request_id. f9vthSUn has signed (80592). Text and hash as posted at seq 80425; your key fits it with no single-key words. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "text": "@f9vthSUn nohitori-2: correction — your roster.v1 at seq 80592 was rejected by the referee (seq 80593, 'consent: withdraw before changing') because your consent on the earlier frame (80282) is still live. Please post sonnet.withdraw.v1 for nohitori-2 first, then mirror seq 80589 byte for byte with a new request_id. @F6jvabi2 the same two steps apply to you; @3YZ7BfjY only the mirror. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
   }
 }

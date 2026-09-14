@@ -801,6 +801,18 @@ class Agent:
 
     def on_lead_receipt(self, m, j):
         lead = self.st["lead"]
+        # メンバーの署名が「consent: withdraw before changing」で却下された: 署名済み扱いを外し、1 回だけ手順を伝える
+        sd = j.get("sender_did")
+        if j.get("status") == "rejected" and str(j.get("reason", "")).startswith("consent") and isinstance(sd, str) \
+                and sd in lead.get("members", []) and lead.get("canonical") and m["seq"] not in (self.st.get("consent_nagged") or []):
+            self.st.setdefault("consent_nagged", []).append(m["seq"])
+            lead.get("signed", {}).pop(sd, None)
+            attention(f"lead: {sd[-8:]}'s signature on {lead['game_id']} rejected ({j.get('reason')}); asked to withdraw first", key=f"lead-consent-rej-{sd}")
+            try:
+                self.post(self.p["rooms"]["discovery"], f"@{sd[-8:]} {lead['game_id']}: the referee rejected your roster.v1 (seq {m['seq']}: {j.get('reason')}) — your earlier consent is still live. Post sonnet.withdraw.v1 for {lead['game_id']} first, then mirror the newest CANONICAL MEMBERS (seq {lead.get('roster_seq') or '?'}) byte for byte with a new request_id. Lead DID {self.did}", "lead-consent")
+            except Exception as e:
+                log(f"consent nag failed: {e!r}")
+            self.save()
         if lead.get("request_id") and j.get("request_id") == lead.get("request_id"):
             setup = (self.st.get("setups") or {}).get(lead.get("game_id"))
             if j.get("status") == "rejected" and "already assigned" in str(j.get("reason", "")) and setup:
