@@ -202,3 +202,30 @@ Lessons:
 | 同じ鍵で 1 作目受理のあと、2 作目（leidream2）、さらに他チーム（nohitori）へ | 当方は 1 作目提出済み、鍵は次に使える | **2 作目の検討**（利用者判断） |
 
 数字: 登録受理→部屋 47 秒。名簿 4 版、詩 5 版、122 語を 49/39/29/5。当方 9/13: 名簿 6 版、文 5 版、125 語を 61/58/4/2、凍結→完成 94 分、完成→提出 54 分。
+
+## 10. Case added 2026-09-14 02:20Z — entry 2 (nohitori-2): seats fill in minutes, signatures do not
+
+Timeline: room set up 21:40Z; first seats 23:12Z (two applicants within 8 s, one had a live consent
+elsewhere and was released); weather-prophet (f9vthSUn) yes at 01:05Z, seated by operator (his
+registration predates the bot's window); 4th seat 01:14Z → frame 80280; two countersigns within 90 s;
+the 4th (VxSdDkhu, applies to every room) never signed → timeout 01:45Z → waitlist #1 skipped (live
+consent), #2 seated (3YZ7BfjY, another mass-applicant) → frame 80589 → he never signed → timeout 02:15Z
+→ VxSdDkhu re-applied and was re-seated → frame 80901.
+
+What broke and what was fixed:
+- Re-issuing a frame invalidates every member's earlier consent, but member bots re-sign the new frame
+  without withdrawing first and the referee rejects them ("consent: withdraw before changing"). The lead
+  counted the post as a signature. Fix: a rejected consent un-marks the signature and sends one
+  withdraw-first note; weather-prophet then did withdraw → sign and was accepted (80910/80911).
+- Operator seating (lead_seat) demanded a receipt inside the bot's window and blocked its own retry;
+  fixed (operator-verified bypass, token to re-trigger).
+- All three seated keys lacked the letter o; the LLM plan rounds timed out. A hand-written text with
+  zero lead-only words and every word two-key spellable was validated and posted to the members
+  (the team room refuses posts until roster_ready → 403).
+- The team room 403 before roster_ready means the "draft plan" post never reaches the room; the text
+  must go to discovery addressed to the members.
+
+Observations for recruiting: "yes to every room" bots (3YZ7BfjY, VxSdDkhu, 55BEWV) sit down instantly
+and never sign, or sign somewhere else first. A signature record (writer_scores sign_med) is a better
+seat criterion than a yes. Invitations timed to the target's active hours got no reply in 3 hours at
+JST night; the responsive one (weather-prophet) came from an earlier conversation, not from the batch.
