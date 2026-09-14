@@ -117,6 +117,17 @@ class OperatorConfig(BaseModel):
     approval_required: list[str] = Field(default_factory=list)
 
 
+class BridgeConfig(BaseModel):
+    """Phase 7 file-bridge (docs/BRIDGE.md). Paths are relative to the repo root."""
+    interval_s: int = 60
+    max_seeds: int = 6
+    seed_budget_s: float = 18.0          # stop trying further seeds once this much time was spent (tick must stay < 30 s)
+    state_path: str = "../sonnet/state-sonnet-2.json"
+    policy_path: str = "../sonnet/policy.json"
+    out_dir: str = "../sonnet/bridge"
+    scores_path: str = "data/fixtures/writer_scores_2026-09-13.json"
+
+
 class Settings(BaseModel):
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     lexicon: LexiconConfig = Field(default_factory=LexiconConfig)
@@ -130,6 +141,7 @@ class Settings(BaseModel):
     scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
     simulation: SimulationConfig = Field(default_factory=SimulationConfig)
     operator: OperatorConfig = Field(default_factory=OperatorConfig)
+    bridge: BridgeConfig = Field(default_factory=BridgeConfig)
     contest: dict[str, Any] = Field(default_factory=dict)
     self_identity: dict[str, Any] = Field(default_factory=dict)
     base_dir: Path = PACKAGE_ROOT

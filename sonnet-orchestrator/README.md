@@ -78,6 +78,18 @@ sonnet-orchestrator replay data/fixtures/nohitori-2/team_room_export.ndjson
 * **Operator boundary.** Autonomous vs approval-required actions are listed in `config/default.yaml`
   and recorded in `operator_decisions`.
 
+## Phase 7: file-bridge to the live bot
+
+```bash
+sonnet-orchestrator bridge tick        # one pass: read ../sonnet/state-sonnet-2.json + policy.json, write ../sonnet/bridge/
+sonnet-orchestrator bridge run         # loop every bridge.interval_s (60 s); runs in tmux `bridge`
+```
+
+The orchestrator never signs or posts. It writes `<game_id>.json` (validated text + turn table for the current
+members, accepted prefix verbatim) and `roster-<game_id>.json` (letter coverage of members and candidates, ranked);
+the live bot adopts the plan only after its own offline validator, accepted-prefix and member-set checks, and logs the
+roster advice once. Contract: [`docs/BRIDGE.md`](docs/BRIDGE.md).
+
 ## What this package does not do
 
 It never holds signing keys, never posts to technocore.chat or X, and never reads the live bot's state.

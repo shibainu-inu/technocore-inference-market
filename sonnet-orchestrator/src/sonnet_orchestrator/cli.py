@@ -17,6 +17,8 @@ solver_app = typer.Typer(help="Assignment / feasibility / roster solver")
 plan_app = typer.Typer(help="Poem planning with the accepted prefix fixed")
 simulate_app = typer.Typer(help="Offline simulation (mock adapters)")
 run_app = typer.Typer(help="Control loop (Phase 7: real adapters; today mock only)")
+bridge_app = typer.Typer(help="Phase 7 file-bridge: read the live bot's state/policy, write plan + roster advice files")
+app.add_typer(bridge_app, name="bridge")
 app.add_typer(lexicon_app, name="lexicon")
 app.add_typer(did_app, name="did")
 app.add_typer(solver_app, name="solver")
@@ -263,6 +265,58 @@ def dashboard(snapshot: Optional[Path] = None, config: Optional[Path] = CONFIG_O
     from .diagnostics.dashboard import render, demo_snapshot
     data = json.loads(snapshot.read_text()) if snapshot else demo_snapshot()
     console.print(render(data))
+
+
+# --------------------------------------------------------------------- bridge (Phase 7)
+def _bridge_paths(s, state, policy, out, scores):
+    b = s.bridge
+    return (state or s.resolve(b.state_path), policy or s.resolve(b.policy_path), out or s.resolve(b.out_dir),
+            scores or s.resolve(b.scores_path))
+
+
+def _bridge_tick_once(s, state, policy, out, scores, seed):
+    from .bridge import tick
+    return tick(state, policy, out, s, scores_path=scores, seed=seed)
+
+
+@bridge_app.command("tick")
+def bridge_tick(state: Optional[Path] = typer.Option(None, "--state", help="live bot state JSON (read-only)"),
+                policy: Optional[Path] = typer.Option(None, "--policy", help="live bot policy JSON (read-only)"),
+                out: Optional[Path] = typer.Option(None, "--out", help="bridge output directory"),
+                scores: Optional[Path] = typer.Option(None, "--scores", help="writer_scores_*.json"),
+                seed: int = typer.Option(0, "--seed"), config: Optional[Path] = CONFIG_OPT):
+    """One bridge tick: write <out>/<game_id>.json and <out>/roster-<game_id>.json when they changed."""
+    s = _settings(config)
+    st, po, od, sc = _bridge_paths(s, state, policy, out, scores)
+    r = _bridge_tick_once(s, st, po, od, sc, seed)
+    print(f"{_ts()} game={r.game_id} plan={r.plan_id} wrote_plan={r.wrote_plan} wrote_roster={r.wrote_roster}"
+          f" {r.elapsed_s:.1f}s :: {r.reason}", flush=True)
+
+
+@bridge_app.command("run")
+def bridge_run(state: Optional[Path] = typer.Option(None, "--state"), policy: Optional[Path] = typer.Option(None, "--policy"),
+               out: Optional[Path] = typer.Option(None, "--out"), scores: Optional[Path] = typer.Option(None, "--scores"),
+               seed: int = typer.Option(0, "--seed"), interval: Optional[float] = typer.Option(None, "--interval", help="seconds"),
+               config: Optional[Path] = CONFIG_OPT):
+    """Loop forever: one tick every --interval seconds (default bridge.interval_s); exceptions are logged, not fatal."""
+    import time
+    s = _settings(config)
+    st, po, od, sc = _bridge_paths(s, state, policy, out, scores)
+    every = float(interval if interval is not None else s.bridge.interval_s)
+    print(f"{_ts()} bridge run: state={st} policy={po} out={od} interval={every:g}s", flush=True)
+    while True:
+        try:
+            r = _bridge_tick_once(s, st, po, od, sc, seed)
+            print(f"{_ts()} game={r.game_id} plan={r.plan_id} wrote_plan={r.wrote_plan} wrote_roster={r.wrote_roster}"
+                  f" {r.elapsed_s:.1f}s :: {r.reason}", flush=True)
+        except Exception as e:  # noqa: BLE001 - keep the loop alive
+            print(f"{_ts()} tick error: {e!r}", flush=True)
+        time.sleep(every)
+
+
+def _ts() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @run_app.command("live")

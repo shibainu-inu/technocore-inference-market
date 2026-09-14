@@ -92,3 +92,12 @@ operator:
     - new_ignore_rule
     - major_roster_strategy_change
     - start_next_entry
+
+bridge:                          # Phase 7 file-bridge (docs/BRIDGE.md); paths relative to the repo root
+  interval_s: 60
+  max_seeds: 6
+  seed_budget_s: 18.0            # stop trying further seeds after this much time (a tick must stay < 30 s)
+  state_path: "../sonnet/state-sonnet-2.json"
+  policy_path: "../sonnet/policy.json"
+  out_dir: "../sonnet/bridge"
+  scores_path: "data/fixtures/writer_scores_2026-09-13.json"
