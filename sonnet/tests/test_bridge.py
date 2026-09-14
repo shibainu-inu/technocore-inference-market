@@ -280,3 +280,14 @@ class TestMemberMode(unittest.TestCase):
         a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
         a.apply_plan_result(list(TEST_PLAN))
         self.assertEqual(a.st["plan"], TEST_PLAN); self.assertNotIn("plan", a.post.kinds())
+
+
+class TestBridgeIgnoredInOthersTeam(unittest.TestCase):
+    def test_bridge_plan_ignored_when_not_lead(self):
+        tmp = tempfile.mkdtemp()
+        a = fresh(); a.post = RecordingPost(); a.p["bridge_dir"] = tmp; a.p.pop("plan_seed", None)
+        a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
+        a.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": None, "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": None}
+        bridge_file(tmp, "prophet", TEST_PLAN, alternate(len(WORDS), [B, ME, C, D]), [B, ME, C, D], id_="x1")
+        a.apply_bridge()
+        self.assertIsNone(a.st.get("plan")); self.assertEqual(a.st.get("bridge_done"), "x1"); self.assertNotIn("plan adopted", att())

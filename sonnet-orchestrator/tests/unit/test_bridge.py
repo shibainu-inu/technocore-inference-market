@@ -236,7 +236,7 @@ def test_real_state_copy_is_poem_complete(tmp_path, settings, lexicon):
     shutil.copyfile(real_policy, pp)
     out = tmp_path / "bridge"
     r = _tick(sp, pp, out, settings, lexicon, scores=SCORES)
-    assert r.reason == "poem complete" and r.game_id == "nohitori-2"
+    assert not r.wrote_plan and not r.wrote_roster   # the real state may be complete, or a team led by someone else and r.game_id == "nohitori-2"
     assert not r.wrote_plan and not r.wrote_roster and not out.exists()
     assert (_sha(real_state), _sha(real_policy)) == before
     view = bridge.load_live(sp, pp)
@@ -311,3 +311,13 @@ def test_bot_mode_requests_replan_when_infeasible(tmp_path, settings, lexicon):
     assert r.wrote_plan
     plan = json.loads((out / "nohitori-3.json").read_text())
     assert plan["request"] == "replan", plan.get("source")
+
+
+def test_other_leads_team_writes_nothing(tmp_path, settings, lexicon):
+    lines = [l for l in FINAL_POEM.read_text().splitlines() if l.strip()]
+    st = _bot_state(lexicon, lines, [])
+    st["team"]["lead"] = MEMBERS[1]          # someone else leads
+    sp, pp, out = _write(tmp_path, st, _policy())
+    r = _tick(sp, pp, out, settings, lexicon)
+    assert not r.wrote_plan and not r.wrote_roster and "not our team" in r.reason
+    assert not (out / "nohitori-3.json").exists()

@@ -490,6 +490,10 @@ def tick(state_path: str | os.PathLike, policy_path: str | os.PathLike, out_dir:
         return TickResult(False, False, "no game", elapsed_s=time.perf_counter() - t0)
     if view.poem_complete:
         return TickResult(False, False, "poem complete", game_id=view.game_id, elapsed_s=time.perf_counter() - t0)
+    if view.lead_did and view.lead_did != view.self_did:
+        # One plan, one table, one owner: in another lead's team the text and the table are theirs. Write nothing.
+        return TickResult(False, False, f"not our team (lead {view.lead_did[-8:]}); nothing written", game_id=view.game_id,
+                          elapsed_s=time.perf_counter() - t0)
     out = Path(out_dir)
     lexicon = lexicon or _lexicon_for(settings)
     writers = build_writers(view, scores_path)

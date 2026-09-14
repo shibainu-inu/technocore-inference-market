@@ -1717,6 +1717,10 @@ class Agent:
         team, lead = self.st.get("team"), self.st.get("lead")
         members = list((team or {}).get("members") or ([self.did] + [m for m in (lead or {}).get("members", []) if m != self.did]))
         lines, who = b.get("lines"), b.get("who")
+        if team and team.get("lead") not in (None, self.did):
+            # 他人のチーム: 本文も手番表もリーダーのもの。bridge の計画は採用しない（1 計画・1 表・1 オーナー）
+            self.st["bridge_done"] = b.get("id")
+            log(f"bridge {b.get('id')}: ignored — {gid} is led by {team.get('lead', '')[-8:]}, not us"); self.save(); return
         if b.get("game_id") == gid and b.get("request") == "replan":
             # bridge が「今の本文は残りの語を書ける人がいない」と判定: 本文を捨てて LLM（Opus）に受理済み語から書き直させる
             self.st["bridge_done"] = b["id"]
