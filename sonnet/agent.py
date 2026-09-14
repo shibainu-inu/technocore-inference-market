@@ -2003,7 +2003,7 @@ class Agent:
             team = self.st.get("team") or {}
             if idx + 1 < len(sc["words"]):
                 nxt = sc["words"][idx + 1]; need = set(self.LETTERS_RE.findall(nxt.lower()))
-                absent = set(self.p.get("absent_members") or [])   # 運用者が不在と判断したメンバーは「次の語を書ける人」に数えない
+                absent = set(self.p.get("absent_members") or []) | set(self.p.get("slow_members") or [])   # 不在・遅い相手は「次の語を書ける人」に数えない
                 others = [m for m in team.get("members", []) if m != self.did and m not in absent and need <= self.key_letters(m)]
                 if not others:
                     log(f"not covering word {idx + 1}: the next word {nxt!r} is spellable only by us")

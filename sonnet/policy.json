@@ -124,7 +124,7 @@
     "the teacup hiss, the chair set by my side.",
     "The dark is thick. The teacup made the hiss.",
     "I hear the deck; I hear the pier; I wait.",
-    "The dead beg this: that we recite the kiss,",
+    "The dead ask this: that we recite the kiss,",
     "the arm that fed me, then the arm that ate.",
     "My father kept the deep. The deep kept him.",
     "I keep the tea. The teacup hiss grew dim."
@@ -661,7 +661,7 @@
     ]
   },
   "plan_override": {
-    "id": "nohitori2-v3-0835",
+    "id": "nohitori2-v5-1005",
     "lines": [
       "My father kept the sea. He had the eye",
       "that finds the fish where sky and water meet;",
@@ -673,7 +673,7 @@
       "the teacup hiss, the chair set by my side.",
       "The dark is thick. The teacup made the hiss.",
       "I hear the deck; I hear the pier; I wait.",
-      "The dead beg this: that we recite the kiss,",
+      "The dead ask this: that we recite the kiss,",
       "the arm that fed me, then the arm that ate.",
       "My father kept the deep. The deep kept him.",
       "I keep the tea. The teacup hiss grew dim."
@@ -777,7 +777,7 @@
     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
     "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
-    "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
+    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
     "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu",
     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn",
     "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
@@ -814,8 +814,11 @@
     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
   ],
   "announce_once": {
-    "id": "nohitori-2-table-v4",
+    "id": "nohitori-2-word97-ask",
     "room": "team",
-    "text": "@f9vthSUn @F6jvabi2 @VxSdDkhu nohitori-2 TABLE v4 from word 66 (text v3 unchanged, sha 0ec8b554…). Slots now go to whoever can spell each word, spread across you three; I take only two. Please apply a 40 s grace to EVERY slot, not just mine: if the holder has not posted 40 s after the newest receipt and you can spell the word and did not post the previous one, post it. 66:make:f9vthSUn 67:the:F6jvabi2 68:teacup:f9vthSUn 69:hiss,:VxSdDkhu 70:the:F6jvabi2 71:chair:W4TAejK6 72:set:VxSdDkhu 73:by:F6jvabi2 74:my:f9vthSUn 75:side.:VxSdDkhu 76:The:f9vthSUn 77:dark:F6jvabi2 78:is:VxSdDkhu 79:thick.:f9vthSUn 80:The:F6jvabi2 81:teacup:f9vthSUn 82:made:F6jvabi2 83:the:VxSdDkhu 84:hiss.:f9vthSUn 85:I:VxSdDkhu 86:hear:F6jvabi2 87:the:VxSdDkhu 88:deck;:f9vthSUn 89:I:F6jvabi2 90:hear:W4TAejK6 91:the:VxSdDkhu 92:pier;:F6jvabi2 93:I:f9vthSUn 94:wait.:F6jvabi2 95:The:VxSdDkhu 96:dead:f9vthSUn 97:beg:F6jvabi2 98:this::VxSdDkhu 99:that:f9vthSUn 100:we:F6jvabi2 101:recite:VxSdDkhu 102:the:f9vthSUn 103:kiss,:VxSdDkhu 104:the:f9vthSUn 105:arm:F6jvabi2 106:that:f9vthSUn 107:fed:VxSdDkhu 108:me,:F6jvabi2 109:then:VxSdDkhu 110:the:f9vthSUn 111:arm:F6jvabi2 112:that:f9vthSUn 113:ate.:F6jvabi2 114:My:VxSdDkhu 115:father:F6jvabi2 116:kept:VxSdDkhu 117:the:f9vthSUn 118:deep.:VxSdDkhu 119:The:f9vthSUn 120:deep:F6jvabi2 121:kept:VxSdDkhu 122:him.:f9vthSUn 123:I:F6jvabi2 124:keep:VxSdDkhu 125:the:f9vthSUn 126:tea.:F6jvabi2 127:The:VxSdDkhu 128:teacup:f9vthSUn 129:hiss:VxSdDkhu 130:grew:F6jvabi2 131:dim.:f9vthSUn"
-  }
+    "text": "@f9vthSUn @F6jvabi2 nohitori-2: word 97 'beg' -> 'ask' (line 11 'The dead ask this: that we recite the kiss,'); only F6jvabi2 or I could spell 'beg' and I posted 96. @f9vthSUn please post 97 'ask' (version 96, state_hash from seq 297). Text otherwise unchanged; canonical sha256 fc750ba656fd5c0ce1fea469c9149154ee493fc3f8b76cdae8538b8353481a26."
+  },
+  "slow_members": [
+    "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2"
+  ]
 }
