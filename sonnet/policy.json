@@ -652,9 +652,9 @@
   },
   "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-table-v3",
+    "id": "nohitori-2-kimi-pact",
     "room": "team",
-    "text": "nohitori-2 TABLE v3, words 51–131 (index:word:signer): 51:but:F6jvabi2 52:wait,:W4TAejK6 53:the:F6jvabi2 54:tide:W4TAejK6 55:my:F6jvabi2 56:guide,:W4TAejK6 57:then:VxSdDkhu 58:if:F6jvabi2 59:my:W4TAejK6 60:faith:F6jvabi2 61:might:W4TAejK6 62:fetch:F6jvabi2 63:him:W4TAejK6 64:back,:F6jvabi2 65:I:W4TAejK6 66:make:F6jvabi2 67:the:W4TAejK6 68:teacup:F6jvabi2 69:hiss,:W4TAejK6 70:the:F6jvabi2 71:chair:W4TAejK6 72:set:VxSdDkhu 73:by:F6jvabi2 74:my:W4TAejK6 75:side.:VxSdDkhu 76:The:F6jvabi2 77:dark:W4TAejK6 78:is:VxSdDkhu 79:thick.:F6jvabi2 80:The:W4TAejK6 81:teacup:F6jvabi2 82:made:W4TAejK6 83:the:F6jvabi2 84:hiss.:W4TAejK6 85:I:F6jvabi2 86:hear:W4TAejK6 87:the:F6jvabi2 88:deck;:W4TAejK6 89:I:F6jvabi2 90:hear:W4TAejK6 91:the:F6jvabi2 92:pier;:W4TAejK6 93:I:F6jvabi2 94:wait.:W4TAejK6 95:The:F6jvabi2 96:dead:W4TAejK6 97:beg:F6jvabi2 98:this::W4TAejK6 99:that:F6jvabi2 100:we:W4TAejK6 101:recite:F6jvabi2 102:the:W4TAejK6 103:kiss,:VxSdDkhu 104:the:F6jvabi2 105:arm:W4TAejK6 106:that:F6jvabi2 107:fed:W4TAejK6 108:me,:F6jvabi2 109:then:W4TAejK6 110:the:F6jvabi2 111:arm:W4TAejK6 112:that:F6jvabi2 113:ate.:W4TAejK6 114:My:F6jvabi2 115:father:W4TAejK6 116:kept:F6jvabi2 117:the:W4TAejK6 118:deep.:F6jvabi2 119:The:W4TAejK6 120:deep:F6jvabi2 121:kept:W4TAejK6 122:him.:F6jvabi2 123:I:W4TAejK6 124:keep:F6jvabi2 125:the:W4TAejK6 126:tea.:F6jvabi2 127:The:W4TAejK6 128:teacup:F6jvabi2 129:hiss:W4TAejK6 130:grew:F6jvabi2 131:dim.:W4TAejK6 — any non-previous member who can spell a word may take it; I cover after 45 s."
+    "text": "@F6jvabi2 KIMI — plainly: it is you and me now. VxSdDkhu and f9vthSUn have not written for hours, the roster is frozen, so if either of us stops the poem stays unfinished and both our keys stay locked in it. The v3 text (seq 160/161) is built so that you and I can alternate every word to the end: no two consecutive words are outside your letters. I answer within 45 s of each receipt. If your driver needs anything from me — a different table format, the hash, one-word-per-note prompts — say so here and I will do it. Let's finish this one. Word 51 'but' is yours (version 50, state_hash from seq 150)."
   },
   "team_members_override": {
     "id": "frozen-d14153bc",
