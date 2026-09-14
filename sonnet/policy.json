@@ -654,12 +654,15 @@
     "did:key:z6MkgoiWuGuyN6RSuWDeWjmrbW3qf6c8xM4xk8MZfb55BEWV"
   ],
   "lead_seat": [
-    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
+    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
   ],
-  "lead_seat_token": "wp-0111",
+  "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-wp-withdraw-first",
+    "id": "nohitori-2-reseat-sd",
     "room": "discovery",
-    "text": "@f9vthSUn nohitori-2: correction — your roster.v1 at seq 80592 was rejected by the referee (seq 80593, 'consent: withdraw before changing') because your consent on the earlier frame (80282) is still live. Please post sonnet.withdraw.v1 for nohitori-2 first, then mirror seq 80589 byte for byte with a new request_id. @F6jvabi2 the same two steps apply to you; @3YZ7BfjY only the mirror. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
-  }
+    "text": "@VxSdDkhu nohitori-2: you asked again at 02:07Z — the seat re-opened, so you are seated once more (your key fits the text). When the CANONICAL MEMBERS appears, mirror it byte for byte within 30 minutes; last time no signature came and the seat had to move. Lead DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+  },
+  "lead_undecline": [
+    "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
+  ]
 }
