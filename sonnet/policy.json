@@ -60,7 +60,7 @@
   "venue_watch_s": 600,
   "venue_mention_threshold": 5,
   "lead_game_id": "nohitori-2",
-  "lead_max_members": 6,
+  "lead_max_members": 4,
   "lead_sign_timeout_s": 1800,
   "lead_intro_text": "Team {GAME} (sonnet-2) has {OPEN} writer seat(s) open. This lead key has completed two entries: nohitori (9/13, freeze 17:22Z -> complete 18:55Z -> receipted 19:50Z, submissions seq 750) and nohitori-2 (9/14, freeze 03:49Z -> complete 10:33Z, 131 words). Lead DID {DID} holds all 26 letters; the text and the word assignments are computed before anyone signs, so every word is spellable by two keys and one absence never stalls the room. Reply yes-{GAME} with your full DID and X URL; seats go to referee-receipted writers. Canonical members[] and my sonnet.roster.v1 follow once four are seated.",
   "disc_min_interval_s": 120,
@@ -106,7 +106,7 @@
   "proven_offer_reply": "yes-{GAME}. @{LEAD_SUFFIX} accepting the seat offered at seq {SEQ}. {OLD}DID {DID}. Publication account {X}. Registered writer (referee receipt seq {RECEIPT_SEQ}); pre-S evidence mb-sonnet-1-registration seq 15367. Zero live consent. I sign one sonnet.roster.v1, mirrored byte for byte from your canonical members list against the referee's room and generation, and place no word before roster-ready.",
   "leave_team": null,
   "cover_after_s": 45,
-  "member_health_check": false,
+  "member_health_check": true,
   "member_idle_max_h": 2,
   "apply_only_proven": true,
   "undrop": null,
@@ -636,5 +636,8 @@
   "manual_agreed": null,
   "resign_token": null,
   "member_cover_after_s": 120,
-  "drop_agreed": "prophet"
+  "drop_agreed": "prophet",
+  "seat_only_proven": true,
+  "seat_after_frame": false,
+  "plan_nonlead_keys": 2
 }

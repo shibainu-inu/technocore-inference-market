@@ -95,6 +95,7 @@ operator:
 
 bridge:                          # Phase 7 file-bridge (docs/BRIDGE.md); paths relative to the repo root
   text_source: bot               # bot = Opus writes the text (live bot make_plan), bridge assigns; heuristic = bridge writes text too
+  lead_word_latency_ms: 120000   # lead = controller + emergency cover; the solver gives it words only when nobody else can
   interval_s: 60
   max_seeds: 6
   seed_budget_s: 18.0            # stop trying further seeds after this much time (a tick must stay < 30 s)

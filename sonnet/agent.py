@@ -961,8 +961,12 @@ class Agent:
         submitter = j.get("sender_did")
         cands = [d for d, _ in proposers.most_common() if d not in (self.did, submitter) and d not in self.ignored()]
         w = self.st.setdefault("writers_ok", {})
+        pc = self.st.setdefault("proven_contributors", {})
         for d in cands:
             w.setdefault(d, m["seq"])   # 語が受理された = 登録済み writer
+            pc.setdefault(d, m["seq"])  # 受理された詩に語を通した = accepted-word history あり
+        if isinstance(submitter, str):
+            pc.setdefault(submitter, m["seq"])
         ri = self.st.setdefault("release_invites", [])
         added = [d for d in cands if d not in ri and d not in (self.st.get("lead_invited") or [])]
         ri.extend(added); del ri[:-40]
@@ -1571,6 +1575,16 @@ class Agent:
         if not ok:
             attention(f"lead: applicant {frm[-6:]} for {lead['game_id']} has no observed writer receipt; not seated (they can ask the referee for their receipt)", key=f"lead-app-{frm}")
             return
+        if self.p.get("seat_only_proven") and not self.is_proven(frm):
+            # 2026-09-14 方針: 大量応募 bot を避け、受理された詩に語を通した相手（accepted-word history）だけを座らせる。運用者は lead_seat で例外を出せる
+            attention(f"lead: applicant {frm[-8:]} for {lead['game_id']} has no accepted-word history; not seated (operator may seat with lead_seat)", key=f"lead-proven-{frm}")
+            if frm not in (self.st.get("proven_told") or []):
+                self.st.setdefault("proven_told", []).append(frm); del self.st["proven_told"][:-100]
+                try:
+                    self.post(self.p["rooms"]["discovery"], f"@{frm[-8:]} {lead['game_id']}: thanks for applying. Seats here go first to writers with accepted words in a submitted poem; I could not find yours in the accepted entries. If you have one, reply with the game_id and my operator checks it. Lead DID {self.did}", "lead-proven")
+                except Exception as e:
+                    log(f"proven note failed: {e!r}")
+            self.save(); return
         # 他所の枠に生きている同意がある相手は、審判が当方の枠への署名を却下する（consent: withdraw before changing）: 座らせず理由を返す
         lc = [w for x, w in self.member_health([frm], lead["game_id"]) if w.startswith("live consent")]
         if lc:
@@ -1766,6 +1780,11 @@ class Agent:
         except Exception as e:
             log(f"maybe_propose after bridge: {e!r}")
 
+    def is_proven(self, did):
+        """accepted-word history: 受理された詩に語を通した／提出した DID、または運用者の招待先"""
+        return did in (self.st.get("proven_contributors") or {}) or did in (self.st.get("proven_submitters") or {}) \
+            or did in (self.p.get("lead_invites") or []) or did in (self.p.get("trusted_senders") or [])
+
     def key_fits_plan(self, did):
         """計画（plan_seed / plan）に対して候補の鍵が合うか。合わなければ理由文字列、合えば ""。計画が無ければ常に合う"""
         plan = self.st.get("plan") or self.p.get("plan_seed")
@@ -1834,7 +1853,10 @@ class Agent:
                     lead["members"].remove(d); lead.setdefault("declined", []).append(d)
                 attention(f"lead: {len(missing)} member(s) did not sign within the window; seats re-opened, roster will be re-issued", key="lead-timeout")
                 lead["canonical"] = None; lead["signed"] = {}; self.st["team"] = None; self.st["intro_at"] = 0
-                self.seat_from_waitlist()
+                if self.p.get("seat_after_frame", True):
+                    self.seat_from_waitlist()
+                else:
+                    log("seat_after_frame is false: not seating from the waitlist after a frame was issued")
                 self.save(); return
             if lead["canonical"] == members:
                 return
@@ -2336,9 +2358,10 @@ class Agent:
             words = [w for line in lines for w in line.split(" ") if w]
             can = [[m for m in members if set(self.LETTERS_RE.findall(w.lower())) <= letters[m]] for w in words]
             probs = []
-            single = [words[i] for i in range(len(words)) if len(can[i]) < 2]
+            need_nonlead = int(self.p.get("plan_nonlead_keys", 2))   # 2026-09-14 方針: 可能な限り全語を lead 抜きで 2 鍵
+            single = [words[i] for i in range(len(words)) if len([m for m in can[i] if m != me]) < need_nonlead]
             if single:
-                probs.append("words spellable by fewer than two members (change them): " + ", ".join(dict.fromkeys(single)))
+                probs.append(f"words spellable by fewer than {need_nonlead} non-lead members (change them): " + ", ".join(dict.fromkeys(single)))
             adj = [f"{words[i]} {words[i + 1]}" for i in range(len(words) - 1) if can[i] == [me] and can[i + 1] == [me]]
             if adj:
                 probs.append("two consecutive words only the lead can spell (change one): " + "; ".join(adj[:6]))

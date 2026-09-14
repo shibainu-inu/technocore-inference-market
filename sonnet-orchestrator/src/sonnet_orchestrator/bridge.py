@@ -147,14 +147,19 @@ def _profile(did: str, scores: dict[str, WriterProfile], **update) -> WriterProf
     return base.model_copy(update=update)
 
 
-def build_writers(view: LiveView, scores_path: Optional[str | os.PathLike] = None) -> list[WriterProfile]:
-    """One WriterProfile per member (lead first). Letters come from the DID; latency/mass_application from scores."""
+def build_writers(view: LiveView, scores_path: Optional[str | os.PathLike] = None,
+                  lead_latency_ms: Optional[float] = None) -> list[WriterProfile]:
+    """One WriterProfile per member (lead first). Letters come from the DID; latency/mass_application from scores.
+    ``lead_latency_ms`` (config bridge.lead_word_latency_ms) makes the solver treat the lead as slow, so the lead is a
+    controller + emergency cover and gets words only where nobody else can spell them."""
     scores = _scores_map(scores_path)
     out: list[WriterProfile] = []
     for did in view.members:
         upd: dict = {"is_lead": did == view.lead_did, "is_self": did == view.self_did}
         if did == view.self_did and view.x_account:
             upd["x_account"] = view.x_account
+        if did == view.lead_did and lead_latency_ms:
+            upd["word_latency_median_ms"] = float(lead_latency_ms)
         if did in view.absent_members:
             upd["health"] = WriterHealth.DOWN
         elif did in view.slow_members:
@@ -496,7 +501,7 @@ def tick(state_path: str | os.PathLike, policy_path: str | os.PathLike, out_dir:
                           elapsed_s=time.perf_counter() - t0)
     out = Path(out_dir)
     lexicon = lexicon or _lexicon_for(settings)
-    writers = build_writers(view, scores_path)
+    writers = build_writers(view, scores_path, lead_latency_ms=getattr(settings.bridge, "lead_word_latency_ms", None))
 
     plan_path = out / f"{view.game_id}.json"
     previous = _load_existing(plan_path)

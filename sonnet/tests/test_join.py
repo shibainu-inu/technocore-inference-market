@@ -38,6 +38,7 @@ def fresh(auto=None):
               "invite_windows", "invite_records", "team_members_override", "lead_seat_token", "manual_agreed", "resign_token"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
     p["plan_seed"] = TEST_PLAN              # 試験は本番 policy の plan_seed に依らず固定の合格文で回す
+    p["lead_max_members"] = 6; p["seat_only_proven"] = False; p["seat_after_frame"] = True   # 本番方針の切替に試験を依存させない
     if auto: p["auto"].update(auto)
     # 方針の再読込（60 秒ごと）は本番の policy.json ではなく、この試験用に剥いた写しを読む
     p["_path"] = os.path.join(HERE, "_policy_join.json")

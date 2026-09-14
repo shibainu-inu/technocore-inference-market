@@ -3,7 +3,7 @@ import json, os, sys, unittest, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE)); sys.path.insert(0, HERE)
 import agent
-from test_join import fresh, att, RecordingPost, TEST_PLAN, ME, CID, REF, OTHERS, LEAD, healthy
+from test_join import fresh, att, RecordingPost, TEST_PLAN, ME, CID, REF, OTHERS, LEAD, healthy, DISC
 
 SUBS = json.load(open(os.path.join(os.path.dirname(HERE), "policy.json")))["rooms"]["submissions"]
 B, C, D = OTHERS[0], OTHERS[1], LEAD
@@ -322,3 +322,34 @@ class TestStuckTimerFromFirstSignature(unittest.TestCase):
         self.team(a, signed_at=agent.iso()); a.st["leave_team_done"] = "prophet"   # 旧形式の done marker
         a.p["leave_team"] = "prophet"; a.apply_operator_switches(a.p)
         self.assertIsNone(a.st["team"]); self.assertEqual(a.st["leave_team_done"], "prophet:10")
+
+
+class TestEntry3Recruitment(unittest.TestCase):
+    """2026-09-14 方針: accepted-word history 必須、署名開始後は席を増やさない"""
+
+    def lead(self, a):
+        a.st["lead"] = {"game_id": "nohitori-3b", "request_id": "r", "state": "collecting", "at": "t", "members": [], "signed": {}, "declined": [],
+                        "poem_room": f"d-{CID}-team-nohitori-3b", "generation": 1, "waitlist": []}
+        a.st["writers_ok"] = {B: 1, C: 1}; a.st.setdefault("last_seen", {})[B] = agent.iso(); a.st["last_seen"][C] = agent.iso()
+        return a
+
+    def app(self, a, frm):
+        j = {"type": "sonnet.application.v1", "contest_id": CID, "game_id": "nohitori-3b", "did": frm, "role": "writer", "request_id": f"ap-{frm[-6:]}"}
+        a.on_lead_application({"seq": 5, "ts": agent.iso(), "from": frm, "_sig_ok": True, "_room": DISC, "text": json.dumps(j)}, j)
+
+    def test_unproven_applicant_not_seated_but_proven_is(self):
+        a = fresh(); a.post = RecordingPost(); a.p["seat_only_proven"] = True; a.p["member_health_check"] = False; self.lead(a)
+        self.app(a, B)
+        self.assertNotIn(B, a.st["lead"]["members"]); self.assertIn("no accepted-word history", att()); self.assertIn("lead-proven", a.post.kinds())
+        a.st["proven_contributors"] = {C: 1}
+        self.app(a, C)
+        self.assertIn(C, a.st["lead"]["members"])
+        self.app(a, B)                                       # 同じ相手に二度は書かない
+        self.assertEqual(a.post.kinds().count("lead-proven"), 1)
+
+    def test_release_watch_records_proven_contributors(self):
+        a = fresh(); a.post = RecordingPost()
+        a.st["proven_contributors"] = {}
+        pc = a.st["proven_contributors"]; pc.setdefault(B, 9)
+        self.assertTrue(a.is_proven(B)); self.assertFalse(a.is_proven(C))
+        a.p["lead_invites"] = [C]; self.assertTrue(a.is_proven(C))
