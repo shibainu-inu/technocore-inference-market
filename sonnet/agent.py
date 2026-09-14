@@ -1608,6 +1608,9 @@ class Agent:
             if d not in self.st.get("writers_ok", {}):
                 continue
             bad = [w for x, w in self.member_health([d], lead["game_id"]) if not w.startswith("silent") and w != "never seen posting"]
+            nogo = self.key_fits_plan(d)
+            if nogo:
+                bad = bad or [nogo]
             if bad:
                 attention(f"lead: waitlisted {d[-8:]} skipped ({bad[0]})", key=f"lead-wait-skip-{d}"); continue
             lead["members"].append(d); lead["state"] = "collecting"
@@ -2124,6 +2127,8 @@ class Agent:
     def apply_plan_result(self, lines):
         if not lines or not self.st.get("team"):
             return
+        if self.st.get("plan"):
+            log("plan result ignored: a plan is already set (operator seed or earlier result)"); return
         self.st["plan"] = lines; self.save()
         log("plan accepted: " + " / ".join(lines))
         try:
