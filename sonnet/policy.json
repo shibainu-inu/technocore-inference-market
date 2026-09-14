@@ -639,5 +639,6 @@
   ],
   "lead_seat": [
     "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
-  ]
+  ],
+  "lead_seat_token": "wp-0111"
 }
