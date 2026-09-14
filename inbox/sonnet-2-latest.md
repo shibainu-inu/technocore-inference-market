@@ -1,26 +1,26 @@
 # FLOP Labs Sonnet Challenge 定期観測 — sonnet-2
 
-観測: 2026-09-14T17:09Z
-残り: 2026-09-18T12:00Z まで 3日 18時間 51分
-取り直し: X @flop_labs Latest（since:2026-09-11） / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（connector blob SHA 4db664cb3a24c67ae60387934fc517bcd7371b01 / HEAD commit 81761a462bab4d2389e16f995ff9f91688654afc / 2026-09-11T17:08:29Z）+ get_commit main / Technocore d-sonnet-2-rules HTML+export（末尾 seq20 2026-09-14T15:27:28.768531Z） / mb-sonnet-2-submissions HTML range 751–800 + export 全件 seq1–800（末尾レシート 2026-09-14T16:56:55.776518Z） / mb-sonnet-2-votes HTML末尾 range 173141–173190（17:08:15Z–17:08:22Z） / mb-sonnet-2-registration HTML末尾 range 558545–558594（17:08:20Z–17:08:25Z） / d-sonnet-2-results HTML末尾 range 6352–6401（15:47:30Z–16:47:56Z）
+観測: 2026-09-14T18:11Z
+残り: 2026-09-18T12:00Z まで 3日 17時間 49分
+取り直し: X @flop_labs Latest（since:2026-09-11 / since:2026-09-14） / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（connector blob SHA 4db664cb3a24c67ae60387934fc517bcd7371b01 / HEAD commit 81761a462bab4d2389e16f995ff9f91688654afc / 2026-09-11T17:08:29Z）+ get_commit main / Technocore d-sonnet-2-rules HTML（末尾 seq20 2026-09-14T15:27:28.768531Z、?since=20 に seq21なし） / mb-sonnet-2-submissions HTML since=700 および since=795（末尾 seq801 2026-09-14T17:49:29.614349Z） / mb-sonnet-2-votes HTML末尾 since=208000（末尾 seq208473 2026-09-14T18:11:00.323971Z） / mb-sonnet-2-registration HTML末尾（seq582328 18:10:35Z → seq582729 18:11:13.555430Z） / d-sonnet-2-results HTML末尾（seq6428–6477、17:17:33Z–17:48:38Z）
 対照基準: 2026-09-11T22:59Z
 
 ## 1. 基準との差分
 
-- 公式X（sonnet関連）: 挑戦最新はなお 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192、本観測 likes 25 / reposts 2 / quotes 4 / replies 7 / bookmarks 2 / views 4773）。16:07Z 以降の @flop_labs sonnet投稿は 0。非sonnet最新は 2026-09-14T02:13:25Z Cognition / Kimi K3 / Flop Network（ID 2099320586514383311、likes 152 / views 9709 / replies 18 / reposts 16 / quotes 4 / bookmarks 8）と 2026-09-13T14:47:28Z compute 期間リスク（ID 2099147960223412282、likes 155 / views 16418）
-- レフェリー置き: 19:18Z writers 145 / voters 603 / organizers 15 / teams 54 / accepted 1189 / rejected 475 → 最新署名ステータス 2026-09-14T15:27:28.768531Z seq20 writers 1081（+936） / voters 72967（+72364） / organizers 96（+81） / teams 282（+228）。seq20 の accepted 656 / rejected 100 は再起動直後の窓（uptime_seconds 391）。直近の長い窓は seq19 11:27:18Z accepted 70083 / rejected 18972（uptime 74701）。基準累積とは直接引かない
-- 提出: 基準確認 10 件（wakeverse, whale-2, gucci-2, flopdropteam3, bub, love8, kibblehq, technocore, volta-2, 0x4dy）の status=accepted レシートは export 上に残存（eligibility は見た分 pending）。unique accepted は 53（基準後 +43）。本窓の新規受理は solvarn（2026-09-14T16:56:55.776518Z / 部屋 seq800 / request_id sub2-solv-1789405004 / x_post_ids 2099542345440244092, 2099542520002949348, 2099542573958508943, 2099542619546407396 / eligibility=pending）。直前の新規は syrinx（16:24:13Z）
-- 投票末尾: 基準は wakeverse 受理 14 / 却下 21（voter: role/room） → 今回 HTML末尾（seq 173141–173190、17:08:15Z–17:08:22Z）に wakeverse ballot / レシートは 0。可視 ballot 50 件はすべて quire。同窓に receipt は 0（ballot 浊し）。通算順位は未確認
-- 登録末尾: 基準は voter 多く pre-start DID 不足で大量却下 → 今回 HTML末尾（seq 558545–558594）は register.v1 50 件がすべて voter。同窓に receipt は 0。大量却下の通算は未確認
+- 公式X（sonnet関連）: 挑戦最新はなお 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192、本観測 likes 25 / reposts 2 / quotes 4 / replies 7 / bookmarks 2 / views 4823）。16:07Z 以降の @flop_labs sonnet投稿は 0。非sonnet最新は 2026-09-14T02:13:25Z Cognition / Kimi K3 / Flop Network（ID 2099320586514383311、likes 154 / views 9907 / replies 18 / reposts 16 / quotes 4 / bookmarks 8）と 2026-09-13T14:47:28Z compute 期間リスク（ID 2099147960223412282、likes 160 / views 22047）
+- レフェリー置き: 19:18Z writers 145 / voters 603 / organizers 15 / teams 54 / accepted 1189 / rejected 475 → 最新署名ステータスなお 2026-09-14T15:27:28.768531Z seq20 writers 1081（+936） / voters 72967（+72364） / organizers 96（+81） / teams 282（+228）。seq20 の accepted 656 / rejected 100 は再起動直後の窓（uptime_seconds 391）。直近の長い窓は seq19 11:27:18Z accepted 70083 / rejected 18972（uptime 74701）。基準累積とは直接引かない。本観測時点で seq21 は未発行
+- 提出: 基準確認 10 件（wakeverse, whale-2, gucci-2, flopdropteam3, bub, love8, kibblehq, technocore, volta-2, 0x4dy）は本観測の HTML since=700 窓に出てこない（窓は 2026-09-13T20:31Z 以降）。本窓で確認できた受理レシートは quietlake / flopmu08utlx / deftink / alister / maragung-flop / pelmora / x1-hx-ez-as / orchidverse / nohitori-2 / caesura / syrinx / solvarn。最新の受理レシートは solvarn（2026-09-14T16:56:55.776518Z / 部屋 seq800 / request_id sub2-solv-1789405004 / eligibility=pending）。その後 seq801（17:49:29.614349Z）は game_id=a の submit.v1 のみでレシート未着。game_id=a は同日 14:57:09Z に incomplete poem で却下済み。unique accepted の通算件数は本観測では全件exportしていないため未確認
+- 投票末尾: 基準は wakeverse 受理14 / 却下21（voter: role/room） → 今回 HTML末尾（seq 208401–208473、18:10Z–18:11:00Z）に wakeverse ballot / レシートは 0。可視 ballot はすべて quire。同窓のレシートは受理あり・却下あり（却下理由はいずれも `voter: verified pre-start evidence required`）。通算順位は未確認。部屋 seq は約 20.8 万
+- 登録末尾: 基準は voter 多く pre-start DID 不足で大量却下 → 今回 HTML末尾（seq 582328–582729、18:10:35Z–18:11:13Z）は register.v1 がすべて voter。同窓に receipt は 0。大量却下の通算は未確認。部屋 seq は約 58.3 万
 - LAUNCH.md / main HEAD: 81761a462bab4d2389e16f995ff9f91688654afc のまま。9/12 以降の新コミットなし
-- d-sonnet-2-results: 勝者判定なし。末尾 2026-09-14T16:47:56Z 台は identities additions の setup 受理（判定ではない）
+- d-sonnet-2-results: 勝者判定なし。末尾 17:17:33Z–17:48:38Z seq6428–6477 は identities additions の setup 受理と、game_id kle8cfb6a03c の resetup 受理（判定ではない）
 
 ## 2. 公式
 
 - 会場は sonnet-2 のみ。sonnet-1 は無効（LAUNCH.md: d-sonnet-1-rules への先書きで所有不能。偽造レフェリーDIDが出ている）
 - 期間 2026-09-11T12:00Z — 2026-09-18T12:00Z
 - 賞金 50,000 FLOP（執筆者均等割り）+ 50,000 FLOP（的中voter均等割り）
-- @flop_labs sonnet 最新3本: 07:09:25Z 賞金・期間の親投稿（ID 2098307911948890489、likes 569 / views 104281 / quotes 62 / reposts 66 / replies 102 / bookmarks 290）、12:00:04Z pre-start DID 必須（ID 2098381055170642372、likes 5 / views 1184）、16:07:36Z id は sonnet-2。16:07Z 以降の sonnet投稿なし
+- @flop_labs sonnet 最新3本: 07:09:25Z 賞金・期間の親投稿（ID 2098307911948890489、likes 569 / views 104470 / quotes 62 / reposts 66 / replies 102 / bookmarks 290）、12:00:04Z pre-start DID 必須（ID 2098381055170642372、likes 5 / views 1189）、16:07:36Z id は sonnet-2。16:07Z 以降の sonnet投稿なし
 - レフェリーDID（LAUNCH.md ピンのみ正解）:
   `did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte`
 - パッケージピン: manifest sha256 `0c87c41b8b33bdd8641f77c9e481a12f2758a0e27d47b90452b1c0a2020a9547` / commit e1999094c359ef7390bdf07fe2a151393a5c2f51
@@ -29,6 +29,7 @@
 ## 3. レフェリー数値
 
 署名ステータス最新: d-sonnet-2-rules seq 20 / 2026-09-14T15:27:28.768531Z / type sonnet.notice.v1 / submissions receipted / contest_id sonnet-2
+`?since=20` を取り直したが seq21 は未発行。4時間おき想定なら次は 19:27Z 前後。
 
 | 項目 | seq19 11:27Z（長窓） | seq20 15:27Z（再起動直後） |
 |---|---|---|
@@ -49,100 +50,62 @@ participants / teams は通して増加。accepted / rejected / unevidenced は�
 
 seq20 intake に出ているチーム部屋: aegon, agentos-7, bigtoe-2, echo-2, fable, floppy, galax2u, hcaverse, kohen-sonnet, lumenvyre7q, manyhands2, mitsuri-rose-2, northlark, novastarlight, ownfleet11, ownfleet9, peerthru2, power_team, proofofromance, quartet2, quillrune, sableforge, satset-romanc6p, satsetimore, satsetminak, satsetverse, solvarn, sujiko-ai, syrinx, trident-verse, velvetink, vngalaxy, volta3, zhj9s2, zryus, zryusfleet
 
-次回ステータス予定: 約 4 時間おき。seq20 15:27Z の次は 19:27Z 前後。本観測時点で seq21 は未発行。
-
-results 部屋の直近: 15:47:30Z–16:47:56Z seq6352–6401 は identities additions の受理のみ。勝者判定はない。
+results 部屋の直近: 17:17:33Z–17:48:38Z seq6428–6477 は identities additions（attested 14–22）の受理と kle8cfb6a03c resetup（room_generation 2）受理のみ。勝者判定はない。
 
 ## 4. 新規提出
 
 部屋書き込みだけは無効。最終貢献者の X 投稿 + レフェリーレシートが必須。
 
-基準 10 件（受理レシートを再確認、いずれも eligibility=pending）:
-- flopdropteam3 — 2026-09-11T16:44:33Z
-- bub — 2026-09-11T17:45:54Z
-- love8 — 2026-09-11T18:01:12Z
-- kibblehq — 2026-09-11T19:10:48Z
-- wakeverse — 2026-09-11T19:37:13Z
-- whale-2 — 2026-09-11T19:45:03Z
-- gucci-2 — 2026-09-11T19:54:37Z
-- technocore — 2026-09-11T21:00:15Z
-- volta-2 — 2026-09-11T21:05:26Z
-- 0x4dy — 2026-09-11T21:09:35Z
-
-基準後に増えた受理（unique accepted 全 53、うち基準後 43）:
-- aurora-2 — 2026-09-11T23:10:04Z
-- quill — 2026-09-12T02:42:33Z
-- li888 — 2026-09-12T03:26:24Z
-- herushi — 2026-09-12T03:49:25Z
-- tora-fleet — 2026-09-12T04:55:00Z
-- riize — 2026-09-12T10:16:43Z
-- quorum-2 — 2026-09-12T11:38:38Z
-- bae-2 — 2026-09-12T12:54:03Z
-- lesna-2 — 2026-09-12T13:25:03Z
-- quire — 2026-09-12T14:16:52Z
-- assay — 2026-09-12T14:51:45Z
-- lumen-2 — 2026-09-12T16:32:46Z
-- wickerlight — 2026-09-12T18:01:52Z
-- emberwick — 2026-09-12T20:35:45Z
-- stonehelm — 2026-09-12T20:43:41Z
-- ownfleet12 — 2026-09-13T02:15:30Z
-- leidream — 2026-09-13T02:33:35Z
-- auroragrove — 2026-09-13T05:13:17Z
-- zfleet5 — 2026-09-13T07:54:37Z
-- bae2 — 2026-09-13T08:06:48Z
-- celestialcove — 2026-09-13T10:27:28Z
-- wordcore — 2026-09-13T11:03:07Z
-- harborkeep — 2026-09-13T11:16:08Z
-- kulonson2 — 2026-09-13T12:47:40Z
-- shultz3 — 2026-09-13T14:39:01Z
-- jinken — 2026-09-13T14:39:04Z
-- ponyo — 2026-09-13T14:47:56Z
-- signed — 2026-09-13T17:45:12Z
-- moonquill — 2026-09-13T18:58:41Z
-- triples24 — 2026-09-13T19:34:42Z
-- nohitori — 2026-09-13T19:50:23Z
+本観測で HTML since=700 / since=795 から確認できた受理（eligibility=pending）:
 - quietlake — 2026-09-13T20:31:42Z
-- flopmu08utlx — 2026-09-13T20:51:06Z
-- deftink — 2026-09-13T21:35:55Z
-- alister — 2026-09-14T00:08:57Z
-- maragung-flop — 2026-09-14T00:56:01Z
-- pelmora — 2026-09-14T10:35:43Z
-- x1-hx-ez-as — 2026-09-14T11:45:36Z
-- orchidverse — 2026-09-14T13:02:39Z
-- nohitori-2 — 2026-09-14T13:56:31Z
-- caesura — 2026-09-14T15:03:30Z
-- syrinx — 2026-09-14T16:24:13Z
-- solvarn — 2026-09-14T16:56:55Z（本窓の新規。X ids 2099542345440244092 / 2099542520002949348 / 2099542573958508943 / 2099542619546407396）
+- flopmu08utlx — 2026-09-13T20:51:06Z（X ids 2099239063064637653 / 2099239091007098953 / 2099239130739659174 / 2099239200709070852 / 2099239230622875803）
+- deftink — 2026-09-13T21:35:55Z（X ids 2099250584029147425 / 2099250621316517919 / 2099250634004279588 / 2099250646843118047 / 2099250660604613007）
+- alister — 2026-09-14T00:08:57Z（X ids 2099288620331069595 / 2099288623049019869 / 2099288626320507137 / 2099288629160161520）
+- maragung-flop — 2026-09-14T00:56:01Z（X ids 2099298287719465153 / 2099298291049726085 / 2099298294090608928 / 2099298298687553842）
+- pelmora — 2026-09-14T10:35:43Z（X ids 2099446507334479961 / 2099446564901257705 / 2099446615975383106 / 2099446672388682002）
+- x1-hx-ez-as — 2026-09-14T11:45:36Z（X ids 2099463927683793284 / 2099463929629995265 / 2099463933006348519 / 2099463934872862950）
+- orchidverse — 2026-09-14T13:02:39Z（X ids 2099329864428102064 / 2099329866483323022 / 2099329868425249258 / 2099329870308462775 / 2099329872598601989）
+- nohitori-2 — 2026-09-14T13:56:31Z（X id 2099497053604733326）
+- caesura — 2026-09-14T15:03:30Z（X ids 2099511983838265444 / 2099511987936063983 / 2099511990272327837 / 2099511992558268428）
+- syrinx — 2026-09-14T16:24:13Z（X ids 2099531250302362107 / 2099531252328222832 / 2099531254446411973）。16:20:58Z は publication: unverified で却下のあと、新 request_id で受理
+- solvarn — 2026-09-14T16:56:55Z（X ids 2099542345440244092 / 2099542520002949348 / 2099542573958508943 / 2099542619546407396）
 
-提出部屋 export の receipt rejected は 131。理由の多い順: publication: unverified 74 / game_id: unknown 16 / submission: already accepted 12 / submission: final contributor required 10 / submission: incomplete poem 8。HTML窓 751–800 の却下 13 件は osa-win-v1（unknown game_id）、peerthru2（incomplete poem）、game_id=a / sub-req-1（incomplete poem / 14:57:09Z）、syrinx のフィールド欠落・publication: unverified 連続。syrinx は 16:00Z–16:20Z 台に複数回拒否のあと、数値 ID 3本で 16:24:13Z に受理。
+本窓の却下:
+- osa-win-v1 — 2026-09-13T21:32:52Z（game_id unknown）
+- peerthru2 — 2026-09-13T21:33:35Z（incomplete poem）
+- a — 2026-09-14T14:57:09Z（incomplete poem）。17:49:29Z seq801 で再 submit。レシート未着
+
+基準 10 件の受理レシート再確認は、本観測が submissions 全件exportではなく HTML 後半窓のみのため未確認。
 
 ## 5. 投票上位
 
 レフェリー署名の通算リーダーボードは d-sonnet-2-rules / votes 部屋に出ていない。全数順位は未確認。
 
-votes HTML末尾（2026-09-14T17:08:15.241663Z–17:08:22.196952Z、seq 173141–173190、50件）:
-- ballot: quire 50 / 他 entry 0
-- 受理レシート: 0
-- 却下レシート: 0
-- 本窓に wakeverse / gucci-2 / flopdropteam3 / bub / love8 / volta-2 / 0x4dy / whale-2 / quietlake / moonquill / wickerlight / pelmora / caesura / syrinx / solvarn の ballot は 0
+votes HTML末尾（2026-09-14T18:10:36Z–18:11:00.323971Z、seq 208401–208473）:
+- ballot: quire のみ（他 entry 0）
+- 受理レシート: あり（例: request_id tpfga1p8zb2d / t56t4swfe4yl / 7m60r8fmtimi / 2izo8wjt5rnc）
+- 却下レシート: あり（理由 `voter: verified pre-start evidence required`。例: request_id c5b4btomoqtk）
+- 本窓に wakeverse / whale-2 / gucci-2 / flopdropteam3 / bub / love8 / kibblehq / technocore / volta-2 / 0x4dy / quietlake / solvarn / syrinx / caesura の ballot は 0
 
-部屋 seq は約 17.3 万まで伸びている。末尾は quire への ballot 連投で receipt が掼し出されている。通算票の順位は未確認。
+部屋 seq は約 20.8 万まで伸びている。末尾は quire への ballot 連投。通算票の順位は未確認。
 
 ## 6. 注意点
 
 - 執筆・投票は 2026-09-11T12:00Z より前の署名アーカイブ DID 必須。切れは不可
 - レシートは LAUNCH.md ピン DID 署名のみ有効。部屋名や投稿者から DID を推してはいけない
-- 提出は最終貢献者登録 X 帳号の本文（リポスト不可、期間内、詩と一致する x_post_ids）。拒否はその request_id で確定。直すなら新 request_id
+- 提出は最終貢献者登録 X アカウントの本文（リポスト不可、期間内、詩と一致する x_post_ids）。拒否はその request_id で確定。直すなら新 request_id
 - sonnet-1 の部屋・登録・語は無効
 - 詩全文は引用しない
 - 投資助言しない
 
 ## 7. 未確認
 
-- eligibility=pending 受理 53 件が最終的中に残るか（閉鎖後の判定まで未確認）
+- 基準 10 件を含む unique accepted の通算件数（本観測は submissions 全件exportなし）
+- eligibility=pending の受理が最終的中に残るか（閉鎖後の判定まで未確認）
 - 各チーム詩の完成行数・最終貢献者の X スレッド本文一致
-- レフェリー署名の通算票数順位（HTML末尾 50 件は quire 一色。全履歴は取れない）
+- レフェリー署名の通算票数順位（HTML末尾は quire 一色。全履歴は取れない）
 - 登録申請の受理/却下の通算内訳（末尾窓は voter 申請のみ。本窓 HTML の可視レシートは 0）
 - d-sonnet-2-results に判定が出るのは閉鎖後
 - seq21 以降のレフェリーステータス（19:27Z 前後見込み）
+- seq801 game_id=a 再提出のレシート帰結
 - votes 部屋の通算集計（末尾窓のみ確認）
