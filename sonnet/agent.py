@@ -773,7 +773,7 @@ class Agent:
         if not lead:
             if now < self.st.get("lead_block_until", 0) or self.st.get("lead_attempts", 0) >= p.get("lead_max_attempts", 3):
                 return
-            gid = p.get("lead_game_id") or f"nohitori{int(now) % 1000}"
+            gid = self.lead_game_id() or f"nohitori{int(now) % 1000}"
             if not GAME_RE.match(gid):
                 attention(f"lead_game_id {gid!r} is not a valid game_id", key="lead-gid"); return
             su = (self.st.get("setups") or {}).get(gid)
@@ -914,6 +914,10 @@ class Agent:
             ps = self.st.setdefault("proven_submitters", {})
             if d not in ps:
                 ps[d] = m["seq"]; log(f"proven submitter observed: {d[-8:]} (submissions seq {m['seq']})")
+        try:
+            self.maybe_next_entry_on_release(m, j)
+        except Exception as e:
+            log(f"next_entry_on_release error: {e!r}")
         if not self._replaying and not getattr(self, "_syncing", False):
             try:
                 self.release_watch(m, j)
@@ -1588,6 +1592,133 @@ class Agent:
         self.save()
         self.lead_check_roster()
 
+    def archive_game_and_reset(self, why, next_gid=None):
+        """提出済み（または閉じる）ゲームを退避し、lead/team/poem/plan/手番表を初期化して次のゲームを請求できる状態にする。
+        完成済み枠への当方の同意は念のため取り下げる（審判が「consent: missing」で却下しても害は無い）。
+        next_gid があれば以後の lead_game_id をそれに差し替える（policy の lead_game_id より優先）"""
+        p = self.p
+        done = self.st.setdefault("done_games", [])
+        done.append({"at": iso(), "lead": self.st.get("lead"), "team": self.st.get("team"), "poem": self.st.get("poem"),
+                     "plan": self.st.get("plan"), "script": self.st.get("script"), "submission_ready": self.st.get("submission_ready")})
+        old_gid = ((self.st.get("team") or {}).get("game_id")) or ((self.st.get("lead") or {}).get("game_id"))
+        if old_gid and self.key is not None:
+            try:
+                self.post(p["rooms"]["discovery"], self.compact({"type": "sonnet.withdraw.v1", "contest_id": p["contest_id"], "game_id": old_gid, "request_id": self.req_id("withdraw")}), "withdraw")
+            except Exception as e:
+                log(f"withdraw after completion failed: {e!r}")
+        self.st["lead"] = None; self.st["team"] = None; self.st["plan"] = None; self.st["script"] = None; self.st["pending_word"] = None
+        self.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": None, "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": None}
+        self.st["submission_ready"] = None; self.st["lead_attempts"] = 0; self.st["lead_block_until"] = 0; self.st["intro_at"] = 0
+        self.st["lead_invited"] = []; self.st["release_invites"] = []; self.st["lead_status_key"] = None
+        self.st["bridge_done"] = None; self.st["bridge_roster_done"] = None
+        if isinstance(next_gid, str) and GAME_RE.match(next_gid):
+            self.st["lead_game_id_override"] = next_gid
+        attention(f"{why}: game {old_gid} archived; requesting a new team room for {self.lead_game_id()}")
+        self.save()
+
+    def lead_game_id(self):
+        """次に率いるゲーム ID: 解放時に立てた override が policy の lead_game_id より優先"""
+        ov = self.st.get("lead_game_id_override")
+        return ov if isinstance(ov, str) and GAME_RE.match(ov) else self.p.get("lead_game_id")
+
+    def maybe_next_entry_on_release(self, m, j):
+        """審判が当方チームの詩の提出を受理した = 全員の同意が解放された（規則）。auto.next_entry_on_release が真なら
+        そのまま次のゲームを請求する（募集・招待・計画は従来の経路と file-bridge が担う）"""
+        if not self.p["auto"].get("next_entry_on_release") or self._replaying or getattr(self, "_syncing", False):
+            return
+        if j.get("type") != "sonnet.receipt.v1" or j.get("status") != "accepted":
+            return
+        gid = ((self.st.get("team") or {}).get("game_id")) or ((self.st.get("lead") or {}).get("game_id"))
+        if not gid:
+            return
+        sr = (self.st.get("submit_reqs") or {}).get(j.get("request_id")) or {}
+        if sr.get("game") != gid and j.get("entry_id") != gid:
+            return
+        next_gid = self.p.get("next_game_id")
+        if not (isinstance(next_gid, str) and GAME_RE.match(next_gid)) or next_gid == gid:
+            attention(f"submission for {gid} accepted (seq {m['seq']}) but next_game_id {next_gid!r} is unusable; staying put", key="next-gid"); return
+        attention(f"CRITICAL submission for {gid} accepted by the referee (seq {m['seq']}, entry {j.get('entry_id', '')}): roster released")
+        self.archive_game_and_reset(f"auto next_entry_on_release ({gid} -> {next_gid})", next_gid)
+
+    def bridge_path(self, name):
+        d = self.p.get("bridge_dir")
+        if not isinstance(d, str) or not d:
+            return None
+        return os.path.join(d, name) if os.path.isabs(d) else os.path.join(HERE, "..", d, name)   # 相対はリポジトリ直下基準
+
+    def apply_bridge(self):
+        """file-bridge: orchestrator が書いた <bridge_dir>/<game_id>.json（本文 + 手番表）と roster-<game_id>.json（助言）を読む。
+        本文は plan_override と同じ検査（公式バリデータ・受理済み語との一致・メンバー集合の一致）を通った時だけ採用する"""
+        gid = ((self.st.get("team") or {}).get("game_id")) or ((self.st.get("lead") or {}).get("game_id"))
+        if not gid:
+            return
+        path = self.bridge_path(f"{gid}.json")
+        if not path:
+            return
+        try:
+            mt = os.path.getmtime(path)
+        except OSError:
+            mt = None
+        if mt is not None and mt != getattr(self, "_bridge_mtime", None):
+            self._bridge_mtime = mt
+            try:
+                b = json.load(open(path))
+            except (OSError, ValueError) as e:
+                attention(f"bridge: cannot read {path}: {e}", key="bridge-read"); b = None
+            if isinstance(b, dict) and b.get("id") and b.get("id") != self.st.get("bridge_done"):
+                self.apply_bridge_plan(b, gid)
+        rpath = self.bridge_path(f"roster-{gid}.json")
+        try:
+            rmt = os.path.getmtime(rpath) if rpath else None
+        except OSError:
+            rmt = None
+        if rmt is not None and rmt != getattr(self, "_bridge_roster_mtime", None):
+            self._bridge_roster_mtime = rmt
+            try:
+                r = json.load(open(rpath))
+            except (OSError, ValueError):
+                r = None
+            if isinstance(r, dict) and r.get("id") and r.get("id") != self.st.get("bridge_roster_done") and r.get("advice"):
+                self.st["bridge_roster_done"] = r["id"]
+                attention(f"bridge roster {r['id']}: {str(r['advice'])[:300]}")
+                self.save()
+
+    def apply_bridge_plan(self, b, gid):
+        team, lead = self.st.get("team"), self.st.get("lead")
+        members = list((team or {}).get("members") or ([self.did] + [m for m in (lead or {}).get("members", []) if m != self.did]))
+        lines, who = b.get("lines"), b.get("who")
+        if b.get("game_id") != gid or not (isinstance(lines, list) and len(lines) == 14 and all(isinstance(x, str) for x in lines)):
+            attention(f"bridge {b.get('id')}: ignored (game {b.get('game_id')!r} != {gid!r} or malformed)", key="bridge-shape"); return
+        if set(b.get("members") or []) != set(members):
+            log(f"bridge {b['id']}: members differ from the current roster; waiting for a regenerated plan"); return
+        self.st["bridge_done"] = b["id"]
+        words = [w for line in lines for w in line.split(" ") if w]
+        poem = self.st.get("poem") or {}
+        done = [w for line in poem.get("lines", []) for w in line.split(" ") if w] + list(poem.get("current") or [])
+        problems = check_poem(lines, self.lexicon())
+        if problems:
+            attention(f"bridge {b['id']} rejected by the offline check: {problems[:3]}"); self.save(); return
+        if words[:len(done)] != done:
+            attention(f"bridge {b['id']} rejected: accepted words so far do not match its prefix"); self.save(); return
+        who_ok = isinstance(who, list) and len(who) == len(words) and all(isinstance(x, str) and x in members for x in who) \
+            and all(who[i] != who[i + 1] for i in range(len(who) - 1))
+        self.st["plan"] = list(lines)
+        if team and team.get("ready") and team.get("lead") == self.did:
+            if who_ok:
+                self.st["script"] = {"words": words, "who": list(who)}
+                self.post_script(lines, list(who))
+            else:
+                self.st["script"] = None
+                self.ensure_script()
+        elif self.st.get("script"):
+            self.st["script"]["words"] = words
+        attention(f"bridge {b['id']}: plan adopted for {gid} ({len(words)} words, prefix {len(done)}, who={'bridge' if who_ok else 'own'}, fit problems {len(b.get('fit_problems') or [])})")
+        self.save()
+        try:
+            self.maybe_propose()
+        except Exception as e:
+            log(f"maybe_propose after bridge: {e!r}")
+
     def key_fits_plan(self, did):
         """計画（plan_seed / plan）に対して候補の鍵が合うか。合わなければ理由文字列、合えば ""。計画が無ければ常に合う"""
         plan = self.st.get("plan") or self.p.get("plan_seed")
@@ -1970,6 +2101,11 @@ class Agent:
         words, who = self.build_turn_script(plan, team["members"])
         self.st["script"] = {"words": words, "who": who}
         self.save()
+        self.post_script(plan, who)
+
+    def post_script(self, plan, who):
+        """手番表をチーム部屋に連（4/4/4/2）ごとに投稿する"""
+        team = self.st.get("team")
         counts = collections.Counter(who)
         log("turn script: " + ", ".join(f"{m[-6:]}={counts[m]}" for m in team["members"]))
         if self.key is None:
@@ -2424,24 +2560,8 @@ class Agent:
             attention("operator script_who: turn assignments replaced (" + ", ".join(f"{m[-6:]}={sw.count(m)}" for m in dict.fromkeys(sw)) + ")")
         ng = p.get("lead_next_game")
         if isinstance(ng, str) and ng and ng != self.st.get("lead_next_game_done"):
-            # 提出済みのゲームを閉じて次のゲームを請求する: 今のゲームの状態を退避し、lead/team/poem/plan/手番表を初期化。
-            # 完成済み枠への当方の同意は念のため取り下げる（審判が「consent: missing」で却下しても害は無い）
             self.st["lead_next_game_done"] = ng
-            done = self.st.setdefault("done_games", [])
-            done.append({"at": iso(), "lead": self.st.get("lead"), "team": self.st.get("team"), "poem": self.st.get("poem"),
-                         "plan": self.st.get("plan"), "script": self.st.get("script"), "submission_ready": self.st.get("submission_ready")})
-            old_gid = ((self.st.get("team") or {}).get("game_id")) or ((self.st.get("lead") or {}).get("game_id"))
-            if old_gid:
-                try:
-                    self.post(p["rooms"]["discovery"], self.compact({"type": "sonnet.withdraw.v1", "contest_id": p["contest_id"], "game_id": old_gid, "request_id": self.req_id("withdraw")}), "withdraw")
-                except Exception as e:
-                    log(f"withdraw after completion failed: {e!r}")
-            self.st["lead"] = None; self.st["team"] = None; self.st["plan"] = None; self.st["script"] = None; self.st["pending_word"] = None
-            self.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": None, "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": None}
-            self.st["submission_ready"] = None; self.st["lead_attempts"] = 0; self.st["lead_block_until"] = 0; self.st["intro_at"] = 0
-            self.st["lead_invited"] = []; self.st["release_invites"] = []; self.st["lead_status_key"] = None
-            attention(f"operator lead_next_game {ng}: game {old_gid} archived; requesting a new team room for {p.get('lead_game_id')}")
-            self.save()
+            self.archive_game_and_reset(f"operator lead_next_game {ng}", p.get("next_game_id"))
         tmo = p.get("team_members_override")
         if isinstance(tmo, dict) and isinstance(tmo.get("members"), list) and tmo.get("id") != self.st.get("team_members_override_done") \
                 and self.st.get("team") and all(DID_RE.fullmatch(x) for x in tmo["members"]) and self.did in tmo["members"]:
@@ -2742,6 +2862,12 @@ class Agent:
             self._propose_at = now
             try: self.maybe_propose()
             except Exception as e: log(f"maybe_propose error: {e!r}")
+        if now - getattr(self, "_bridge_at", 0) > 30:
+            self._bridge_at = now
+            try:
+                self.apply_bridge()
+            except Exception as e:
+                log(f"apply_bridge error: {e!r}")
         if a["plan_lines"] and self.st.get("team") and self.st.get("plan") is None and now >= self.opening \
                 and now - getattr(self, "_plan_at", 0) > 600:
             self._plan_at = now

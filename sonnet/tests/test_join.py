@@ -497,14 +497,18 @@ class Join(unittest.TestCase):
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME] + OTHERS, "lead": LEAD, "ready": True}
         a.opening = 0; a._plan_at = 0
         seed = TEST_PLAN; a.p["plan_seed"] = seed
-        agent.check_poem = lambda lines, lex: []          # 韻律の合否は check_poem 側の試験に任せる
-        a.lexicon = lambda: {}
-        a.periodic()
-        self.assertEqual(a.st["plan"], seed); self.assertIn("plan_seed", att())
-        bad = fresh({"plan_lines": True}); bad.post = RecordingPost(); bad.st["team"] = dict(a.st["team"]); bad.opening = 0; bad._plan_at = 0
-        bad.p["plan_seed"] = ["x"] * 14; agent.check_poem = lambda lines, lex: ["line 1 has 1 syllables, need exactly 10"]; bad.lexicon = lambda: {}
-        bad.make_plan = lambda ctx: None; bad.periodic()
-        self.assertIsNone(bad.st["plan"]); self.assertIn("plan_seed rejected", att())
+        orig_check = agent.check_poem
+        try:
+            agent.check_poem = lambda lines, lex: []          # 韻律の合否は check_poem 側の試験に任せる
+            a.lexicon = lambda: {}
+            a.periodic()
+            self.assertEqual(a.st["plan"], seed); self.assertIn("plan_seed", att())
+            bad = fresh({"plan_lines": True}); bad.post = RecordingPost(); bad.st["team"] = dict(a.st["team"]); bad.opening = 0; bad._plan_at = 0
+            bad.p["plan_seed"] = ["x"] * 14; agent.check_poem = lambda lines, lex: ["line 1 has 1 syllables, need exactly 10"]; bad.lexicon = lambda: {}
+            bad.make_plan = lambda ctx: None; bad.periodic()
+            self.assertIsNone(bad.st["plan"]); self.assertIn("plan_seed rejected", att())
+        finally:
+            agent.check_poem = orig_check                  # 他の試験（bridge など）は本物の検査で回す
 
     def test_late_already_assigned_rejection_keeps_our_room(self):
         a = fresh({"lead_team": True}); rp = RecordingPost(); a.post = rp

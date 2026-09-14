@@ -22,3 +22,4 @@ sonnet/RESTART
 sonnet/llm-cwd/
 sonnet/SUBMIT.md
 sonnet/tests/SUBMIT.md
+sonnet/bridge/

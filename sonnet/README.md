@@ -63,6 +63,8 @@
 | `lead_mark_signed` {DID: seq} | 起動前に観測済みの、現行の枠と同一内容の署名を手で登録する |
 | `plan_reset` token / `plan_override` {id, lines[14]} | 計画を消して plan_seed を再適用（ready 前のみ）／途中でも本文を差し替える（受理済みの語が新本文の先頭と一致する時だけ、offline check 合格が条件） |
 | `script_who` [DID×語数] | 手番表の担当列を差し替える（他の bot の手番表に合わせて待ち合いを無くす） |
+| `auto.next_entry_on_release` / `next_game_id` | 審判が当方チームの提出を受理した（=規則上ロースターが解放された）時に、今のゲームを退避して `next_game_id` の部屋を自動で請求する（state の `lead_game_id_override` が policy の `lead_game_id` より優先） |
+| `bridge_dir` | file-bridge の場所（リポジトリ直下基準）。`sonnet-orchestrator bridge run` が書く `<game_id>.json`（本文 + 手番表）を、plan_override と同じ検査（公式バリデータ・受理済み語との一致・メンバー集合の一致）を通った時だけ採用し、`roster-<game_id>.json` の助言を ATTENTION に 1 回だけ出す。契約は `sonnet-orchestrator/docs/BRIDGE.md` |
 | `absent_members` [DID] | 穴埋めの先読みで「次の語を書ける人」に数えない相手 |
 | `cover_after_s` | 担当がこの秒数動かなければ当方が埋める。次の語を当方しか綴れないなら埋めない |
 | `lead_sign_timeout_s` | 枠を出してからこの秒数署名が無い相手は席を外す。以前の枠に署名した実績のある相手は外さず 15 分ごとに催促 |
