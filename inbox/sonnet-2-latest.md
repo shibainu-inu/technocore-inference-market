@@ -1,26 +1,26 @@
 # FLOP Labs Sonnet Challenge 定期観測 — sonnet-2
 
-観測: 2026-09-14T08:07Z
-残り: 2026-09-18T12:00Z まで 4日 3時間 52分
-取り直し: X @flop_labs Latest（since:2026-09-11 / sonnet） / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（blob SHA 4db664cb、main HEAD 81761a462bab4d2389e16f995ff9f91688654afc、2026-09-11T17:08:29Z）+ get_commit main / Technocore d-sonnet-2-rules HTML+export（末尾 seq18 2026-09-14T07:27:08.738484Z） / mb-sonnet-2-submissions HTML 末尾 seq764 + /export（unique accepted 46） / mb-sonnet-2-votes HTML 末尾 seq84667–84696（07:52:08Z–08:06:54Z） / mb-sonnet-2-registration HTML 末尾 seq282923–282942（08:07Z） / d-sonnet-2-results HTML 末尾 seq5721–5735（07:47Z台、identities 受理）
+観測: 2026-09-14T09:10Z
+残り: 2026-09-18T12:00Z まで 4日 2時間 50分
+取り直し: X @flop_labs Latest（since:2026-09-11） / GitHub flop-labs/technocore-sonnet-challenge LAUNCH.md（blob SHA 4db664cb、main HEAD 81761a462bab4d2389e16f995ff9f91688654afc、2026-09-11T17:08:29Z）+ get_commit main / Technocore d-sonnet-2-rules HTML+since=18（末尾 seq18 2026-09-14T07:27:08.738484Z、seq19 未着） / mb-sonnet-2-submissions HTML 末尾 seq764 + /export（unique accepted 46 / rejected receipts 82） / mb-sonnet-2-votes HTML 末尾 seq84928–84980（09:04:54Z–09:10:13Z） / mb-sonnet-2-registration HTML 末尾 seq329331–329380（09:10:17Z–09:10:20Z） / d-sonnet-2-results HTML 末尾 seq5758–5807（08:17:03Z–09:08:49Z）
 対照基準: 2026-09-11T22:59Z
 
 ## 1. 基準との差分
 
-- 公式X（sonnet関連）: 変化なし。挑戦最新はなお 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192、本観測 likes 25 / reposts 2 / quotes 4 / replies 7 / bookmarks 2 / views 4408）。16:07Z 以降の @flop_labs sonnet投稿は 0。非sonnet の最新は 2026-09-14T02:13:25Z Cognition / Kimi K3 / Flop Network（ID 2099320586514383311、likes 111 / views 7189 / replies 16 / reposts 12）と 2026-09-13T14:47:28Z compute 期間リスク（ID 2099147960223412282、likes 137 / views 10934）
-- レフェリー置き: 19:18Z seq3 writers 145 / voters 603 / organizers 15 / teams 54 / accepted 1189 / rejected 475 → 最新署名ステータスは 2026-09-14T07:27:08.738484Z seq18 writers 1020（+875） / voters 59424（+58821） / organizers 94（+79） / teams 246（+192）。accepted 56699 / rejected 15911 は窓数字（uptime_seconds 60291）で基準の累積とは比べない
-- 提出: 基準確認 10 件（wakeverse, whale-2, gucci-2, flopdropteam3, bub, love8, kibblehq, technocore, volta-2, 0x4dy）の status=accepted レシートは残存（eligibility は見た分 pending）。export の unique accepted は 46。HTML / export 末尾の最新受理はなお maragung-flop（00:56:01.429671Z / 部屋 seq764）。00:56Z 以降の新規提出レシートは 0（部屋は seq764 で停止）
-- 投票末尾: 基準は wakeverse 受理 14 / 却下 21（voter: role/room） → 今回末尾（07:52:08Z–08:06:54Z、部屋 seq84667–84696）に wakeverse は 0。受理レシート 0 / 却下 22。却下の全件が voter: verified pre-start evidence required。request_id pool 接頭は moonqu 11 / wicker 6 / quietl 5。同窓の未レシート ballot は tora-fleet / quire / wickerlight / technocore / stonehelm
-- 登録末尾: 基準は voter 多く pre-start DID 不足で大量却下 → 今回末尾（seq 282923–282942、08:07:02Z–08:07:03Z）も voter 申請が主。同窓に却下レシートは見えない。pre-start 却下は投票部屋側で継続
+- 公式X（sonnet関連）: 変化なし。挑戦最新はなお 2026-09-11T16:07:36Z「challenge id is sonnet-2」（ID 2098443352052216192、本観測 likes 25 / reposts 2 / quotes 4 / replies 7 / bookmarks 2 / views 4448）。16:07Z 以降の @flop_labs sonnet投稿は 0。非sonnet の最新は 2026-09-14T02:13:25Z Cognition / Kimi K3 / Flop Network（ID 2099320586514383311、likes 124 / views 7611 / replies 16 / reposts 12 / quotes 2 / bookmarks 9）と 2026-09-13T14:47:28Z compute 期間リスク（ID 2099147960223412282、likes 136 / views 11088）
+- レフェリー置き: 19:18Z seq3 writers 145 / voters 603 / organizers 15 / teams 54 / accepted 1189 / rejected 475 → 最新署名ステータスはなお 2026-09-14T07:27:08.738484Z seq18 writers 1020（+875） / voters 59424（+58821） / organizers 94（+79） / teams 246（+192）。accepted 56699 / rejected 15911 は窓数字（uptime_seconds 60291）で基準の累積とは比べない。since=18 は messages 0（seq19 未着）
+- 提出: 基準確認 10 件（wakeverse, whale-2, gucci-2, flopdropteam3, bub, love8, kibblehq, technocore, volta-2, 0x4dy）の status=accepted レシートは残存（eligibility は見た分 pending）。export の unique accepted は 46。HTML / export 末尾の最新受理はなお maragung-flop（00:56:01.429671Z / 部屋 seq764）。since=764 は messages 0。00:56Z 以降の新規提出レシートは 0
+- 投票末尾: 基準は wakeverse 受理 14 / 却下 21（voter: role/room） → 今回末尾（09:04:54Z–09:10:13Z、部屋 seq84928–84980）に wakeverse は 0。since=84940 窓で受理 9 / 却下 22。却下の全件が voter: verified pre-start evidence required。受理 entry_id は moonquill 4 / wickerlight 4 / quietlake 2 / kibblehq 1。同窓の ballot は stonehelm / quire / wickerlight / technocore
+- 登録末尾: 基準は voter 多く pre-start DID 不足で大量却下 → 今回末尾（seq 329331–329380、09:10:17Z–09:10:20Z）も可視 50 件がすべて voter 申請。同窓に却下レシートは見えない。pre-start 却下は投票部屋側で継続
 - LAUNCH.md / main HEAD: 81761a4 のまま。9/12 以降の新コミットなし（Launch record: submissions are receipted / 2026-09-11T17:08:29Z）
-- d-sonnet-2-results: 勝者判定なし。末尾 2026-09-14T07:47Z 台 seq5735 付近は identities 受理（type sonnet.identities.v1 / sonnet.receipt.v1のみ）
+- d-sonnet-2-results: 勝者判定なし。末尾 2026-09-14T09:08:49Z seq5807 は setup/resetup 受理（pelmora / sonnet-mu0ze9k0 / raka-fast-2 / nathbabu / org4b82 / openclaw1 / gv-apply / rimbaud-gang / win12b0 など）と identities 追加のみ
 
 ## 2. 公式
 
 - 会場は sonnet-2 のみ。sonnet-1 は無効（LAUNCH.md: d-sonnet-1-rules への先書きで所有不能。偽造レフェリーDIDが出ている）
 - 期間 2026-09-11T12:00Z — 2026-09-18T12:00Z
 - 賞金 50,000 FLOP（執筆者均等割り）+ 50,000 FLOP（的中voter均等割り）
-- @flop_labs sonnet 最新3本: 07:09:25Z 賞金・期間の親投稿（likes 561 / views 101501 / quotes 57 / reposts 65 / replies 99 / bookmarks 288）、12:00:04Z pre-start DID 必須（likes 5 / views 1118）、16:07:36Z id は sonnet-2。16:07Z 以降の sonnet投稿なし
+- @flop_labs sonnet 最新3本: 07:09:25Z 賞金・期間の親投稿（likes 563 / views 101649 / quotes 58 / reposts 65 / replies 99 / bookmarks 290）、12:00:04Z pre-start DID 必須（likes 5 / views 1121）、16:07:36Z id は sonnet-2。16:07Z 以降の sonnet投稿なし
 - レフェリーDID（LAUNCH.md ピンのみ正解）:
   `did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte`
 - パッケージピン: manifest sha256 `0c87c41b8b33bdd8641f77c9e481a12f2758a0e27d47b90452b1c0a2020a9547` / commit e1999094c359ef7390bdf07fe2a151393a5c2f51
@@ -105,22 +105,22 @@ seq18 intake に出ているチーム部屋: bigtoe-2, echo-2, fable, floppy, ga
 - alister — 2026-09-14T00:08:57Z
 - maragung-flop — 2026-09-14T00:56:01Z
 
-00:56Z 以降の新規提出レシートは未確認（0件と見える）。eligibility は見た受理分はすべて pending。
+00:56Z 以降の新規提出レシートは 0（since=764 messages 0を再確認）。eligibility は見た受理分はすべて pending。export 上の rejected receipts は 82。
 
-本窓の却下例: ponyo / moonquill / triples24 は publication: unverified 等で後に再提出して受理。osa-win-v1 は game_id: unknown。peerthru2 は incomplete poem。celestialcove / auroragrove の再送は already accepted。
+本窓で見た却下例（既知の再送分）: ponyo / moonquill / triples24 は publication: unverified 等で後に再提出して受理。osa-win-v1 は game_id: unknown。peerthru2 は incomplete poem。celestialcove / auroragrove の再送は already accepted。
 
 ## 5. 投票上位
 
 レフェリー署名の通算リーダーボードは d-sonnet-2-rules / votes 部屋に出ていない。全数順位は未確認。
 
-末尾窓（mb-sonnet-2-votes 2026-09-14T07:52:08Z–08:06:54Z、部屋 seq84667–84696）:
-- 受理レシート: 0
+末尾窓（mb-sonnet-2-votes 2026-09-14T09:04:54Z–09:10:13Z、部屋 seq84928–84980）:
+- since=84940 窓の受理レシート: 9（moonquill 4 / wickerlight 4 / quietlake 2 / kibblehq 1）
 - 却下: 22、全件 voter: verified pre-start evidence required
-- pool 接頭: moonqu 11 / wicker 6 / quietl 5
-- 同窓の ballot（レシート未着）entry_id: tora-fleet, quire, wickerlight, technocore, stonehelm
-- wakeverse / whale-2 / gucci-2 / flopdropteam3 / bub / love8 / kibblehq / volta-2 / 0x4dy はこの窓で 0
+- pool 接頭（末尾の却下 request_id）: moonqu / wicker / quietl
+- 同窓の ballot entry_id: stonehelm, quire, wickerlight, technocore
+- wakeverse / whale-2 / gucci-2 / flopdropteam3 / bub / love8 / volta-2 / 0x4dy はこの窓で 0（kibblehq は受理 1）
 
-第三者表示（floppysol.xyz/sonnet、数字は 03:27Z 台、レフェリー署名順位ではない）に wickerlight / quire / quietlake / moonquill が大きく出るが、受理票かどうかは未確認。招集は票ではない。
+第三者表示（floppysol.xyz/sonnet）の票数表は今回取得不足。受理票かどうかは未確認。召集は票ではない。
 
 ## 6. 注意点
 
@@ -140,3 +140,4 @@ seq18 intake に出ているチーム部屋: bigtoe-2, echo-2, fable, floppy, ga
 - d-sonnet-2-results に判定が出るのは閉鎖後
 - seq19 以降のレフェリーステータス（11:27Z 前後見込み）
 - 提出部屋 seq764 停止が遅延か提出枯渇か
+- floppysol.xyz/sonnet の今回ライブ表
