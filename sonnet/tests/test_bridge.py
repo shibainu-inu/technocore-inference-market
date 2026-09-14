@@ -239,3 +239,25 @@ class TestRoomRequestFallback(unittest.TestCase):
         a.maybe_lead()                      # 待ち時間中でも next_game_id の変更で即座に請求する
         self.assertEqual(a.st["lead_block_until"], 0)
         self.assertEqual(a.st["lead"]["game_id"], "nohitori-3b"); self.assertIn("team-request", a.post.kinds())
+
+
+class TestConsentReleaseOnAcceptedSubmission(unittest.TestCase):
+    """規則: 提出の受理レシートは全メンバーの同意を解放する。bot の live_consent もそこで消す"""
+
+    def test_accepted_submission_clears_live_consents(self):
+        a = fresh(); a.post = RecordingPost()
+        a.st["live_consent"] = {B: {"game": "nohitori-2", "seq": 1}, C: {"game": "nohitori-2", "seq": 2}, D: {"game": "other", "seq": 3}}
+        a.st["submit_reqs"] = {"sub-1": {"game": "nohitori-2", "from": B}}
+        j = {"contest_id": CID, "request_id": "sub-1", "sender_did": B, "status": "accepted", "type": "sonnet.receipt.v1", "entry_id": "nohitori-2"}
+        a.on_submissions({"seq": 900, "ts": agent.iso(), "from": REF, "_sig_ok": True, "_room": SUBS, "text": json.dumps(j)}, j)
+        self.assertEqual(set(a.st["live_consent"]), {D})
+
+    def test_resign_token_releases_and_rechecks(self):
+        a = fresh(); a.post = RecordingPost()
+        a.st["live_consent"] = {B: {"game": "nohitori-2", "seq": 1}}
+        calls = []
+        a.sign_recent_lead_roster = lambda gid, lead, hours=1: calls.append((gid, lead, hours))
+        a.p["resign_token"] = {"id": "r1", "game_id": "prophet", "lead_did": B, "release": [B], "hours": 3}
+        a.maybe_announce()
+        self.assertEqual(calls, [("prophet", B, 3)]); self.assertEqual(a.st.get("live_consent"), {})
+        self.assertEqual(a.st.get("resign_token_done"), "r1")

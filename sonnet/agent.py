@@ -911,6 +911,15 @@ class Agent:
             self.save()
         if j.get("type") != "sonnet.receipt.v1" or j.get("status") != "accepted":
             return
+        # 規則: 提出の受理レシートは、その詩の全メンバーの同意を解放する（withdraw.v1 は要らない）。生きた同意の記録から消す
+        rg = ((self.st.get("submit_reqs") or {}).get(j.get("request_id")) or {}).get("game") or j.get("entry_id")
+        if isinstance(rg, str):
+            lc = self.st.get("live_consent") or {}
+            freed = [d_ for d_, c in list(lc.items()) if isinstance(c, dict) and c.get("game") == rg]
+            for d_ in freed:
+                lc.pop(d_, None)
+            if freed:
+                log(f"accepted submission for {rg} released {len(freed)} live consent(s): {[x[-8:] for x in freed]}")
         d = j.get("sender_did")
         if isinstance(d, str) and DID_RE.fullmatch(d):
             ps = self.st.setdefault("proven_submitters", {})
@@ -2687,6 +2696,24 @@ class Agent:
             if isinstance(gid, str) and GAME_RE.match(gid) and isinstance(lead, str) and DID_RE.fullmatch(lead) \
                     and gid not in self.st.get("dropped", []) and not self.application_for(gid):
                 self.add_application(gid, lead, manual=True, source="manual")
+                try:
+                    self.sign_recent_lead_roster(gid, lead)   # 提示より先にロースターが出ていれば取りこぼさない
+                except Exception as e:
+                    log(f"sign_recent_lead_roster (manual): {e!r}")
+        rt = p.get("resign_token")
+        if isinstance(rt, dict) and rt.get("id") and rt.get("id") != self.st.get("resign_token_done") and not self.st.get("team"):
+            # 運用者: リーダーの直近ロースターを取り直して署名判定をやり直す（同意の解放を見落として保留した時など）
+            self.st["resign_token_done"] = rt["id"]
+            gid, lead = rt.get("game_id"), rt.get("lead_did")
+            if isinstance(gid, str) and GAME_RE.match(gid) and isinstance(lead, str) and DID_RE.fullmatch(lead):
+                for d_ in (rt.get("release") or []):
+                    (self.st.get("live_consent") or {}).pop(d_, None)
+                attention(f"operator resign_token {rt['id']}: re-checking {lead[-8:]}'s latest roster for {gid}")
+                try:
+                    self.sign_recent_lead_roster(gid, lead, hours=rt.get("hours", 3))
+                except Exception as e:
+                    attention(f"resign_token: {e!r}")
+            self.save()
 
     def expire_agreed(self):
         """損切り: 応募ごとに、(a) agreed_ttl_hours 以内にロースターが来ない、(b) リーダーが lead_silence_hours 沈黙、
