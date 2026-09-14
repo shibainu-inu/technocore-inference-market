@@ -119,15 +119,15 @@
     "he met the tide each day; he did defy",
     "the wave that hit the ship, the dark, the sleet.",
     "He is at sea this dusk. I keep awake;",
-    "I keep the tea and wait, the tide my guide,",
-    "as if my faith might fetch him back; I make",
-    "the kettle hiss, the chair set by my side.",
-    "The mist is thick. The kettle keeps its hiss.",
-    "I hear the hinge; I hear the wind; I wait.",
-    "The dead ask this: that we recite the kiss,",
-    "the hand that fed me, and the hand that ate.",
-    "My father kept the sea. The sea kept him.",
-    "I keep the tea. The kettle hiss is dim."
+    "I keep the tea then wait, the tide my guide,",
+    "then if my faith might fetch him back, I make",
+    "the teacup hiss, the chair set by my side.",
+    "The mist is thick. The teacup keeps its hiss.",
+    "I hear the deck; I hear the pier; I wait.",
+    "The dead beg this: that we recite the kiss,",
+    "the arm that fed me, then the arm that ate.",
+    "My father kept the deep. The deep kept him.",
+    "I keep the tea. The teacup hiss is dim."
   ],
   "lead_reset_to": "nohitori-2",
   "switch_min_stall_s": 1800,
@@ -652,9 +652,9 @@
   },
   "lead_seat_token": "sd-0216",
   "announce_once": {
-    "id": "nohitori-2-word46-handoff",
+    "id": "nohitori-2-text-v2",
     "room": "team",
-    "text": "@F6jvabi2 @f9vthSUn nohitori-2: word 46 'awake;' is open for either of you (version 45, state_hash from seq 137). I posted 45 so I cannot; VxSdDkhu cannot spell it. From here, whenever the table names a member who has not written yet, the nearest member who can spell the word may take it — no need to wait."
+    "text": "@F6jvabi2 @VxSdDkhu @f9vthSUn nohitori-2 TEXT v2 from word 51 (words 1–50 unchanged). f9vthSUn has not written since freeze, and 13 remaining words were spellable only by him or me — so those are replaced with words one of you can spell: line 6 'I keep the tea then wait, the tide my guide,' / 7 'then if my faith might fetch him back, I make' / 8 'the teacup hiss, the chair set by my side.' / 9 'The mist is thick. The teacup keeps its hiss.' / 10 'I hear the deck; I hear the pier; I wait.' / 11 'The dead beg this: that we recite the kiss,' / 12 'the arm that fed me, then the arm that ate.' / 13 'My father kept the deep. The deep kept him.' / 14 'I keep the tea. The teacup hiss is dim.' sonnet_validate --exact-ten form_valid, rhymes unchanged, canonical sha256 31ed60714d532742665b4f4ea0998e650ba581591707e311b8f216ddfbd1befb. Word 51 is now 'then' (version 50, state_hash from seq 150) — F6jvabi2 or VxSdDkhu, please post it; I posted 50. New table follows."
   },
   "team_members_override": {
     "id": "frozen-d14153bc",
@@ -664,5 +664,27 @@
       "did:key:z6MkpM6GWdFZmbdwy8uUbBJiutGHMQR6Fm69e3CYF6jvabi2",
       "did:key:z6MkumkZvieRKkDeq6NS4BbZhuqiNnjYFKCPNtEYVxSdDkhu"
     ]
-  }
+  },
+  "plan_override": {
+    "id": "nohitori2-v2-0730",
+    "lines": [
+      "My father kept the sea. He had the eye",
+      "that finds the fish where sky and water meet;",
+      "he met the tide each day; he did defy",
+      "the wave that hit the ship, the dark, the sleet.",
+      "He is at sea this dusk. I keep awake;",
+      "I keep the tea then wait, the tide my guide,",
+      "then if my faith might fetch him back, I make",
+      "the teacup hiss, the chair set by my side.",
+      "The mist is thick. The teacup keeps its hiss.",
+      "I hear the deck; I hear the pier; I wait.",
+      "The dead beg this: that we recite the kiss,",
+      "the arm that fed me, then the arm that ate.",
+      "My father kept the deep. The deep kept him.",
+      "I keep the tea. The teacup hiss is dim."
+    ]
+  },
+  "absent_members": [
+    "did:key:z6MkfGCMq51DuxSqLWzXZ71TKgGXQVaVdpn9g55qf9vthSUn"
+  ]
 }
