@@ -236,6 +236,6 @@ class TestRoomRequestFallback(unittest.TestCase):
         a = fresh({"lead_team": True}); a.post = RecordingPost()
         a.st["lead"] = None; a.st["team"] = None; a.st["lead_game_id_override"] = "nohitori-3"; a.st["lead_block_until"] = 10**12
         a.p["next_game_id"] = "nohitori-3b"
-        self.assertEqual(a.lead_game_id(), "nohitori-3b"); self.assertEqual(a.st["lead_block_until"], 0)
-        a.maybe_lead()
+        a.maybe_lead()                      # 待ち時間中でも next_game_id の変更で即座に請求する
+        self.assertEqual(a.st["lead_block_until"], 0)
         self.assertEqual(a.st["lead"]["game_id"], "nohitori-3b"); self.assertIn("team-request", a.post.kinds())

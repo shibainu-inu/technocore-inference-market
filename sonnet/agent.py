@@ -771,9 +771,9 @@ class Agent:
         lead = self.st.get("lead")
         now = utc_now()
         if not lead:
+            gid = self.lead_game_id() or f"nohitori{int(now) % 1000}"   # 先に呼ぶ: 運用者の next_game_id 変更が待ち時間を解く
             if now < self.st.get("lead_block_until", 0) or self.st.get("lead_attempts", 0) >= p.get("lead_max_attempts", 3):
                 return
-            gid = self.lead_game_id() or f"nohitori{int(now) % 1000}"
             if not GAME_RE.match(gid):
                 attention(f"lead_game_id {gid!r} is not a valid game_id", key="lead-gid"); return
             su = (self.st.get("setups") or {}).get(gid)
