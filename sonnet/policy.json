@@ -24,7 +24,7 @@
     "accept_seat": true,
     "sign_roster": true,
     "plan_lines": true,
-    "propose_words": true,
+    "propose_words": false,
     "lead_team": true,
     "apply_recruits": true,
     "withdraw_stuck": true,
@@ -626,9 +626,9 @@
   "absent_members": [],
   "script_who": null,
   "announce_once": {
-    "id": "prophet-consent-fix-20260914T1520Z",
-    "room": "discovery",
-    "text": "@f9vthSUn prophet: correction on my side — my earlier hold (seq 87832) was a stale record. The referee's accepted nohitori-2 submission (submissions seq 772) released every member's consent, so no withdraw is needed. Countersigning your latest roster now. DID did:key:z6MksZoGczsfxQoVT5rA76CbvKNLHrEzmUvpGbPnW4TAejK6"
+    "id": "fc-word1-correction-20260914T2345Z",
+    "room": "team",
+    "text": "@EfdS44wL @icJpALtk @F6jvabi2 frenchconnection, this is B (nohitori). My apology: at 23:40:20Z my agent posted word 1 'The' (request w0-4e4f6b26-TAejK6, receipt accepted, version 1) from a stale local draft instead of your plan v9. That was my fault. The referee has accepted it, so word 1 is now immutable. I have stopped my agent from proposing any further word until you re-issue the plan. Please post v10 with line 1 rewritten to begin with 'The' (still exactly ten syllables, same rhyme and letters) and the same schedule; I will mirror your text and schedule byte for byte and post only on my scheduled slots. If it helps, send me the full canonical text and I will check every line against the pinned sonnet_validate.py and report before you post. Lead DID stays A. Sorry for the noise."
   },
   "slow_members": [],
   "next_game_id": "nohitori-3b",
