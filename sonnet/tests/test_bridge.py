@@ -261,3 +261,22 @@ class TestConsentReleaseOnAcceptedSubmission(unittest.TestCase):
         a.maybe_announce()
         self.assertEqual(calls, [("prophet", B, 3)]); self.assertEqual(a.st.get("live_consent"), {})
         self.assertEqual(a.st.get("resign_token_done"), "r1")
+
+
+class TestMemberMode(unittest.TestCase):
+    """他人のチームでは手番表が無くても先取りしない: 担当が member_cover_after_s 以上動かない時だけ埋める"""
+
+    def test_member_waits_then_covers(self):
+        a = fresh(); a.post = RecordingPost(); a.p["member_cover_after_s"] = 90
+        a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
+        a.st["script"] = None
+        a.st["poem"]["state_at"] = agent.iso()
+        self.assertFalse(a.our_turn_or_cover(1, []))
+        a.st["poem"]["state_at"] = "2026-09-14T00:00:00Z"
+        self.assertTrue(a.our_turn_or_cover(1, []))
+
+    def test_member_does_not_post_draft_plan(self):
+        a = fresh(); a.post = RecordingPost(); a.p.pop("plan_seed", None)
+        a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
+        a.apply_plan_result(list(TEST_PLAN))
+        self.assertEqual(a.st["plan"], TEST_PLAN); self.assertNotIn("plan", a.post.kinds())

@@ -2166,9 +2166,18 @@ class Agent:
     def our_turn_or_cover(self, line_no, cur):
         """手番表があれば、次の語の担当が当方のときだけ提案する。担当が cover_after_s 以上動かなければ当方が埋める"""
         sc = self.st.get("script")
+        poem = self.st["poem"]
+        team = self.st.get("team") or {}
+        if not sc and team and team.get("lead") not in (None, self.did):
+            # 他人のチーム（手番表は相手のもの）: 先取りの競争はせず、担当が member_cover_after_s 以上動かない時だけ埋める
+            waited = utc_now() - parse_iso(poem.get("state_at") or iso())
+            wait_s = self.p.get("member_cover_after_s", 90)
+            if waited < wait_s:
+                return False
+            log(f"member mode: covering after {int(waited)} s idle (lead {team.get('lead', '')[-6:]})")
+            return True
         if not sc:
             return True
-        poem = self.st["poem"]
         idx = sum(len(l.split(" ")) for l in poem["lines"]) + len(cur)
         if idx >= len(sc["who"]) or sc["who"][idx] == self.did:
             return True
@@ -2374,6 +2383,8 @@ class Agent:
         attention(f"plan text set for {ctx['game_id']} ({len(words)} words; operator may replace it with plan_override before the freeze): " + " / ".join(lines))
         if not self.st.get("team"):
             return   # 凍結前: 本文は席の鍵検査に使う。部屋は審判が開くまで 403 なので投稿しない
+        if self.st["team"].get("lead") not in (None, self.did):
+            return   # 他人のチーム: 本文はリーダーのもの。当方の案は LLM の語選びの下書きに留め、部屋には出さない
         try:
             self.post(self.st["team"]["room"], "Draft plan (validated: 14 lines, exactly 10 CMUdict syllables each, ABAB CDCD EFEF GG). "
                       "Anyone may propose the next word from it; I fill gaps. | " + " / ".join(lines), "plan")
