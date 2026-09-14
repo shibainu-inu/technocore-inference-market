@@ -120,6 +120,7 @@ class OperatorConfig(BaseModel):
 class BridgeConfig(BaseModel):
     """Phase 7 file-bridge (docs/BRIDGE.md). Paths are relative to the repo root."""
     interval_s: int = 60
+    text_source: str = "bot"             # "bot": the live bot's LLM writes the text, the bridge only assigns; "heuristic": bridge writes text too
     max_seeds: int = 6
     seed_budget_s: float = 18.0          # stop trying further seeds once this much time was spent (tick must stay < 30 s)
     state_path: str = "../sonnet/state-sonnet-2.json"

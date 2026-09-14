@@ -1687,6 +1687,13 @@ class Agent:
         team, lead = self.st.get("team"), self.st.get("lead")
         members = list((team or {}).get("members") or ([self.did] + [m for m in (lead or {}).get("members", []) if m != self.did]))
         lines, who = b.get("lines"), b.get("who")
+        if b.get("game_id") == gid and b.get("request") == "replan":
+            # bridge が「今の本文は残りの語を書ける人がいない」と判定: 本文を捨てて LLM（Opus）に受理済み語から書き直させる
+            self.st["bridge_done"] = b["id"]
+            if set(b.get("members") or []) == set(members) and self.st.get("plan"):
+                self.st["plan"] = None; self.st["script"] = None; self._plan_at = 0
+                attention(f"bridge {b['id']} requests a rewrite of the remaining text: {str(b.get('reason', ''))[:200]} — plan cleared; the LLM rewrites from the accepted words")
+            self.save(); return
         if b.get("game_id") != gid or not (isinstance(lines, list) and len(lines) == 14 and all(isinstance(x, str) for x in lines)):
             attention(f"bridge {b.get('id')}: ignored (game {b.get('game_id')!r} != {gid!r} or malformed)", key="bridge-shape"); return
         if set(b.get("members") or []) != set(members):
@@ -1705,8 +1712,10 @@ class Agent:
         self.st["plan"] = list(lines)
         if team and team.get("ready") and team.get("lead") == self.did:
             if who_ok:
+                same = (self.st.get("script") or {}).get("words") == words and (self.st.get("script") or {}).get("who") == list(who)
                 self.st["script"] = {"words": words, "who": list(who)}
-                self.post_script(lines, list(who))
+                if not same:
+                    self.post_script(lines, list(who))
             else:
                 self.st["script"] = None
                 self.ensure_script()
@@ -2244,11 +2253,24 @@ class Agent:
                         {"version": poem["version"], "line_no": line_no, "cur": list(cur), "remaining": remaining})
 
     # ----- 下書き（14 行） -----
+    def plan_context(self):
+        """本文を書く相手: 凍結後はチーム。凍結前でも lead mode で席が plan_min_members（既定 2）以上埋まれば、
+        その顔ぶれで本文を書き、以後の席は key_fits_plan で本文に合う鍵だけ通す（entry 2 の「本文が先、席は後」）"""
+        team = self.st.get("team")
+        if team:
+            return {"game_id": team["game_id"], "members": list(team["members"]), "room": team.get("room")}
+        lead = self.st.get("lead")
+        if lead and lead.get("state") == "collecting" and len(lead.get("members", [])) >= self.p.get("plan_min_members", 2):
+            return {"game_id": lead["game_id"], "members": [self.did] + [m for m in lead["members"] if m != self.did], "room": None}
+        return None
+
     def make_plan(self, team_context):
         """LLM に 14 行を作らせ、公式バリデータと韻律で検証し、不備を返して最大 4 回直す（ワーカーで実行）"""
         schema = {"type": "object", "properties": {"lines": {"type": "array", "items": {"type": "string"}, "minItems": 14, "maxItems": 14},
                                                    "notes": {"type": "string"}}, "required": ["lines", "notes"], "additionalProperties": False}
         accepted, lex = list(self.st["poem"]["lines"]), self.lexicon()
+        poem_ = self.st.get("poem") or {}
+        done_words = [w for line in poem_.get("lines", []) for w in line.split(" ") if w] + list(poem_.get("current") or [])
         model, tmo = self.model_for("plan"), self.p["llm"]["timeout_s"]
         members = list((self.st.get("team") or {}).get("members") or team_context.get("members") or [])
         letters = {m: self.key_letters(m) for m in members}
@@ -2282,10 +2304,17 @@ class Agent:
             feedback = ""; best = None
             for rnd in range(6):
                 user = json.dumps({"team_context": team_context, "previous_attempt_feedback": feedback,
-                                   "accepted_lines_so_far": accepted}, ensure_ascii=False)
+                                   "accepted_lines_so_far": accepted,
+                                   "accepted_words_so_far": done_words,
+                                   "prefix_rule": "the poem must begin with accepted_words_so_far exactly, in order; only the words after them may change"},
+                                  ensure_ascii=False)
                 out = llm.ask(SYSTEM_PLAN, user, schema, model=model, timeout_s=tmo, task=f"plan{rnd}")
                 lines = [" ".join(l.split()) for l in out["lines"]]
                 problems = check_poem(lines, lex)
+                if not problems and done_words:
+                    words_ = [w for line in lines for w in line.split(" ") if w]
+                    if words_[:len(done_words)] != done_words:
+                        problems = ["the first words must be exactly the accepted words: " + " ".join(done_words)]
                 fit = fit_problems(lines) if not problems and members else []
                 if not problems and not fit:
                     return lines
@@ -2300,12 +2329,21 @@ class Agent:
         self.submit_llm("plan", job)
 
     def apply_plan_result(self, lines):
-        if not lines or not self.st.get("team"):
+        ctx = self.plan_context()
+        if not lines or not ctx:
             return
         if self.st.get("plan"):
             log("plan result ignored: a plan is already set (operator seed or earlier result)"); return
+        poem_ = self.st.get("poem") or {}
+        done = [w for line in poem_.get("lines", []) for w in line.split(" ") if w] + list(poem_.get("current") or [])
+        words = [w for line in lines for w in line.split(" ") if w]
+        if words[:len(done)] != done:
+            attention("plan result rejected: accepted words so far do not match its prefix (will retry)"); return
         self.st["plan"] = lines; self.save()
         log("plan accepted: " + " / ".join(lines))
+        attention(f"plan text set for {ctx['game_id']} ({len(words)} words; operator may replace it with plan_override before the freeze): " + " / ".join(lines))
+        if not self.st.get("team"):
+            return   # 凍結前: 本文は席の鍵検査に使う。部屋は審判が開くまで 403 なので投稿しない
         try:
             self.post(self.st["team"]["room"], "Draft plan (validated: 14 lines, exactly 10 CMUdict syllables each, ABAB CDCD EFEF GG). "
                       "Anyone may propose the next word from it; I fill gaps. | " + " / ".join(lines), "plan")
@@ -2868,10 +2906,10 @@ class Agent:
                 self.apply_bridge()
             except Exception as e:
                 log(f"apply_bridge error: {e!r}")
-        if a["plan_lines"] and self.st.get("team") and self.st.get("plan") is None and now >= self.opening \
+        if a["plan_lines"] and self.plan_context() and self.st.get("plan") is None and now >= self.opening \
                 and now - getattr(self, "_plan_at", 0) > 600:
             self._plan_at = now
-            team = self.st["team"]
+            team = self.plan_context()
             seed = self.p.get("plan_seed")
             if isinstance(seed, list) and len(seed) == 14 and all(isinstance(x, str) for x in seed):
                 problems = check_poem(seed, self.lexicon())
@@ -2880,7 +2918,7 @@ class Agent:
                     self.apply_plan_result(list(seed))
                     return
                 attention(f"plan_seed rejected by the offline check ({problems[:3]}); falling back to the LLM plan", key="plan-seed")
-            ctx = [f"{x['from'][-6:]}: {clip(x['text'], 400)}" for x in list(self.recent[team["room"]])[-60:]]
+            ctx = [f"{x['from'][-6:]}: {clip(x['text'], 400)}" for x in list(self.recent[team["room"]])[-60:]] if team.get("room") else []
             self.make_plan({"members": team["members"], "team_room_messages": ctx})
         if now - getattr(self, "_save_at", 0) > 60:
             self._save_at = now; self.save()

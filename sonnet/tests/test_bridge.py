@@ -148,3 +148,70 @@ class TestBridge(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOpusTextBeforeFreeze(unittest.TestCase):
+    """(b) 体制: 本文は bot の LLM（Opus）が書く。凍結前でも席が 2 つ埋まれば書き、席の鍵検査に使う。bridge は割当だけ"""
+
+    def test_plan_context_before_freeze_needs_two_members(self):
+        a = fresh(); a.post = RecordingPost()
+        a.st["lead"] = {"game_id": "nohitori-3", "request_id": "r", "state": "collecting", "at": "t", "members": [B], "signed": {}, "declined": [], "poem_room": f"d-{CID}-team-nohitori-3", "generation": 1}
+        self.assertIsNone(a.plan_context())
+        a.st["lead"]["members"] = [B, C]
+        ctx = a.plan_context()
+        self.assertEqual(ctx["game_id"], "nohitori-3"); self.assertEqual(ctx["members"], [ME, B, C]); self.assertIsNone(ctx["room"])
+
+    def test_periodic_calls_llm_plan_in_lead_mode(self):
+        a = fresh({"plan_lines": True}); a.post = RecordingPost(); a.p.pop("plan_seed", None)
+        json.dump(a.p, open(a.p["_path"], "w"))   # 60 秒ごとの再読込でも plan_seed が戻らないように写しも剥ぐ
+        a.st["lead"] = {"game_id": "nohitori-3", "request_id": "r", "state": "collecting", "at": "t", "members": [B, C], "signed": {}, "declined": [], "poem_room": f"d-{CID}-team-nohitori-3", "generation": 1}
+        a.opening = 0; a._plan_at = 0
+        seen = {}
+        a.make_plan = lambda ctx: seen.update(ctx)
+        a.periodic()
+        self.assertEqual(seen.get("members"), [ME, B, C]); self.assertEqual(seen.get("team_room_messages"), [])
+        # 結果は凍結前でも採用され、部屋には投稿しない（403 になる）
+        a.apply_plan_result(list(TEST_PLAN))
+        self.assertEqual(a.st["plan"], TEST_PLAN); self.assertNotIn("plan", a.post.kinds())
+        self.assertIn("plan text set for nohitori-3", att())
+        self.assertIsInstance(a.key_fits_plan(B), str)   # 席の鍵検査はこの本文に対して走る（合う鍵は ""）
+
+    def test_plan_result_must_start_with_accepted_words(self):
+        a = self.frozen_with_prefix()
+        a.apply_plan_result(list(TEST_PLAN))
+        self.assertIsNone(a.st["plan"]); self.assertIn("do not match its prefix", att())
+        # 受理済み語で始まる本文は通る
+        lines = list(TEST_PLAN); lines[0] = "I climb the ladder, kneel, and rake the hay,"
+        a.st["poem"]["lines"] = []; a.st["poem"]["current"] = ["I", "climb"]
+        a.apply_plan_result(lines)
+        self.assertEqual(a.st["plan"], lines)
+
+    def frozen_with_prefix(self):
+        a = fresh(); a.post = RecordingPost(); a.p.pop("plan_seed", None)
+        frozen_team(a); a.st["poem"]["lines"] = []; a.st["poem"]["current"] = ["Not", "these"]
+        return a
+
+    def test_bridge_replan_request_clears_plan_for_llm(self):
+        tmp = tempfile.mkdtemp()
+        a = fresh(); a.post = RecordingPost(); a.p["bridge_dir"] = tmp; a.p.pop("plan_seed", None)
+        frozen_team(a); a.st["plan"] = list(TEST_PLAN); a.st["script"] = {"words": WORDS, "who": alternate(len(WORDS), [ME, B, C, D])}
+        a._plan_at = 10**12
+        os.makedirs(tmp, exist_ok=True)
+        with open(os.path.join(tmp, "nohitori-3.json"), "w") as f:
+            json.dump({"id": "rp1", "game_id": "nohitori-3", "request": "replan", "reason": "dead ends near [40]", "members": [ME, B, C, D], "lines": TEST_PLAN, "who": []}, f)
+        a.apply_bridge()
+        self.assertIsNone(a.st["plan"]); self.assertIsNone(a.st["script"]); self.assertEqual(a._plan_at, 0)
+        self.assertEqual(a.st["bridge_done"], "rp1"); self.assertIn("requests a rewrite", att())
+        # 同じ要求は二度効かない
+        a.st["plan"] = list(TEST_PLAN); a._bridge_mtime = None; a.apply_bridge()
+        self.assertEqual(a.st["plan"], TEST_PLAN)
+
+    def test_same_script_not_reposted(self):
+        tmp = tempfile.mkdtemp()
+        a = fresh(); a.post = RecordingPost(); a.p["bridge_dir"] = tmp; a.p.pop("plan_seed", None)
+        frozen_team(a)
+        who = alternate(len(WORDS), [ME, B, C, D])
+        a.st["plan"] = list(TEST_PLAN); a.st["script"] = {"words": WORDS, "who": who}
+        bridge_file(tmp, "nohitori-3", TEST_PLAN, who, [ME, B, C, D], id_="same1")
+        a.apply_bridge()
+        self.assertEqual(a.st["bridge_done"], "same1"); self.assertNotIn("script", a.post.kinds())

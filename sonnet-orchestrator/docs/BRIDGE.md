@@ -47,6 +47,16 @@ Rules for the reader (live bot, `apply_bridge`):
 - Sets `state.plan = lines`; if the team is frozen, sets `state.script = {words, who}` and posts the turn script.
   Before freeze the plan feeds `key_fits_plan` (seating gate) and blocks the LLM planner.
 
+### Text source (config `bridge.text_source`, default `bot`)
+- `bot` (体制 b): the live bot's LLM (Opus, `make_plan`) writes the text — before the freeze as soon as
+  `plan_min_members` (2) seats are filled, and after any reset. The bridge takes `state.plan` verbatim, validates it,
+  assigns `who`, and writes the plan file with `source: "bot-text+orchestrator-assign"`. While the bot has no plan
+  the bridge writes only the roster report. If the remaining words cannot be alternated by the available members, or the
+  accepted words diverge from the text, the bridge writes `{"request": "replan", "reason": ...}` with a stable id; the
+  bot clears its plan and the LLM rewrites from the accepted words (prefix enforced in the retry loop). The operator can
+  always replace the text with `plan_override` before the freeze (the bot logs every adopted text to ATTENTION).
+- `heuristic`: the bridge writes the text too (offline generator; valid form, plain poetry).
+
 ## Output 2: roster report `sonnet/bridge/roster-<game_id>.json`
 ```json
 {

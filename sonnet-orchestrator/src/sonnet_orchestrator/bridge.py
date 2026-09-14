@@ -308,6 +308,44 @@ def plan_for(view: LiveView, writers: Sequence[WriterProfile], settings: Setting
 
 
 # ------------------------------------------------------------------ roster report
+def plan_from_bot_text(view: LiveView, writers: Sequence[WriterProfile], settings: Settings, lexicon: Lexicon) -> Optional[dict]:
+    """text_source == "bot": the live bot's plan (LLM-written, operator-reviewable) is the text; the bridge only assigns.
+
+    Returns None when the bot has no plan yet (nothing to assign). When the remaining words cannot be alternated by the
+    available members, returns a ``request: replan`` file so the bot clears its plan and lets the LLM rewrite the suffix
+    from the accepted words. Ids are stable per (lines, prefix) so the bot never loops on the same request.
+    """
+    lines = view.existing_plan_lines
+    if not (isinstance(lines, list) and len(lines) == POEM_LINES and all(isinstance(x, str) for x in lines)):
+        return None
+    members = list(view.members)
+    prefix = list(view.accepted_words)
+    prefix_len = len(prefix)
+    words = _words_of_lines(lines)
+    base = {"game_id": view.game_id, "generated_at": _iso_now(), "members": members, "prefix_len": prefix_len, "lines": list(lines)}
+    try:
+        lexicon.validate_poem(canonical_text(lines), exact_ten=True)
+        entries = words_of_poem(lines, lexicon)
+    except ValueError as e:
+        return dict(base, id=plan_id(lines, ["replan", "invalid", str(prefix_len)]), request="replan", who=[], keys=[], fit_problems=[],
+                    source="orchestrator-replan", feasible=False, reason=f"bot text fails the official validator: {e}")
+    if words[:prefix_len] != prefix:
+        div = next((i for i in range(min(len(words), prefix_len)) if words[i] != prefix[i]), prefix_len)
+        return dict(base, id=plan_id(lines, ["replan", "prefix", str(prefix_len)]), request="replan", who=[], keys=[], fit_problems=[],
+                    source="orchestrator-replan", feasible=False, reason=f"accepted words diverge from the bot text at index {div}")
+    prefix_who = _prefix_who(view, members, prefix_len)
+    last = prefix_who[-1] if prefix_who else None
+    suffix_who, feasible = _assign_suffix(entries, writers, settings, view, prefix_len, last)
+    who = prefix_who + suffix_who
+    keys, problems = keys_and_problems(words, members, view.lead_did)
+    if not feasible or len(who) != len(words) or any(not w for w in who):
+        dead = [i for i in range(prefix_len, len(words)) if keys[i] == 0 or (i < len(who) and not who[i])]
+        return dict(base, id=plan_id(lines, ["replan", "infeasible", str(prefix_len)]), request="replan", who=[], keys=keys,
+                    fit_problems=problems, source="orchestrator-replan", feasible=False,
+                    reason=f"remaining words cannot be alternated by the available members (dead ends near {dead[:4]})")
+    return dict(base, id=plan_id(lines, who), who=who, keys=keys, fit_problems=problems, source="bot-text+orchestrator-assign", feasible=True)
+
+
 def _nonlead_counts(members: Sequence[str], lead_did: str) -> dict[str, int]:
     return {c: sum(1 for m in members if m != lead_did and c in m.lower()) for c in LETTERS}
 
@@ -461,10 +499,18 @@ def tick(state_path: str | os.PathLike, policy_path: str | os.PathLike, out_dir:
     wrote_plan = False
     reasons: list[str] = []
     plan: Optional[dict] = None
-    try:
-        plan = plan_for(view, writers, settings, lexicon, previous=previous, seed=seed)
-    except (PlanError, ValueError) as e:
-        reasons.append(f"plan failed: {e}")
+    if getattr(settings.bridge, "text_source", "bot") == "bot":
+        try:
+            plan = plan_from_bot_text(view, writers, settings, lexicon)
+        except (PlanError, ValueError) as e:
+            reasons.append(f"assign failed: {e}")
+        if plan is None and not reasons:
+            reasons.append("waiting for the bot's text (LLM plan); roster advice only")
+    else:
+        try:
+            plan = plan_for(view, writers, settings, lexicon, previous=previous, seed=seed)
+        except (PlanError, ValueError) as e:
+            reasons.append(f"plan failed: {e}")
     if plan is not None:
         if previous is not None and previous.get("id") == plan["id"]:
             reasons.append(f"plan {plan['id']} unchanged")
@@ -489,5 +535,5 @@ def tick(state_path: str | os.PathLike, policy_path: str | os.PathLike, out_dir:
                       fit_problems=list((plan or {}).get("fit_problems") or []))
 
 
-__all__ = ["LiveView", "TickResult", "load_live", "build_writers", "plan_for", "roster_report", "tick",
+__all__ = ["LiveView", "TickResult", "load_live", "build_writers", "plan_for", "plan_from_bot_text", "roster_report", "tick",
            "keys_and_problems", "plan_id", "write_atomic"]

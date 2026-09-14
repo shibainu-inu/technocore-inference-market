@@ -94,6 +94,7 @@ operator:
     - start_next_entry
 
 bridge:                          # Phase 7 file-bridge (docs/BRIDGE.md); paths relative to the repo root
+  text_source: bot               # bot = Opus writes the text (live bot make_plan), bridge assigns; heuristic = bridge writes text too
   interval_s: 60
   max_seeds: 6
   seed_budget_s: 18.0            # stop trying further seeds after this much time (a tick must stay < 30 s)

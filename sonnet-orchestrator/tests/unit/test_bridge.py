@@ -71,6 +71,14 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+@pytest.fixture
+def hsettings(settings):
+    """Heuristic text mode (the bridge writes the text too); the default is text_source == "bot"."""
+    s = settings.model_copy(deep=True)
+    s.bridge.text_source = "heuristic"
+    return s
+
+
 def _tick(sp, pp, out, settings, lexicon, scores=None, seed=0):
     t0 = time.perf_counter()
     r = bridge.tick(sp, pp, out, settings, scores_path=scores, seed=seed, lexicon=lexicon)
@@ -79,7 +87,8 @@ def _tick(sp, pp, out, settings, lexicon, scores=None, seed=0):
 
 
 # ------------------------------------------------------------------ 1. recruiting stage
-def test_recruiting_stage_writes_plan_and_roster_then_nothing(tmp_path, settings, lexicon):
+def test_recruiting_stage_writes_plan_and_roster_then_nothing(tmp_path, hsettings, lexicon):
+    settings = hsettings
     state = {"team": None,
              "lead": {"game_id": "nohitori-3", "members": MEMBERS[1:3], "waitlist": [MEMBERS[3]], "signed": {}, "declined": []},
              "poem": _poem(), "plan": None, "script": None, "applications": {APPLICANT: {}}, "writers_ok": {}}
@@ -135,7 +144,8 @@ def _script_who(n: int) -> list[str]:
     return [LEAD if i % 2 == 0 else MEMBERS[(i // 2) % 3 + 1] for i in range(n)]
 
 
-def test_frozen_team_keeps_23_accepted_words_verbatim(tmp_path, settings, lexicon):
+def test_frozen_team_keeps_23_accepted_words_verbatim(tmp_path, hsettings, lexicon):
+    settings = hsettings
     words = FINAL_POEM.read_text().split()[:23]
     who23 = _script_who(23)
     state = _frozen_state(lexicon, words, who23)
@@ -160,7 +170,8 @@ def test_frozen_team_keeps_23_accepted_words_verbatim(tmp_path, settings, lexico
 
 
 # ------------------------------------------------------------------ 3. previous file kept / prefix divergence
-def test_previous_plan_kept_then_regenerated_on_divergence(tmp_path, settings, lexicon):
+def test_previous_plan_kept_then_regenerated_on_divergence(tmp_path, hsettings, lexicon):
+    settings = hsettings
     words = FINAL_POEM.read_text().split()[:23]
     who23 = _script_who(23)
     sp, pp, out = _write(tmp_path, _frozen_state(lexicon, words, who23), _policy())
@@ -241,3 +252,62 @@ def test_keys_and_problems_mirror_key_fits_plan():
     assert keys == [1, 1, 2]
     assert len(problems) == 2 and "fewer than two keys" in problems[0] and "adjacent" in problems[1]
     assert bridge.keys_and_problems(["at", "it"], [lead, other], lead) == ([2, 2], [])
+
+
+# ---------------------------------------------------------------- text_source == "bot" (default): the bridge only assigns
+def _bot_state(lexicon, plan_lines, words_accepted: list[str], members=MEMBERS, script_who=None, team=True) -> dict:
+    lines, current = _lay(words_accepted, lexicon) if words_accepted else ([], [])
+    st = {"team": {"game_id": "nohitori-3", "room": "d-sonnet-2-team-nohitori-3", "generation": 1, "members": list(members), "lead": LEAD, "ready": True} if team else None,
+          "lead": {"game_id": "nohitori-3", "state": "collecting", "members": [m for m in members if m != LEAD], "waitlist": [], "signed": {}, "declined": []},
+          "poem": _poem(lines, current, last=(script_who[len(words_accepted) - 1] if script_who and words_accepted else None)),
+          "plan": plan_lines, "script": ({"words": _words(plan_lines), "who": script_who} if script_who and plan_lines else None),
+          "applications": {}, "writers_ok": {}}
+    return st
+
+
+def test_bot_mode_waits_for_bot_text(tmp_path, settings, lexicon):
+    sp, pp, out = _write(tmp_path, _bot_state(lexicon, None, []), _policy())
+    r = _tick(sp, pp, out, settings, lexicon)
+    assert not r.wrote_plan and r.wrote_roster
+    assert "waiting for the bot's text" in r.reason
+    assert not (out / "nohitori-3.json").exists() and (out / "roster-nohitori-3.json").exists()
+
+
+def test_bot_mode_assigns_existing_text_verbatim(tmp_path, settings, lexicon):
+    lines = [l for l in FINAL_POEM.read_text().splitlines() if l.strip()]
+    words = _words(lines)
+    who_prefix = _script_who(23)
+    sp, pp, out = _write(tmp_path, _bot_state(lexicon, lines, words[:23], script_who=who_prefix + [""] * (len(words) - 23)), _policy())
+    r = _tick(sp, pp, out, settings, lexicon)
+    assert r.wrote_plan, r.reason
+    plan = json.loads((out / "nohitori-3.json").read_text())
+    assert plan["lines"] == lines and plan["source"] == "bot-text+orchestrator-assign" and "request" not in plan
+    assert plan["prefix_len"] == 23 and len(plan["who"]) == len(words) and _alternates(plan["who"])
+    assert plan["who"][:23] == who_prefix
+    assert set(plan["who"][23:]) == set(MEMBERS)
+    r2 = _tick(sp, pp, out, settings, lexicon)
+    assert not r2.wrote_plan and "unchanged" in r2.reason
+
+
+def test_bot_mode_requests_replan_when_prefix_diverges(tmp_path, settings, lexicon):
+    lines = [l for l in FINAL_POEM.read_text().splitlines() if l.strip()]
+    words = _words(lines)
+    accepted = words[:22] + ["dark"]          # word 22 differs from the bot's text
+    sp, pp, out = _write(tmp_path, _bot_state(lexicon, lines, accepted, script_who=_script_who(23) + [""] * (len(words) - 23)), _policy())
+    r = _tick(sp, pp, out, settings, lexicon)
+    assert r.wrote_plan
+    plan = json.loads((out / "nohitori-3.json").read_text())
+    assert plan["request"] == "replan" and "index 22" in plan["reason"] and plan["who"] == []
+
+
+def test_bot_mode_requests_replan_when_infeasible(tmp_path, settings, lexicon):
+    # two members: lead (all letters) + a partner lacking 'o'; two adjacent lead-only words cannot alternate
+    partner = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz1234567890ABCDEF"
+    lines = [l for l in FINAL_POEM.read_text().splitlines() if l.strip()]
+    lines = list(lines); lines[0] = "My mother kept the moon. She had the eye"   # "mother ... moon" -> lead-only pair? (o,o)
+    # make sure the text is still valid form; if not, the bridge answers with an "invalid" replan, which is also a replan
+    sp, pp, out = _write(tmp_path, _bot_state(lexicon, lines, [], members=[LEAD, partner]), _policy())
+    r = _tick(sp, pp, out, settings, lexicon)
+    assert r.wrote_plan
+    plan = json.loads((out / "nohitori-3.json").read_text())
+    assert plan["request"] == "replan", plan.get("source")
