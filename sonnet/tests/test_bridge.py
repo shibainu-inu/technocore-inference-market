@@ -279,7 +279,9 @@ class TestMemberMode(unittest.TestCase):
         a = fresh(); a.post = RecordingPost(); a.p.pop("plan_seed", None)
         a.st["team"] = {"game_id": "prophet", "room": f"d-{CID}-team-prophet", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
         a.apply_plan_result(list(TEST_PLAN))
-        self.assertEqual(a.st["plan"], TEST_PLAN); self.assertNotIn("plan", a.post.kinds())
+        self.assertIsNone(a.st.get("plan")); self.assertNotIn("plan", a.post.kinds())   # 他人のチームでは LLM の下書きを持たない
+        a.apply_plan_result(list(TEST_PLAN), source="override")
+        self.assertEqual(a.st["plan"], TEST_PLAN)                                       # 運用者の本文は受け入れる
 
 
 class TestBridgeIgnoredInOthersTeam(unittest.TestCase):
@@ -353,3 +355,52 @@ class TestEntry3Recruitment(unittest.TestCase):
         pc = a.st["proven_contributors"]; pc.setdefault(B, 9)
         self.assertTrue(a.is_proven(B)); self.assertFalse(a.is_proven(C))
         a.p["lead_invites"] = [C]; self.assertTrue(a.is_proven(C))
+
+
+class TestMemberModeFollowsLead(unittest.TestCase):
+    """他人のチームでは、リーダーの本文と手番表に従い、自分の下書きから語を出さない（2026-09-14 frenchconnection の語 1 事故）"""
+
+    def team(self, a):
+        a.st["team"] = {"game_id": "fc", "room": f"d-{CID}-team-fc", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
+        a.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": "h", "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": agent.iso()}
+        return a
+
+    def test_no_own_draft_and_no_word_from_own_plan(self):
+        a = fresh({"plan_lines": True}); a.post = RecordingPost(); self.team(a)
+        self.assertIsNone(a.plan_context())                      # LLM の下書きを作らない
+        a.st["plan"] = list(TEST_PLAN); a.st["plan_source"] = "own"
+        self.assertIsNone(a.word_from_plan(1, [], 10))            # 自分の下書きからは出さない
+        a.st["plan_source"] = "override"
+        self.assertEqual(a.word_from_plan(1, [], 10), "I")        # 運用者/リーダーの本文からは出す
+
+    def test_script_who_builds_member_table(self):
+        a = fresh(); a.post = RecordingPost(); self.team(a)
+        a.st["plan"] = list(TEST_PLAN); a.st["plan_source"] = "override"; a.st["script"] = None
+        who = alternate(len(WORDS), [B, ME, C, D]); a.p["script_who"] = who
+        a.apply_operator_switches(a.p)
+        self.assertEqual(a.st["script"]["who"], who); self.assertEqual(a.st["script"]["words"], WORDS)
+        self.assertNotIn("script", a.post.kinds())               # 他人の部屋に表は投稿しない
+        # 自分の担当なら即、他人の担当は member_cover_after_s まで待つ
+        a.p["member_cover_after_s"] = 90
+        idx_me = who.index(ME); idx_other = who.index(C)
+        a.st["poem"]["current"] = []
+        self.assertEqual(a.our_turn_or_cover(1, WORDS[:0]) if idx_me == 0 else True, True)
+        a.st["script"]["who"][0] = C
+        self.assertFalse(a.our_turn_or_cover(1, []))
+        a.st["poem"]["state_at"] = "2026-09-14T00:00:00Z"
+        self.assertTrue(a.our_turn_or_cover(1, []))
+        self.assertEqual(a.st["script"]["who"][1], who[1])       # member は hand_off で表を書き換えない
+
+    def test_adopts_lead_plan_note(self):
+        a = fresh(); a.post = RecordingPost(); self.team(a)
+        a.st["plan"] = ["x"] * 14; a.st["plan_source"] = "own"
+        sched = "".join({B: "A", ME: "B", C: "C", D: "D"}[w] for w in alternate(len(WORDS), [B, ME, C, D]))
+        j = {"type": "sonnet.note.v1", "contest_id": CID, "game_id": "fc", "poem": "\n".join(TEST_PLAN[:4] + [""] + TEST_PLAN[4:8] + [""] + TEST_PLAN[8:12] + [""] + TEST_PLAN[12:]),
+             "schedule": sched, "legend": {"A": B, "B": ME, "C": C, "D": D}, "request_id": "plan-1"}
+        a.on_team({"seq": 9, "ts": agent.iso(), "from": B, "_sig_ok": True, "_room": f"d-{CID}-team-fc", "text": json.dumps(j)}, j)
+        self.assertEqual(a.st["plan"], TEST_PLAN); self.assertEqual(a.st["plan_source"], "lead")
+        self.assertEqual(len(a.st["script"]["who"]), len(WORDS)); self.assertIn("lead plan adopted", att())
+        # 受理済みの語と食い違う計画は採用しない
+        a.st["poem"]["current"] = ["Not"]
+        j2 = dict(j, request_id="plan-2"); a.on_team({"seq": 10, "ts": agent.iso(), "from": B, "_sig_ok": True, "_room": f"d-{CID}-team-fc", "text": json.dumps(j2)}, j2)
+        self.assertIn("do not match its prefix", att())

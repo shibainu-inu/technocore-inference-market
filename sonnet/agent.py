@@ -1761,7 +1761,7 @@ class Agent:
             attention(f"bridge {b['id']} rejected: accepted words so far do not match its prefix"); self.save(); return
         who_ok = isinstance(who, list) and len(who) == len(words) and all(isinstance(x, str) and x in members for x in who) \
             and all(who[i] != who[i + 1] for i in range(len(who) - 1))
-        self.st["plan"] = list(lines)
+        self.st["plan"] = list(lines); self.st["plan_source"] = "bridge"
         if team and team.get("ready") and team.get("lead") == self.did:
             if who_ok:
                 same = (self.st.get("script") or {}).get("words") == words and (self.st.get("script") or {}).get("who") == list(who)
@@ -1909,7 +1909,50 @@ class Agent:
     # 審判の受領（sonnet-2 実物）: {"type":"sonnet.receipt.v1","status":"accepted|rejected","request_id","sender_did",
     #   "version"(受理後の版),"state_hash"(受理後),"syllables"(累積音節),"complete"(bool),"reason"(拒否理由),
     #   "room_generation","poem_room"(部屋設定の受領)} — 受理された語そのものは入らないので、提案（request_id→語）から対応付ける
+    def maybe_adopt_lead_plan(self, m, j):
+        """他人のチーム: リーダーが team 部屋に出した構造化の計画（poem 14 行 + schedule + legend）を本文と手番表として採用する。
+        受理済みの語と本文の先頭が一致する時だけ。自分の下書きは捨てる"""
+        team = self.st.get("team")
+        if not team or team.get("lead") in (None, self.did) or not j or m.get("from") != team.get("lead"):
+            return False
+        poem, sched, legend = j.get("poem"), j.get("schedule"), j.get("legend")
+        if not (isinstance(poem, str) and isinstance(sched, str) and legend):
+            return False
+        if isinstance(legend, str):
+            try:
+                import ast
+                legend = ast.literal_eval(legend)
+            except Exception:
+                return False
+        if not isinstance(legend, dict):
+            return False
+        lines = [" ".join(l.split()) for l in poem.split("\n") if l.strip()]
+        words = [w for line in lines for w in line.split(" ") if w]
+        if len(lines) != 14 or len(words) != len(sched) or not set(sched) <= set(legend):
+            attention(f"lead plan note seq {m['seq']} ignored: lines={len(lines)} words={len(words)} schedule={len(sched)}", key="lead-plan-shape"); return False
+        who = [legend[c] for c in sched]
+        if not all(isinstance(x, str) and DID_RE.fullmatch(x) and x in team["members"] for x in who):
+            attention(f"lead plan note seq {m['seq']} ignored: legend has a DID outside the team", key="lead-plan-legend"); return False
+        problems = check_poem(lines, self.lexicon())
+        if problems:
+            attention(f"lead plan note seq {m['seq']} rejected by the offline check: {problems[:3]}", key="lead-plan-check"); return False
+        pm = self.st.get("poem") or {}
+        done = [w for line in pm.get("lines", []) for w in line.split(" ") if w] + list(pm.get("current") or [])
+        if words[:len(done)] != done:
+            attention(f"lead plan note seq {m['seq']}: accepted words so far do not match its prefix; not adopted", key="lead-plan-prefix"); return False
+        if self.st.get("plan") == lines and (self.st.get("script") or {}).get("who") == who:
+            return True
+        self.st["plan"] = lines; self.st["plan_source"] = "lead"
+        self.st["script"] = {"words": words, "who": who}
+        attention(f"lead plan adopted from team room seq {m['seq']} ({len(words)} words, ours {who.count(self.did)}): " + " / ".join(lines))
+        self.save()
+        return True
+
     def on_team(self, m, j):
+        try:
+            self.maybe_adopt_lead_plan(m, j)
+        except Exception as e:
+            log(f"maybe_adopt_lead_plan error: {e!r}")
         text = m["text"]
         if self.is_referee(m):
             r = self.parse_receipt(j, text)
@@ -2212,9 +2255,9 @@ class Agent:
         if idx >= len(sc["who"]) or sc["who"][idx] == self.did:
             return True
         waited = utc_now() - parse_iso(poem.get("state_at") or iso())
-        if waited >= self.p.get("cover_after_s", 180):
+        member = bool(team) and team.get("lead") not in (None, self.did)
+        if waited >= (self.p.get("member_cover_after_s", 90) if member else self.p.get("cover_after_s", 180)):
             # 次の語を当方しか綴れないなら、この語を当方が取ると次が詰まる（連続投稿は禁止）: 譲る
-            team = self.st.get("team") or {}
             if idx + 1 < len(sc["words"]):
                 nxt = sc["words"][idx + 1]; need = set(self.LETTERS_RE.findall(nxt.lower()))
                 absent = set(self.p.get("absent_members") or []) | set(self.p.get("slow_members") or [])   # 不在・遅い相手は「次の語を書ける人」に数えない
@@ -2223,7 +2266,8 @@ class Agent:
                     log(f"not covering word {idx + 1}: the next word {nxt!r} is spellable only by us")
                     return False
             log(f"covering word {idx + 1} (assigned to {sc['who'][idx][-6:]}, idle {int(waited)} s)")
-            self.hand_off_next(idx + 1)
+            if not member:
+                self.hand_off_next(idx + 1)   # 手番表の付け替えはリーダーだけ
             return True
         return False
 
@@ -2299,6 +2343,9 @@ class Agent:
         plan = self.st.get("plan")
         if not plan or len(plan) < line_no:
             return None
+        team = self.st.get("team") or {}
+        if team.get("lead") not in (None, self.did) and self.st.get("plan_source", "own") == "own":
+            return None   # 他人のチームで自分の下書きから語を出さない（2026-09-14 frenchconnection の語 1 事故）
         pw = plan[line_no - 1].split(" ")
         if [prosody.bare(w) for w in cur] != [prosody.bare(w) for w in pw[:len(cur)]] or len(pw) <= len(cur):
             return None
@@ -2322,11 +2369,14 @@ class Agent:
                         {"version": poem["version"], "line_no": line_no, "cur": list(cur), "remaining": remaining})
 
     # ----- 下書き（14 行） -----
-    def plan_context(self):
+    def plan_context(self, allow_member=False):
         """本文を書く相手: 凍結後はチーム。凍結前でも lead mode で席が plan_min_members（既定 2）以上埋まれば、
-        その顔ぶれで本文を書き、以後の席は key_fits_plan で本文に合う鍵だけ通す（entry 2 の「本文が先、席は後」）"""
+        その顔ぶれで本文を書き、以後の席は key_fits_plan で本文に合う鍵だけ通す（entry 2 の「本文が先、席は後」）。
+        他人のチームでは LLM の下書きは作らない（allow_member は運用者の plan_seed / override 用）"""
         team = self.st.get("team")
         if team:
+            if team.get("lead") not in (None, self.did) and not allow_member:
+                return None   # 他人のチーム: 本文はリーダーのもの。自分の下書きは作らない（member mode）
             return {"game_id": team["game_id"], "members": list(team["members"]), "room": team.get("room")}
         lead = self.st.get("lead")
         if lead and lead.get("state") == "collecting" and len(lead.get("members", [])) >= self.p.get("plan_min_members", 2):
@@ -2398,8 +2448,8 @@ class Agent:
             return None
         self.submit_llm("plan", job)
 
-    def apply_plan_result(self, lines):
-        ctx = self.plan_context()
+    def apply_plan_result(self, lines, source="own"):
+        ctx = self.plan_context(allow_member=(source != "own"))
         if not lines or not ctx:
             return
         if self.st.get("plan"):
@@ -2409,7 +2459,7 @@ class Agent:
         words = [w for line in lines for w in line.split(" ") if w]
         if words[:len(done)] != done:
             attention("plan result rejected: accepted words so far do not match its prefix (will retry)"); return
-        self.st["plan"] = lines; self.save()
+        self.st["plan"] = lines; self.st["plan_source"] = source; self.save()
         log("plan accepted: " + " / ".join(lines))
         attention(f"plan text set for {ctx['game_id']} ({len(words)} words; operator may replace it with plan_override before the freeze): " + " / ".join(lines))
         if not self.st.get("team"):
@@ -2657,13 +2707,19 @@ class Agent:
             elif words[:len(done)] != done:
                 attention(f"operator plan_override {po['id']} rejected: accepted words so far do not match its prefix")
             else:
-                self.st["plan"] = list(po["lines"])
+                self.st["plan"] = list(po["lines"]); self.st["plan_source"] = "override"
                 if self.st.get("script"):
                     self.st["script"]["words"] = words
                 attention(f"operator plan_override {po['id']}: text replaced ({len(words)} words); turn assignments follow script_who")
             self.save()
         sw = p.get("script_who")
         sc = self.st.get("script")
+        if isinstance(sw, list) and not sc and self.st.get("plan") and self.st.get("team") and all(DID_RE.fullmatch(x) for x in sw):
+            # member mode: リーダーの手番表を持つ（ensure_script はリーダーの時しか動かない）
+            pw = [w for line in self.st["plan"] for w in line.split(" ") if w]
+            if len(pw) == len(sw):
+                self.st["script"] = {"words": pw, "who": list(sw)}; sc = self.st["script"]; self.save()
+                attention("operator script_who: turn table adopted for " + self.st["team"]["game_id"] + " (" + ", ".join(f"{m[-6:]}={sw.count(m)}" for m in dict.fromkeys(sw)) + ")")
         if isinstance(sw, list) and sc and len(sw) == len(sc.get("words", [])) and sc.get("who") != sw and all(DID_RE.fullmatch(x) for x in sw):
             # 運用者が手番表の担当列を差し替える（別の bot の手番表に合わせて待ち合いを無くすため）。語は変えない
             sc["who"] = list(sw); self.save()
@@ -2996,18 +3052,20 @@ class Agent:
                 self.apply_bridge()
             except Exception as e:
                 log(f"apply_bridge error: {e!r}")
-        if a["plan_lines"] and self.plan_context() and self.st.get("plan") is None and now >= self.opening \
+        if a["plan_lines"] and self.plan_context(allow_member=True) and self.st.get("plan") is None and now >= self.opening \
                 and now - getattr(self, "_plan_at", 0) > 600:
             self._plan_at = now
-            team = self.plan_context()
+            team = self.plan_context(allow_member=True)
             seed = self.p.get("plan_seed")
             if isinstance(seed, list) and len(seed) == 14 and all(isinstance(x, str) for x in seed):
                 problems = check_poem(seed, self.lexicon())
                 if not problems:
                     attention(f"plan: using the operator's plan_seed (validated offline) for {team['game_id']}")
-                    self.apply_plan_result(list(seed))
+                    self.apply_plan_result(list(seed), source="override")
                     return
                 attention(f"plan_seed rejected by the offline check ({problems[:3]}); falling back to the LLM plan", key="plan-seed")
+            if not self.plan_context():
+                return   # 他人のチーム: LLM の下書きは作らない。本文はリーダーの計画（team 部屋）か plan_override で来る
             ctx = [f"{x['from'][-6:]}: {clip(x['text'], 400)}" for x in list(self.recent[team["room"]])[-60:]] if team.get("room") else []
             self.make_plan({"members": team["members"], "team_room_messages": ctx})
         if now - getattr(self, "_save_at", 0) > 60:
