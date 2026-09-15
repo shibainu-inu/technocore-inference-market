@@ -938,7 +938,7 @@ class Agent:
     def release_watch(self, m, j):
         """受理された提出の貢献者は解放される（規則）。その詩の部屋から「語を通した人」を取り、提出者以外を招待候補に積む。
         起きていて・返事をし・語を通した実績がある writer は、ここでしか空かない"""
-        if not self.p["auto"].get("release_watch") or self.st.get("team"):
+        if not self.p["auto"].get("release_watch"):
             return
         sr = (self.st.get("submit_reqs") or {}).get(j.get("request_id"))
         gid = sr and sr.get("game")
@@ -949,17 +949,25 @@ class Agent:
             st, body = fm.http_get(f"{BASE}/r/{room}/export", timeout=120)
         except Exception as e:
             log(f"release_watch: {fm.err_kind(e)}"); return
-        proposers = collections.Counter()
+        proposers = collections.Counter(); by_req = {}; accepted = collections.Counter()
         for ln in body.splitlines():
             try:
                 mm = json.loads(ln)
             except ValueError:
                 continue
             jj = parse_json(mm.get("text", ""))
-            if jj and jj.get("type") == "sonnet.word.v1" and DID_RE.fullmatch(mm.get("from", "")):
+            if not jj or not DID_RE.fullmatch(mm.get("from", "")):
+                continue
+            if jj.get("type") == "sonnet.word.v1":
                 proposers[mm["from"]] += 1
+                if isinstance(jj.get("request_id"), str):
+                    by_req[jj["request_id"]] = mm["from"]
+            elif jj.get("type") == "sonnet.receipt.v1" and jj.get("status") == "accepted" and jj.get("request_id") in by_req \
+                    and "version" in jj:
+                accepted[by_req[jj["request_id"]]] += 1   # 受理レシートが付いた語だけを実績に数える
         submitter = j.get("sender_did")
-        cands = [d for d, _ in proposers.most_common() if d not in (self.did, submitter) and d not in self.ignored()]
+        history = accepted if accepted else proposers
+        cands = [d for d, _ in history.most_common() if d not in (self.did, submitter) and d not in self.ignored()]
         w = self.st.setdefault("writers_ok", {})
         pc = self.st.setdefault("proven_contributors", {})
         for d in cands:
@@ -967,6 +975,9 @@ class Agent:
             pc.setdefault(d, m["seq"])  # 受理された詩に語を通した = accepted-word history あり
         if isinstance(submitter, str):
             pc.setdefault(submitter, m["seq"])
+        if self.st.get("team"):
+            log(f"release watch: {gid} accepted; recorded {len(cands)} contributors (no invitations while seated)")
+            self.save(); return
         ri = self.st.setdefault("release_invites", [])
         added = [d for d in cands if d not in ri and d not in (self.st.get("lead_invited") or [])]
         ri.extend(added); del ri[:-40]
@@ -1038,6 +1049,10 @@ class Agent:
         if not cands or self.application_for(cands[0]):
             return False
         gid = cands[0]
+        mine = self.st.get("lead") or {}
+        if mine and len(mine.get("members") or []) > int(self.p.get("abandon_lead_max_members", 0)):
+            attention(f"proven offer for {gid} from {frm[-8:]} held: our own game {mine.get('game_id')} has seated members; operator decides", key=f"offer-gate-{gid}")
+            return False
         if gid in self.st.get("dropped", []):
             self.st["dropped"].remove(gid)
         old = team["game_id"] if team else None
@@ -1780,10 +1795,43 @@ class Agent:
         except Exception as e:
             log(f"maybe_propose after bridge: {e!r}")
 
+    def offer_gate(self, gid, lead):
+        """席の提示に乗る前の関門（2026-09-14 方針）: (1) join_only_proven なら lead に accepted-word history が要る、
+        (2) 自分の募集に席が埋まっていれば乗り換えは運用者の判断。合格なら None、駄目なら理由"""
+        if self.p.get("join_only_proven") and not self.is_proven(lead):
+            return "lead has no accepted-word history"
+        mine = self.st.get("lead") or {}
+        seated = len(mine.get("members") or [])
+        if mine and seated > int(self.p.get("abandon_lead_max_members", 0)):
+            return f"our own game {mine.get('game_id')} has {seated} seated member(s); leaving it needs operator approval"
+        return None
+
+    def proven_file_dids(self):
+        """policy proven_file（sonnet/tools/proven_contributors.py が書く JSON）の DID 集合。mtime でキャッシュ"""
+        path = self.p.get("proven_file")
+        if not isinstance(path, str) or not path:
+            return set()
+        full = path if os.path.isabs(path) else os.path.join(HERE, "..", path)
+        try:
+            mt = os.path.getmtime(full)
+        except OSError:
+            return set()
+        cache = getattr(self, "_proven_cache", None)
+        if cache and cache[0] == mt:
+            return cache[1]
+        try:
+            data = json.load(open(full))
+            dids = {d for d, v in data.get("dids", data).items() if DID_RE.fullmatch(d) and (not isinstance(v, dict) or v.get("words", 1) >= 1)}
+        except (OSError, ValueError, AttributeError):
+            dids = set()
+        self._proven_cache = (mt, dids)
+        return dids
+
     def is_proven(self, did):
         """accepted-word history: 受理された詩に語を通した／提出した DID、または運用者の招待先"""
         return did in (self.st.get("proven_contributors") or {}) or did in (self.st.get("proven_submitters") or {}) \
-            or did in (self.p.get("lead_invites") or []) or did in (self.p.get("trusted_senders") or [])
+            or did in (self.p.get("lead_invites") or []) or did in (self.p.get("trusted_senders") or []) \
+            or did in self.proven_file_dids()
 
     def key_fits_plan(self, did):
         """計画（plan_seed / plan）に対して候補の鍵が合うか。合わなければ理由文字列、合えば ""。計画が無ければ常に合う"""
@@ -2575,6 +2623,10 @@ class Agent:
                                 and lead not in self.ignored() and self.lead_acceptable(lead)
                                 and gid not in self.st.get("dropped", [])
                                 and len(self.applications()) < self.p.get("max_applications", 3))
+                why = self.offer_gate(gid, lead) if offer_ok else None
+                if why:
+                    offer_ok = False
+                    attention(f"seat offer for game {gid} from {lead[-8:]} held: {why} (operator may accept with manual_agreed)", key=f"offer-gate-{gid}")
                 if offer_ok:
                     self.add_application(gid, lead, source="offer")
                     try:

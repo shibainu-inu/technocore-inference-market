@@ -770,5 +770,8 @@
   "drop_agreed": "prophet",
   "seat_only_proven": true,
   "seat_after_frame": false,
-  "plan_nonlead_keys": 2
+  "plan_nonlead_keys": 2,
+  "join_only_proven": true,
+  "abandon_lead_max_members": 0,
+  "proven_file": "sonnet/proven_contributors.json"
 }

@@ -404,3 +404,58 @@ class TestMemberModeFollowsLead(unittest.TestCase):
         a.st["poem"]["current"] = ["Not"]
         j2 = dict(j, request_id="plan-2"); a.on_team({"seq": 10, "ts": agent.iso(), "from": B, "_sig_ok": True, "_room": f"d-{CID}-team-fc", "text": json.dumps(j2)}, j2)
         self.assertIn("do not match its prefix", att())
+
+
+class TestOfferGateAndHistory(unittest.TestCase):
+    """台帳 2 件: 席の提示にも accepted-word history の関門、実績の母数（release_watch は席に居ても集める、proven_file）"""
+
+    def offer(self, a, gid, lead):
+        out = {"action": "reply", "text": "yes", "seat_offer": {"game_id": gid, "lead_did": lead}, "reason": "offer"}
+        a.apply_disc_result(out, [{"seq": 1, "from": lead}])
+
+    def test_unproven_lead_offer_is_held(self):
+        a = fresh({"accept_seat": True}); a.post = RecordingPost(); a.p["join_only_proven"] = True; a.p["abandon_lead_max_members"] = 0
+        a.sign_recent_lead_roster = lambda gid, lead, hours=1: None; a.lead_acceptable = lambda d: True
+        a.st["writers_ok"] = {B: 1}; a.st["proven_submitters"] = {}
+        self.offer(a, "fc", B)
+        self.assertEqual(a.applications(), {}); self.assertIn("held: lead has no accepted-word history", att())
+        a.st["proven_contributors"] = {B: 5}
+        self.offer(a, "fc", B)
+        self.assertIn("fc", a.applications())
+
+    def test_offer_held_when_own_game_has_seats_filled(self):
+        a = fresh({"accept_seat": True}); a.post = RecordingPost(); a.p["join_only_proven"] = False; a.p["abandon_lead_max_members"] = 0
+        a.sign_recent_lead_roster = lambda gid, lead, hours=1: None; a.lead_acceptable = lambda d: True
+        a.st["writers_ok"] = {B: 1}
+        a.st["lead"] = {"game_id": "mine", "request_id": "r", "state": "collecting", "at": "t", "members": [C], "signed": {}, "declined": []}
+        self.offer(a, "fc", B)
+        self.assertEqual(a.applications(), {}); self.assertIn("seated member(s); leaving it needs operator approval", att())
+        a.st["lead"]["members"] = []
+        self.offer(a, "fc", B)
+        self.assertIn("fc", a.applications())
+
+    def test_release_watch_collects_history_while_seated(self):
+        a = fresh({"release_watch": True}); a.post = RecordingPost()
+        a.st["team"] = {"game_id": "fc", "room": f"d-{CID}-team-fc", "generation": 2, "members": [B, ME, C, D], "lead": B, "roster_signed": 1, "ready": True}
+        a.st["submit_reqs"] = {"sub-1": {"game": "other", "from": D}}
+        rows = [json.dumps({"seq": 1, "from": C, "text": json.dumps({"type": "sonnet.word.v1", "request_id": "w1", "word": "a"})}),
+                json.dumps({"seq": 2, "from": REF, "text": json.dumps({"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "w1", "version": 1})}),
+                json.dumps({"seq": 3, "from": B[:-4] + "1111", "text": json.dumps({"type": "sonnet.word.v1", "request_id": "w2", "word": "b"})}),
+                json.dumps({"seq": 4, "from": REF, "text": json.dumps({"type": "sonnet.receipt.v1", "status": "rejected", "request_id": "w2", "reason": "version: stale"})})]
+        orig = agent.fm.http_get
+        try:
+            agent.fm.http_get = lambda url, timeout=120: (200, "\n".join(rows))
+            j = {"type": "sonnet.receipt.v1", "status": "accepted", "request_id": "sub-1", "sender_did": D}
+            a.release_watch({"seq": 900, "ts": agent.iso(), "from": REF}, j)
+        finally:
+            agent.fm.http_get = orig
+        self.assertIn(C, a.st["proven_contributors"]); self.assertNotIn(B[:-4] + "1111", a.st["proven_contributors"])   # 受理レシート付きの語だけ
+        self.assertIn(D, a.st["proven_contributors"])                                                              # 提出者
+        self.assertEqual(a.st.get("release_invites") or [], [])                                                    # 席に居る間は招待を積まない
+        self.assertNotIn("lead-invite", a.post.kinds())
+
+    def test_proven_file_is_consulted(self):
+        tmp = tempfile.mkdtemp(); path = os.path.join(tmp, "proven.json")
+        json.dump({"dids": {C: {"words": 3, "games": ["x"], "submitted": 0}, D: {"words": 0, "games": [], "submitted": 1}}}, open(path, "w"))
+        a = fresh(); a.p["proven_file"] = path
+        self.assertTrue(a.is_proven(C)); self.assertFalse(a.is_proven(D)); self.assertFalse(a.is_proven(B))
