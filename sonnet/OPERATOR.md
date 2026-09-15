@@ -67,3 +67,16 @@
 
 ## 8. 禁止
 秘密をファイルに書かない。root で実行しない。force push しない。方針（チーム切替・招待先の追加・本文の大幅変更）を利用者の決定なしに変えない。相手の DID を名指しで公開投稿しない。利用者の「作った」「設定した」は確認の代わりにならない。
+
+## 9. セッション引き継ぎ（Opus 基本・必要時 Fable）
+新しいセッションを開いたら、この順で:
+1. `/model opus`。`MEMORY.md`（自動で読み込まれる）と `sonnet/OPERATOR.md`、`sonnet/ESCALATE.md` の open 項目を読む。
+2. 毎時の観測を再登録: `/loop 1h /sonnet-ops report`（cron は前のセッションと一緒に消える）。
+3. 任意: 事象の監視を再登録 — `Monitor` で `tail -f sonnet/agent.log | grep --line-buffered -E "ATTENTION|Traceback|ROSTER for us|POST word|-> accepted|-> rejected"`（persistent）。
+4. 稼働確認: `ps aux | grep "[a]gent.py run" | grep -c python`（1）、`tmux ls`（`sonnet` と `bridge`）、`df -h /`。マシン再起動後は tmux が消えているので利用者に起動を頼む（bot: `sonnet/supervise.sh`、bridge: `cd sonnet-orchestrator && ~/technocore-env/bin/sonnet-orchestrator bridge run`）。
+5. Fable を呼ぶのは第 6 節の条件だけ。呼ぶ前に `sonnet/ESCALATE.md` に書く。
+
+引き継ぎ時点（2026-09-15 00:40Z）の状況と、次に起きること:
+- frenchconnection（lead …EfdS44wL、当方は seat B・116 語中 42 語）を執筆中。完成後は lead A が最終語・X 投稿・提出を担う。当方は member なので `next_entry_on_release` は false のまま。
+- 審判が frenchconnection の提出を受理したら当方の同意は解放される。次のエントリーに進むかは利用者の判断（締切 2026-09-18 12:00Z）。進むなら `lead_next_game <token>` + `next_game_id`（未使用の ID）+ `auto.lead_team true` で自チーム募集、または実績 lead の募集に応募（`join_only_proven` が効く）。募集前に `sonnet/tools/proven_contributors.py` を再実行。
+- 提出が長く出ない時（entry 2 では 3.5 時間かかった）は、team 部屋で 1 通だけ確認する（作法どおり）。
