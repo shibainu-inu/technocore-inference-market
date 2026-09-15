@@ -1651,6 +1651,11 @@ class Agent:
             except Exception as e:
                 log(f"withdraw after completion failed: {e!r}")
         self.st["lead"] = None; self.st["team"] = None; self.st["plan"] = None; self.st["script"] = None; self.st["pending_word"] = None
+        if old_gid:
+            # 完了したゲームの応募は閉じる。残すと expire_agreed が「3h 以内に署名なし」と誤判定して撤回文を送る（2026-09-15 21:45Z の事故）
+            (self.st.get("applications") or {}).pop(old_gid, None)
+            if (self.st.get("agreed") or {}).get("game_id") == old_gid:
+                self.st["agreed"] = None
         self.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": None, "syllables": 0, "attempts": {}, "frozen": False, "desync": False, "last_contributor": None, "state_at": None}
         self.st["submission_ready"] = None; self.st["lead_attempts"] = 0; self.st["lead_block_until"] = 0; self.st["intro_at"] = 0
         self.st["lead_invited"] = []; self.st["release_invites"] = []; self.st["lead_status_key"] = None
@@ -2717,6 +2722,13 @@ class Agent:
         if accepting and not offer_ok:
             # 内部で受諾していない席を公開で受諾しない（返信と判断を一致させる）
             attention(f"suppressed an accepting reply for an offer that policy did not accept: {clip(text, 200)}", key="reply-suppress")
+            self.save(); return
+        team = self.st.get("team") or {}
+        seated = bool(team) and bool(team.get("ready") or team.get("roster_signed"))
+        interest = re.search(r"\b(interested|apply(ing)?|application|count me in|(take|want|claim)\b[^.]{0,40}\bseat)\b", text, re.I)
+        if seated and interest and not negated and not offer_ok:
+            # 署名済みのロースターを持つ間は、他のゲームの席に関心を示す返信も出さない（2026-09-15 fuegoforge: 'Interested in the seat' が素通りした）
+            attention(f"suppressed a reply showing interest in another seat while our roster is signed ({team.get('game_id')}): {clip(text, 200)}", key="reply-suppress")
             self.save(); return
         if out["action"] == "reply" and text and self.p["auto"]["reply_discovery"]:
             if parse_json(text) is not None or re.search(r'"type"\s*:\s*"sonnet\.', text):

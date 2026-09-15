@@ -644,6 +644,33 @@ class Join(unittest.TestCase):
         a.st["poem"]["state_at"] = "2026-09-13T00:00:00Z"; self.assertTrue(a.our_turn_or_cover(1, ["a", "b"]))   # 3 分以上待った → 埋める
         a.st["script"] = None; self.assertTrue(a.our_turn_or_cover(1, []))
 
+    def test_seated_agent_does_not_post_interest_in_another_seat(self):
+        """署名済みロースターを持つ間に『Interested in the X seat』を出さない（2026-09-15 fuegoforge の事故）。未署名なら従来どおり出す"""
+        a = fresh({"reply_discovery": True}); rp = RecordingPost(); a.post = rp; a.key = object()
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME], "lead": LEAD, "ready": True, "roster_signed": 5}
+        out = {"action": "reply", "text": "@abc Interested in the foo seat. DID " + ME + ". I hold other open applications.", "seat_offer": None, "reason": "r"}
+        a.apply_disc_result(out, [])
+        self.assertEqual(rp.calls, []); self.assertIn("interest in another seat", att())
+        b = fresh({"reply_discovery": True}); rpb = RecordingPost(); b.post = rpb; b.key = object()   # 席なし → 出す
+        b.apply_disc_result(dict(out), [])
+        self.assertEqual(rpb.kinds(), ["disc-reply"])
+        c = fresh({"reply_discovery": True}); rpc = RecordingPost(); c.post = rpc; c.key = object()   # 署名済みでも断りの返信は出す
+        c.st["team"] = dict(a.st["team"])
+        c.apply_disc_result({"action": "reply", "text": "@abc Thank you, but I cannot: I already hold a signed roster on another game.", "seat_offer": None, "reason": "r"}, [])
+        self.assertEqual(rpc.kinds(), ["disc-reply"])
+
+    def test_archive_closes_the_finished_application_without_a_release_note(self):
+        """提出受理後に archive すると、その応募は消え、expire_agreed が撤回文（release-note）を出さない（2026-09-15 21:45Z の事故）"""
+        a = fresh(); rp = RecordingPost(); a.post = rp; a.key = object()
+        a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [LEAD, ME], "lead": LEAD, "ready": True, "roster_signed": 5}
+        a.add_application("g", LEAD, source="offer"); a.st["applications"]["g"]["at"] = "2026-09-13T00:00:00Z"
+        a.st["referee_at"] = "2026-09-13T00:00:00Z"
+        a.archive_game_and_reset("test")
+        self.assertIsNone(a.st["team"]); self.assertNotIn("g", a.applications())
+        a.expire_agreed()
+        self.assertEqual([c[2] for c in rp.calls if c[2] == "release-note"], [])
+        self.assertNotIn("no signed roster within", att())
+
     def test_ensure_script_posts_four_stanzas_once(self):
         a = fresh({"propose_words": True}); rp = RecordingPost(); a.post = rp; a.key = object()
         a.st["team"] = {"game_id": "g", "room": TEAM + "g", "generation": 1, "members": [ME, LEAD, OTHERS[0], OTHERS[1]], "lead": ME, "ready": True}

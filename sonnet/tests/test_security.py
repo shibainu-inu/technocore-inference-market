@@ -590,6 +590,7 @@ class T(unittest.TestCase):
 
     def test_strategy_review_enables_lead_when_stuck(self):
         a = fresh(); a.st["registered"] = {"seq": 1}; a.p["auto"]["lead_team"] = False
+        a.p["review_auto_lead"] = True   # 本番 policy の運用者スイッチに試験を依存させない
         a.st["stage"] = "seeking"; a.st["stage_since"] = agent.iso(agent.utc_now() - 4 * 3600)
         a.strategy_review()
         self.assertTrue(a.p["auto"]["lead_team"]); self.assertIn("REVIEW", open(agent.ATTENTION_PATH).read())
