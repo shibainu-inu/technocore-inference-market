@@ -1941,6 +1941,8 @@ class Agent:
         if words[:len(done)] != done:
             attention(f"lead plan note seq {m['seq']}: accepted words so far do not match its prefix; not adopted", key="lead-plan-prefix"); return False
         if self.st.get("plan") == lines and (self.st.get("script") or {}).get("who") == who:
+            if self.st.get("plan_source") != "lead":
+                self.st["plan_source"] = "lead"; self.save()   # 同じ本文を先に plan_override で入れていた場合もタグを揃える
             return True
         self.st["plan"] = lines; self.st["plan_source"] = "lead"
         self.st["script"] = {"words": words, "who": who}

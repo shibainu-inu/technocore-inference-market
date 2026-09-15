@@ -17,7 +17,7 @@
 - 試したこと: `auto.propose_words` を false にして停止（23:42Z）、team 部屋に訂正と謝罪を 1 通投稿（seq 8）。lead に v10（語 1 を 'The' で始める 14 行）の再発行を依頼。
 - 期待する判断/変更: (a) member の時は lead のテキスト（team 部屋の plan / GO ノート）を採用し、自分の下書きは使わない。(b) `script_who` と手番表を member でも持てるようにする（lead の schedule 文字列 + legend を取り込む経路）。(c) 凍結直後は lead の GO を待ってから最初の語を出す。
 - 緊急度: **高**（現在 propose_words を止めており、v10 が来るまで当方は語を出せない）
-- 状態: open
+- 状態: done(ea9178f) — member では自分の下書きを作らず使わない、`script_who` で手番表を持てる、リーダーの構造化 plan ノート（poem+schedule+legend）を自動採用、cover は member_cover_after_s で hand_off なし
 
 ## 2026-09-14T23:25Z proven の母数が小さすぎる（release_watch のガード）
 - 事象: `is_proven` が見るのは proven_submitters 56 + proven_contributors 5 + 招待先 ≈ 60 DID。`writers_ok` は 959。proven_contributors が 5 しかないのは、`release_watch`（agent.py 938 付近）が `self.st.get("team")` で早期 return し、**自分がチームに居る間の受理提出を取りこぼす**ため。

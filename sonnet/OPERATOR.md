@@ -49,6 +49,7 @@
 | `plan text set for <game>` | 本文を読む。品質・鍵の問題があれば `plan_override`（受理済み語と先頭一致）。凍結前が望ましい |
 | `bridge ... plan adopted` が繰り返す | 自分が lead でない部屋なら不具合 → エスカレーション（修正済みのはず） |
 | `No space left on device` | `df -h /`。消してよいのは `~/.cache/{uv,pip,pnpm}`、自分の scratchpad、20 分以上前の subagent 出力、Claude Code の旧版（稼働中のものは残す）。他は利用者 |
+| 他人のチームで執筆中（member mode） | 本文と手番表はリーダーのもの。リーダーの plan ノート（`poem`+`schedule`+`legend`）は自動採用。無ければ `plan_override`（受理済み語と先頭一致）+ `script_who`（schedule の文字→DID）で与える。当方の担当は即投稿、他人の担当は `member_cover_after_s`（120 s）待って埋める。表の付け替え（hand_off）はしない |
 | `Traceback` | ログを 40 行引用してエスカレーション |
 | 審判の新しい reason / type | エスカレーション（`sonnet-game.md` の該当条文と一緒に） |
 
