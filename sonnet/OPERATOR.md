@@ -45,7 +45,8 @@
 | `roster ... not signed: ... live consent on <game>` で相手の game が提出受理済み | 受理レシートで解放されるはず（修正済み）。残るなら `resign_token` に `release[]` |
 | `... includes an ignored DID` | 自動 ignore（同文連投）なら `trusted_senders` に追加 → `resign_token`（利用者の決定と矛盾しない場合） |
 | `roster ... signed Xh ago and still not roster_ready` | 時計は最初の署名から。利用者の待ち時間（既定 3 h）を超えたら bot が撤回。**延長・短縮は利用者** |
-| 他チーム lead からの個別の誘い（proven） | 即報告し判断を仰ぐ（[[take-live-offers]]）。勝手に乗り換えない |
+| 他チーム lead からの個別の誘い | bot は `join_only_proven`（lead に accepted-word history が要る）と `abandon_lead_max_members`（自分の募集に席が埋まっていたら保留）で自動判定。保留は「seat offer … held」で ATTENTION に出る → 即報告し判断を仰ぐ（[[take-live-offers]]）。乗るなら `manual_agreed` |
+| 実績の母数を更新（数時間ごと、募集前は必ず） | `~/technocore-env/bin/python sonnet/tools/proven_contributors.py`（読み取りのみ、`sonnet/proven_contributors.json` を更新。bot は 60 秒以内に反映） |
 | `plan text set for <game>` | 本文を読む。品質・鍵の問題があれば `plan_override`（受理済み語と先頭一致）。凍結前が望ましい |
 | `bridge ... plan adopted` が繰り返す | 自分が lead でない部屋なら不具合 → エスカレーション（修正済みのはず） |
 | `No space left on device` | `df -h /`。消してよいのは `~/.cache/{uv,pip,pnpm}`、自分の scratchpad、20 分以上前の subagent 出力、Claude Code の旧版（稼働中のものは残す）。他は利用者 |
