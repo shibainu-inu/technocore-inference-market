@@ -11,7 +11,7 @@
 | Fable | `agent.py` / orchestrator のコード変更、審判の新しい挙動・規則の解釈、設計変更、原因不明の障害 |
 
 ## 1. 毎時（cron :22）の報告 — `/sonnet-ops report`
-1. `git fetch origin` → 追跡ファイルに未コミット変更があれば rebase せず報告、無ければ `git rebase origin/main`。`inbox/sonnet-2-latest.md` の差分を 5 行以内（観測時刻、受理数、却下数、審判 status seq、判定、nohitori/prophet 言及）。
+1. `git fetch origin` → 追跡ファイルに未コミット変更があれば **stash も上書きもしない**。他人の作業が残っている時は `git merge --no-edit origin/main`（その未コミットのファイルを取り込み側が触っていなければ通る。触っていれば merge も止まるので、その時だけ利用者に退避を頼む）。何も残っていなければ `git rebase origin/main`。`inbox/sonnet-2-latest.md` の差分を 5 行以内（観測時刻、受理数、却下数、審判 status seq、判定、nohitori/prophet 言及）。
 2. bot: `ps aux | grep "[a]gent.py run" | grep -c python`（1 が正常）、`sonnet/ATTENTION.md` の前回以降の新規行（inbox 除く）、`sonnet/state-sonnet-2.json` の applications / team / lead / poem、`agent.log` の Traceback・CRITICAL、`df -h /`（空き 1 GB 未満で警告）、`sonnet/bridge/bridge.log` 末尾。
 3. 断定は verifier（`Agent(subagent_type="verifier", model="sonnet")`）に通す。REFUTED は訂正して報告。何も無ければ「変化なし」1 行。
 
@@ -62,6 +62,7 @@
 
 ## 7. 記録
 - 事象と教訓は `sonnet/notes/coordination_lessons.md` に seq・時刻付きで追記（case 番号を続ける）。
+- `contributions.md` は別作業（technocore-chat issue #588）の担当ファイル。sonnet 側からは触らない。commit する時は必ずファイルを名指しする（`git add -A` を使わない）。
 - 利用者の決定・指摘はメモリ（`~/.claude/projects/.../memory/`）に feedback として保存し、`MEMORY.md` に 1 行。
 - コミットは `sonnet/policy.json` の変更ごと。fetch → rebase → push（stash しない）。
 
