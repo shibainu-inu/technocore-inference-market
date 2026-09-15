@@ -504,8 +504,11 @@ class TestPlanRiskCheck(unittest.TestCase):
         self.assertIn("PLAN CHECK", body); self.assertLess(len(body), 2000)
         self.assertIn("single points of failure", body)
 
-    def test_note_off_by_default(self):
+    def test_note_off_by_default_but_measured(self):
         a = fresh(); a.post = RecordingPost()
         members = [B, ME, C, OTHERS[1]]; self.team(a, members)
         a.maybe_report_plan_risk(list(TEST_PLAN), alternate(len(WORDS), members), members, "fc")
         self.assertEqual(a.post.kinds().count("plan-check"), 0)             # policy が無ければ投稿しない
+        self.assertIn("plan check fc", att())                                # 計測と ATTENTION は動く
+        self.assertIn("note NOT sent", att())
+        self.assertEqual(a.st.get("plan_risk_told"), [])                     # 送信記録は付かない

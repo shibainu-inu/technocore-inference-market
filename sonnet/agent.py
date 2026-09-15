@@ -1998,14 +1998,15 @@ class Agent:
 
     def maybe_report_plan_risk(self, lines, who, members, gid):
         """他人のチームで計画を採用した直後に、鍵の危険を 1 回だけ伝える（計画の版ごと、game ごとに上限）"""
-        if not self.p.get("plan_risk_note"):
-            return
         words = [w for line in lines for w in line.split(" ") if w]
         risk = self.plan_risk(words, who, members)
         key = hashlib.sha256(("\n".join(lines) + "|" + ",".join(who)).encode()).hexdigest()[:12]
         told = self.st.setdefault("plan_risk_told", [])
         attention(f"plan check {gid} {key}: {len(risk['single'])} single-writer word(s), {len(risk['spof'])} single-point-of-failure slot(s), "
-                  f"letters only one of us has: {''.join(sorted(risk['scarce'])) or '-'}")
+                  f"letters only one of us has: {''.join(sorted(risk['scarce'])) or '-'}"
+                  + ("" if self.p.get("plan_risk_note") else "; note NOT sent (plan_risk_note is off)"))
+        if not self.p.get("plan_risk_note"):
+            return   # 計測と ATTENTION は常に動く。部屋への 1 通だけ運用者の承認制
         if key in told or self.key is None:
             return
         if len([x for x in told if x.startswith(gid + ":")]) >= self.p.get("plan_risk_note_max", 2):
