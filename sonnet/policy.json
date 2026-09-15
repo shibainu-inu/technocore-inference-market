@@ -20,7 +20,7 @@
   "auto": {
     "register_writer": true,
     "post_intro": true,
-    "reply_discovery": true,
+    "reply_discovery": false,
     "accept_seat": true,
     "sign_roster": true,
     "plan_lines": true,
