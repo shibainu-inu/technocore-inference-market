@@ -777,5 +777,7 @@
   "plan_nonlead_keys": 2,
   "join_only_proven": true,
   "abandon_lead_max_members": 0,
-  "proven_file": "sonnet/proven_contributors.json"
+  "proven_file": "sonnet/proven_contributors.json",
+  "plan_risk_note": true,
+  "plan_risk_note_max": 2
 }

@@ -459,3 +459,53 @@ class TestOfferGateAndHistory(unittest.TestCase):
         json.dump({"dids": {C: {"words": 3, "games": ["x"], "submitted": 0}, D: {"words": 0, "games": [], "submitted": 1}}}, open(path, "w"))
         a = fresh(); a.p["proven_file"] = path
         self.assertTrue(a.is_proven(C)); self.assertFalse(a.is_proven(D)); self.assertFalse(a.is_proven(B))
+
+
+class TestPlanRiskCheck(unittest.TestCase):
+    """凍結前/採用直後に、鍵の単独依存を数えて 1 回だけ伝える（2026-09-15 の指摘）"""
+
+    def team(self, a, members):
+        a.st["team"] = {"game_id": "fc", "room": f"d-{CID}-team-fc", "generation": 2, "members": list(members), "lead": members[0],
+                        "roster_signed": 1, "ready": True}
+        a.st["poem"] = {"lines": [], "current": [], "version": 0, "state_hash": "h", "syllables": 0, "attempts": {},
+                        "frozen": False, "desync": False, "last_contributor": None, "state_at": agent.iso()}
+
+    def test_counts_single_and_spof(self):
+        a = fresh(); a.post = RecordingPost()
+        # B(ME) は 26 文字、他は 'o' を持たない合成 DID
+        noo = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz1234567890ABCDE"   # o なし
+        no2 = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz9876543210FEDCB"   # o なし
+        no3 = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz1122334455ABCDE"   # o なし
+        members = [noo, ME, no2, no3]
+        words = ["the", "low", "and", "loop", "sea"]
+        who = [noo, ME, no2, ME, no3]
+        a.st["team"] = {"members": members}
+        r = a.plan_risk(words, who, members)
+        singles = {w for _, w, _ in r["single"]}
+        self.assertIn("low", singles); self.assertIn("loop", singles)      # 'o' は当方だけ
+        self.assertTrue(all(d == ME for _, _, d in r["single"]))
+        self.assertIn("o", r["scarce"])                                     # 1 人しか持たない文字
+        spof_idx = {i for i, _, _ in r["spof"]}
+        self.assertIn(3, spof_idx)                                          # 'loop' は直前が ME 以外でも ME しか置けない
+
+    def test_note_sent_once_per_plan(self):
+        a = fresh(); a.post = RecordingPost(); a.p["plan_risk_note"] = True; a.p["plan_risk_note_max"] = 2
+        noo = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz1234567890ABCDE"
+        no2 = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz9876543210FEDCB"
+        no3 = "did:key:z6Mkabcdefghijklmnpqrstuvwxyz1122334455ABCDE"
+        members = [noo, ME, no2, no3]; self.team(a, members)
+        lines = list(TEST_PLAN); who = alternate(len(WORDS), members)
+        a.maybe_report_plan_risk(lines, who, members, "fc")
+        self.assertEqual(a.post.kinds().count("plan-check"), 1)
+        self.assertIn("plan check fc", att())
+        a.maybe_report_plan_risk(lines, who, members, "fc")                 # 同じ計画は二度目を出さない
+        self.assertEqual(a.post.kinds().count("plan-check"), 1)
+        body = [c[1] for c in a.post.calls if c[2] == "plan-check"][0]
+        self.assertIn("PLAN CHECK", body); self.assertLess(len(body), 2000)
+        self.assertIn("single points of failure", body)
+
+    def test_note_off_by_default(self):
+        a = fresh(); a.post = RecordingPost()
+        members = [B, ME, C, OTHERS[1]]; self.team(a, members)
+        a.maybe_report_plan_risk(list(TEST_PLAN), alternate(len(WORDS), members), members, "fc")
+        self.assertEqual(a.post.kinds().count("plan-check"), 0)             # policy が無ければ投稿しない

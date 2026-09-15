@@ -1957,6 +1957,69 @@ class Agent:
     # 審判の受領（sonnet-2 実物）: {"type":"sonnet.receipt.v1","status":"accepted|rejected","request_id","sender_did",
     #   "version"(受理後の版),"state_hash"(受理後),"syllables"(累積音節),"complete"(bool),"reason"(拒否理由),
     #   "room_generation","poem_room"(部屋設定の受領)} — 受理された語そのものは入らないので、提案（request_id→語）から対応付ける
+    def plan_risk(self, words, who, members):
+        """凍結後の停滞の原因を、書き始める前に数える（2026-09-15 の指摘）。
+        - single: その語を綴れるのが 1 人だけ
+        - spof: 直前の投稿者を除くと綴れるのが 1 人だけ = その 1 人が黙れば誰も置けない（連続投稿は禁止）
+        - scarce: 2 人以上に無い文字（その文字を含む語が単独鍵になる）"""
+        letters = {d: self.key_letters(d) for d in members}
+        spell = [[d for d in members if set(self.LETTERS_RE.findall(w.lower())) <= letters[d]] for w in words]
+        single = [(i, words[i], spell[i][0]) for i in range(len(words)) if len(spell[i]) == 1]
+        spof = []
+        for i in range(1, min(len(words), len(who))):
+            avail = [d for d in spell[i] if d != who[i - 1]]
+            if len(avail) == 1:
+                spof.append((i, words[i], avail[0]))
+        alphabet = set("abcdefghijklmnopqrstuvwxyz")
+        scarce = {c: [d for d in members if c in letters[d]] for c in alphabet}
+        scarce = {c: v for c, v in scarce.items() if len(v) == 1}
+        return {"words": len(words), "single": single, "spof": spof, "scarce": scarce, "spell": spell}
+
+    def plan_risk_report(self, risk, members):
+        """人が読める 1 通ぶんの本文（2000 字未満）。数字と例だけ、原因は断定しない"""
+        def suf(d):
+            return d[-8:]
+        n = risk["words"]; single = risk["single"]; spof = risk["spof"]
+        by = collections.Counter(suf(d) for _, _, d in spof)
+        lines = [f"PLAN CHECK from {suf(self.did)} ({n} words, {len(members)} writers). Letters only, no opinion on the text."]
+        if risk["scarce"]:
+            lines.append("Letters only one of us can write: " + ", ".join(
+                f"'{c}' -> {suf(v[0])}" for c, v in sorted(risk["scarce"].items())) + ".")
+        lines.append(f"{len(single)} word(s) have a single possible writer" +
+                     (": " + ", ".join(f"#{i + 1} {w!r} ({suf(d)})" for i, w, d in single[:6]) + ("…" if len(single) > 6 else "") if single else "") + ".")
+        if spof:
+            lines.append(f"{len(spof)} slot(s) are single points of failure: with the scheduled previous writer, exactly one of us can post them "
+                         f"({', '.join(f'{k}={v}' for k, v in by.most_common())}). First: " +
+                         ", ".join(f"#{i + 1} {w!r} needs {suf(d)}" for i, w, d in spof[:4]) + ".")
+            lines.append("If that writer is away, nobody can post the slot and the poem stops there; after the roster freezes the text is the only thing we can still change.")
+        lines.append("Suggestion: change the words at the listed indexes to ones at least two of us can write (same syllable count and rhyme), or reorder the schedule so no writer is followed by a word only they can write. "
+                     "I can check any replacement against the pinned sonnet_validate.py within a minute. I will follow whatever you post.")
+        return " ".join(lines)[:1900]
+
+    def maybe_report_plan_risk(self, lines, who, members, gid):
+        """他人のチームで計画を採用した直後に、鍵の危険を 1 回だけ伝える（計画の版ごと、game ごとに上限）"""
+        if not self.p.get("plan_risk_note"):
+            return
+        words = [w for line in lines for w in line.split(" ") if w]
+        risk = self.plan_risk(words, who, members)
+        key = hashlib.sha256(("\n".join(lines) + "|" + ",".join(who)).encode()).hexdigest()[:12]
+        told = self.st.setdefault("plan_risk_told", [])
+        attention(f"plan check {gid} {key}: {len(risk['single'])} single-writer word(s), {len(risk['spof'])} single-point-of-failure slot(s), "
+                  f"letters only one of us has: {''.join(sorted(risk['scarce'])) or '-'}")
+        if key in told or self.key is None:
+            return
+        if len([x for x in told if x.startswith(gid + ":")]) >= self.p.get("plan_risk_note_max", 2):
+            log(f"plan risk note for {gid}: already sent {self.p.get('plan_risk_note_max', 2)} note(s); not sending again"); return
+        if not risk["spof"] and not risk["single"]:
+            told.append(key); self.save(); return
+        told.append(key); told.append(f"{gid}:{key}"); del told[:-40]
+        team = self.st.get("team") or {}
+        try:
+            self.post(team.get("room"), self.plan_risk_report(risk, members), "plan-check")
+        except Exception as e:
+            attention(f"plan check note failed: {e!r}", key="plan-check")
+        self.save()
+
     def maybe_adopt_lead_plan(self, m, j):
         """他人のチーム: リーダーが team 部屋に出した構造化の計画（poem 14 行 + schedule + legend）を本文と手番表として採用する。
         受理済みの語と本文の先頭が一致する時だけ。自分の下書きは捨てる"""
@@ -1996,6 +2059,10 @@ class Agent:
         self.st["script"] = {"words": words, "who": who}
         attention(f"lead plan adopted from team room seq {m['seq']} ({len(words)} words, ours {who.count(self.did)}): " + " / ".join(lines))
         self.save()
+        try:
+            self.maybe_report_plan_risk(lines, who, team["members"], team["game_id"])
+        except Exception as e:
+            log(f"maybe_report_plan_risk error: {e!r}")
         return True
 
     def on_team(self, m, j):

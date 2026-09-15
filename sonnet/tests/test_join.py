@@ -35,7 +35,8 @@ def fresh(auto=None):
     p["apply_only_proven"] = False     # 実績リーダー限定は test_apply_only_proven_leads で見る
     for k in ("lead_reissue_token", "lead_unseat", "lead_seat", "lead_undecline", "lead_mark_signed", "undrop", "leave_team", "lead_reset_to", "readdress_token",
               "x_post_ids", "announce_once", "drop_agreed", "plan_reset", "plan_override", "script_who", "absent_members", "lead_next_game", "forget_application",
-              "invite_windows", "invite_records", "team_members_override", "lead_seat_token", "manual_agreed", "resign_token"):
+              "invite_windows", "invite_records", "team_members_override", "lead_seat_token", "manual_agreed", "resign_token",
+              "proven_file", "plan_risk_note"):
         p.pop(k, None)                 # 運用者スイッチは試験ごとに明示する
     p["plan_seed"] = TEST_PLAN              # 試験は本番 policy の plan_seed に依らず固定の合格文で回す
     p["lead_max_members"] = 6; p["seat_only_proven"] = False; p["seat_after_frame"] = True   # 本番方針の切替に試験を依存させない
