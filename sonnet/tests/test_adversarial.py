@@ -210,6 +210,24 @@ class Adversarial(unittest.TestCase):
         #      審判に「同 ID 別内容」として拒否される。旧提案が受理されると agent.py:882 で pending の新語が行に足される
         self.assertNotEqual(second["request_id"], first)
 
+    def test_pending_for_an_old_version_is_cleared_without_waiting_for_the_ttl(self):
+        """審判が再送ではなく最初の投稿を受理すると、受領の request_id は pending のものと一致せず pending が残る。
+        版が進んだ提案はもう受理されないので、TTL を待たずに捨てる（2026-09-15 frenchconnection の 'night,'）"""
+        a = with_team(fresh({"propose_words": True})); a.key = object(); a.opening = 0
+        a.st["plan"] = ["Shall I compare thee to a summer's day"] + ["x"] * 13
+        a.post = RecordingPost()
+        a.p["pending_word_ttl_s"] = 900
+        a.st["pending_word"] = {"request_id": "w0-h0-TAejK6-5", "word": "Shall", "at": agent.iso(), "version": 0}
+        a.st["poem"].update({"version": 1, "state_hash": "h1", "syllables": 1, "current": ["Shall"], "last_contributor": LEAD})
+        a.maybe_propose()
+        self.assertIsNone(a.st["pending_word"])
+        # 同じ版の pending は TTL が来るまで残す
+        b = with_team(fresh({"propose_words": True})); b.key = object(); b.opening = 0
+        b.st["plan"] = list(a.st["plan"]); b.post = RecordingPost(); b.p["pending_word_ttl_s"] = 900
+        b.st["pending_word"] = {"request_id": "w0-h0-TAejK6", "word": "Shall", "at": agent.iso(), "version": 0}
+        b.maybe_propose()
+        self.assertIsNotNone(b.st["pending_word"])
+
     def test_rejected_receipt_for_unknown_request_changes_nothing(self):
         a = with_team(fresh())
         recv(a, 5, rc(status="rejected", request_id="w0-zzz-abcdef", sender_did=LEAD, reason="version: stale"))

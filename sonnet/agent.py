@@ -2234,6 +2234,10 @@ class Agent:
         if rej and (len(rej) >= self.p.get("max_word_attempts", 3) or utc_now() - parse_iso(rej[-1]["at"]) < self.p.get("word_retry_s", 120)):
             return   # 同じ版で拒否が続く／直後の再提案はしない（状態が進めば rejected は版ごとなので自然に解ける）
         pend = self.st.get("pending_word")
+        if pend and pend.get("version") is not None and pend["version"] != poem["version"]:
+            # 版が進んだ提案はもう受理されない（stale になる）。TTL を待たずに捨てて次の手番に入る
+            log(f"pending word {pend['word']!r} was for version {pend['version']}, now {poem['version']}; clearing")
+            self.st["pending_word"] = pend = None
         if pend and utc_now() - parse_iso(pend["at"]) > self.p.get("pending_word_ttl_s", 120):
             log(f"pending word {pend['word']!r} expired without a receipt; clearing"); self.st["pending_word"] = pend = None
         if poem["last_contributor"] == self.did or pend or not poem.get("state_hash"):
@@ -2271,7 +2275,7 @@ class Agent:
             attention(f"word post failed: {e!r}", key="word-post"); return
         attempts[str(poem["version"])] = n
         self.st.setdefault("proposals", {}).setdefault(f"{self.did}|{rid}", {"word": word, "from": self.did, "seq": None})
-        self.st["pending_word"] = {"request_id": rid, "word": word, "at": iso()}
+        self.st["pending_word"] = {"request_id": rid, "word": word, "at": iso(), "version": poem["version"]}
 
     def apply_word_result(self, out, version, line_no, cur, remaining):
         poem = self.st["poem"]
