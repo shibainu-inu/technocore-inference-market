@@ -71,13 +71,22 @@
 
 ## 9. セッション引き継ぎ（Opus 基本・必要時 Fable）
 新しいセッションを開いたら、この順で:
-1. `/model opus`。`MEMORY.md`（自動で読み込まれる）と `sonnet/OPERATOR.md`、`sonnet/ESCALATE.md` の open 項目を読む。
+1. `/model opus`。`MEMORY.md`（自動で読み込まれる）と、この `sonnet/OPERATOR.md`、`sonnet/ESCALATE.md` の open 項目を読む。
 2. 毎時の観測を再登録: `/loop 1h /sonnet-ops report`（cron は前のセッションと一緒に消える）。
-3. 任意: 事象の監視を再登録 — `Monitor` で `tail -f sonnet/agent.log | grep --line-buffered -E "ATTENTION|Traceback|ROSTER for us|POST word|-> accepted|-> rejected"`（persistent）。
-4. 稼働確認: `ps aux | grep "[a]gent.py run" | grep -c python`（1）、`tmux ls`（`sonnet` と `bridge`）、`df -h /`。マシン再起動後は tmux が消えているので利用者に起動を頼む（bot: `sonnet/supervise.sh`、bridge: `cd sonnet-orchestrator && ~/technocore-env/bin/sonnet-orchestrator bridge run`）。
+3. 任意: 事象の監視 — `Monitor` で `tail -f sonnet/agent.log | grep --line-buffered -E "ATTENTION|Traceback|ROSTER for us|POST |-> accepted|-> rejected"`（persistent）。
+4. 稼働確認: `pgrep -af "agent[.]py run"`（1 件）、`tmux ls`（`sonnet` と `bridge`）、`df -h /`。マシン再起動後は tmux が消えているので利用者に起動を頼む（bot: `sonnet/supervise.sh`、bridge: `cd sonnet-orchestrator && ~/technocore-env/bin/sonnet-orchestrator bridge run`）。
 5. Fable を呼ぶのは第 6 節の条件だけ。呼ぶ前に `sonnet/ESCALATE.md` に書く。
 
-引き継ぎ時点（2026-09-15 00:40Z）の状況と、次に起きること:
-- frenchconnection（lead …EfdS44wL、当方は seat B・116 語中 42 語）を執筆中。完成後は lead A が最終語・X 投稿・提出を担う。当方は member なので `next_entry_on_release` は false のまま。
-- 審判が frenchconnection の提出を受理したら当方の同意は解放される。次のエントリーに進むかは利用者の判断（締切 2026-09-18 12:00Z）。進むなら `lead_next_game <token>` + `next_game_id`（未使用の ID）+ `auto.lead_team true` で自チーム募集、または実績 lead の募集に応募（`join_only_proven` が効く）。募集前に `sonnet/tools/proven_contributors.py` を再実行。
-- 提出が長く出ない時（entry 2 では 3.5 時間かかった）は、team 部屋で 1 通だけ確認する（作法どおり）。
+### 引き継ぎ時点（2026-09-16 00:10Z）の状況
+- **エントリー 3 本すべて受理済み**: nohitori（9/13）、nohitori-2（9/14 13:56Z）、frenchconnection（9/15 18:46:35Z、submissions seq 845、eligibility pending）。frenchconnection は lead …EfdS44wL（X @Mussot_Valery）、当方は seat B で 116 語中 43 語（最多）。詩の正規形 sha256 `2bb0a01189b9d1bf1139f5b0c6cd460fcb32c42c2874073c2e7155ddd117e6c9`。
+- **bot は意図的に待機中**。`auto` の `lead_team` / `apply_recruits` / `accept_seat` / `reply_discovery` / `post_intro` と `review_auto_lead` はすべて false、`next_entry_on_release` も false。state は team/lead/agreed/applications すべて空。22:48:09Z 以降 1 件も投稿していない。**4 作目に進むかは利用者の判断**（締切 2026-09-18T12:00Z）。
+- **進む場合の手順**: `sonnet/tools/proven_contributors.py` を再実行 → 実績 lead の募集に乗るなら `auto.accept_seat true` + `auto.apply_recruits true`（`join_only_proven` が効く）、自分で立てるなら `lead_next_game <新トークン>` + `next_game_id <未使用 ID>` + `auto.lead_team true`。`review_auto_lead` は false のままにしておくと勝手に lead に切り替わらない。
+- **未決の誘い 2 件**: fuegoforge（席 B、22:48:09Z に辞退。「空いていればもう一度声をかけて」と書いたので再度来る可能性あり）、noncesense の standby seat（111860、未返信）。どちらも署名していない。
+- **今日の会場の事情**: discovery の intake が約 11〜12 時間遅れ（21:36Z に受理されたのは 10:43Z の行動）。team 部屋の語は別経路で速いが、frenchconnection では中央値 643 秒・31 分の停止 2 回も観測した。roster_ready は最後の署名が処理されるまで出ないので、いま署名しても凍結は 1 日以上先になりうる。
+- **未 push のコミット 8 件**（push は利用者の判断。私からは push しない）。`contributions.md` と `analyze_ia.py` は別作業のファイルで触らない。
+
+### 直近に直した bot の不具合（再発したら同じ所を見る）
+- `pending_word` は版が進んだら TTL を待たず捨てる（7099b34）。審判は再送ではなく最初の投稿を受理するので、受領の request_id が保持中のものと一致しない。
+- 署名済みロースターを持つ間は、他ゲームの席への「関心表明」返信も抑止（602f300）。以前は `yes-` と `accepting the seat` しか見ていなかった。
+- ゲーム退避時に、そのゲームの応募と `agreed` も閉じる（602f300）。残ると `expire_agreed` が「3h 以内に署名なし」と誤判定して撤回文と募集文を投稿する。
+- 既知の失敗テスト 13 件（test_adversarial 9 / test_security 4）は今日の変更より前からのもの。新しい変更を入れたらこの数と比べる。
